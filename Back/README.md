@@ -70,6 +70,19 @@ npm start
   - パラメータ: `id` (マスコットID)
   - レスポンス: マスコット情報（レベル、経験値、機嫌など）
 
+- **POST** `/api/mascot/chat` - マスコットとの会話（AI機能）
+  - ボディ: `{ message, userName, weatherData?, userPreferences?, conversationHistory? }`
+  - レスポンス: AI応答、感情状態、提案、天気アドバイス
+
+### ユーザー管理
+- **POST** `/api/user/profile` - ユーザープロフィール設定
+  - ボディ: `{ userId, userName, preferences, favoriteActivities, clothingStyle }`
+  - レスポンス: 保存されたプロフィール情報
+
+- **GET** `/api/user/profile/:userId` - ユーザープロフィール取得
+  - パラメータ: `userId` (ユーザーID)
+  - レスポンス: プロフィール情報
+
 ## API レスポンス例
 
 ### 天気情報取得
@@ -118,6 +131,28 @@ npm start
 }
 ```
 
+### AI会話レスポンス
+```json
+{
+  "success": true,
+  "data": {
+    "response": "田中さん、今日の服装についてですね！過ごしやすい気温ですね！",
+    "mood": "friendly",
+    "suggestions": [
+      "長袖シャツ",
+      "カーディガン",
+      "チノパン",
+      "軽めのジャケット"
+    ],
+    "weatherAdvice": {
+      "advice": "過ごしやすい気温ですね！",
+      "items": ["長袖シャツ", "カーディガン", "チノパン", "軽めのジャケット"]
+    },
+    "timestamp": "2025-12-04T03:56:47.051Z"
+  }
+}
+```
+
 ## 機能概要
 
 ### 🌤️ 天気連動システム
@@ -129,6 +164,13 @@ npm start
 - 天気に応じた機嫌・エネルギー変化
 - 温度による状態調整
 - ランダムなリアクションメッセージ
+
+### 🤖 AI会話機能
+- 自然な日常会話レスポンス
+- 天気に基づく服装アドバイス
+- パーソナライズされた活動提案
+- 感情認識と共感的な応答
+- ユーザー設定による個性化
 
 ### 📊 拡張可能な設計
 - 将来的なデータベース連携に対応
@@ -150,6 +192,24 @@ curl http://localhost:3001/api/weather/35.6762/139.6503
 
 # 都市名で天気取得
 curl http://localhost:3001/api/weather/city/tokyo
+
+# AI会話テスト
+curl -X POST http://localhost:3001/api/mascot/chat \
+  -H "Content-Type: application/json" \
+  -d '{
+    "message": "今日は何を着ればいいかな？",
+    "userName": "田中さん",
+    "weatherData": {"current": {"weather": "sunny", "temperature": 22}}
+  }'
+
+# ユーザープロフィール設定
+curl -X POST http://localhost:3001/api/user/profile \
+  -H "Content-Type: application/json" \
+  -d '{
+    "userId": "user123",
+    "userName": "田中さん", 
+    "preferences": {"activities": "outdoor", "style": "sporty"}
+  }'
 ```
 
 ## 注意事項
