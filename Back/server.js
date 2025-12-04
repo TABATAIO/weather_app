@@ -2,6 +2,8 @@ const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
 const axios = require('axios');
+const natural = require('natural');
+const nlp = require('compromise');
 
 // 環境変数を読み込み
 dotenv.config();
@@ -29,7 +31,10 @@ app.get('/', (req, res) => {
       'GET /api/weather/:lat/:lon - 緯度経度で天気情報を取得',
       'GET /api/weather/city/:city - 都市名で天気情報を取得',
       'POST /api/mascot/update - マスコット状態を更新',
-      'GET /api/mascot/:id - マスコット情報を取得'
+      'GET /api/mascot/:id - マスコット情報を取得',
+      'POST /api/mascot/chat - マスコットとの会話（AI機能）',
+      'POST /api/user/profile - ユーザープロフィール設定',
+      'GET /api/user/profile/:userId - ユーザープロフィール取得'
     ],
     supportedCities: ['tokyo', 'osaka', 'kyoto', 'yokohama', 'nagoya', 'fukuoka', 'sendai', 'hiroshima']
   });
@@ -480,6 +485,839 @@ function getRecommendations(weatherData) {
   
   return recommendations;
 }
+
+// AI会話エンドポイント
+app.post('/api/mascot/chat', (req, res) => {
+  try {
+    const { 
+      message, 
+      userName, 
+      weatherData, 
+      userPreferences = {},
+      conversationHistory = []
+    } = req.body;
+
+    if (!message || message.trim() === '') {
+      return res.status(400).json({
+        success: false,
+        error: 'メッセージが入力されていません'
+      });
+    }
+
+    // AI会話レスポンス生成
+    const chatResponse = generateChatResponse({
+      userMessage: message.trim(),
+      userName: userName || 'あなた',
+      weatherData,
+      userPreferences,
+      conversationHistory
+    });
+
+    res.json({
+      success: true,
+      data: {
+        response: chatResponse.message,
+        mood: chatResponse.mood,
+        suggestions: chatResponse.suggestions,
+        weatherAdvice: chatResponse.weatherAdvice,
+        timestamp: new Date().toISOString()
+      }
+    });
+
+  } catch (error) {
+    console.error('AI会話エラー:', error.message);
+    res.status(500).json({ 
+      success: false,
+      error: 'メッセージの処理に失敗しました' 
+    });
+  }
+});
+
+// AI会話レスポンス生成関数
+function generateChatResponse({ userMessage, userName, weatherData, userPreferences, conversationHistory }) {
+  const message = userMessage.toLowerCase();
+  
+  // 自然言語解析
+  const doc = nlp(userMessage);
+  const sentiment = analyzeSentiment(userMessage);
+  const intent = analyzeIntent(doc, message);
+  const entities = extractEntities(doc);
+  
+  // 基本的な挨拶パターン
+  const greetings = ['こんにちは', 'おはよう', 'こんばんは', 'はじめまして', 'やあ', 'hello', 'hi'];
+  const farewells = ['さようなら', 'また今度', 'バイバイ', 'また明日', 'おつかれ', 'bye', 'see you'];
+  
+  // 天気関連のキーワード
+  const weatherKeywords = ['天気', '気温', '暑い', '寒い', '雨', '晴れ', '曇り', '雪', '風', '湿度'];
+  
+  // 服装関連のキーワード
+  const clothingKeywords = ['服装', '着る', '洋服', 'ファッション', 'コーデ', '何着る', '服', '何を着', '着れば', '服選び'];
+  
+  // 活動関連のキーワード
+  const activityKeywords = ['何する', '遊び', '出かける', '家にいる', 'おすすめ', 'プラン', '予定'];
+  
+  // 感謝・褒め言葉のキーワード
+  const appreciationKeywords = ['ありがとう', 'すごい', 'いいね', '素敵', 'かわいい', '助かる'];
+  
+  // ユーザー設定による個性化
+  const isOutdoorLover = userPreferences?.activities === 'outdoor';
+  const isIndoorLover = userPreferences?.activities === 'indoor';
+  const isColdSensitive = userPreferences?.weatherSensitivity === 'high';
+  const stylePreference = userPreferences?.style || 'casual';
+  
+  let response = '';
+  let mood = 'friendly';
+  let suggestions = [];
+  let weatherAdvice = null;
+
+  // 高度な自然言語処理を使用した応答生成
+  const advancedResponse = generateAdvancedResponse(
+    userMessage, intent, sentiment, entities, userName, weatherData, userPreferences
+  );
+  
+  response = advancedResponse.response;
+  mood = advancedResponse.mood;
+  suggestions = advancedResponse.suggestions || suggestions;
+  weatherAdvice = advancedResponse.weatherAdvice;
+
+  return {
+    message: response,
+    mood: mood,
+    suggestions: suggestions,
+    weatherAdvice: weatherAdvice
+  };
+}
+
+// 天気コメント生成
+function getWeatherComment(currentWeather) {
+  const { weather, temperature } = currentWeather;
+  
+  switch (weather?.toLowerCase()) {
+    case 'sunny':
+      return temperature > 25 ? 
+        '今日は暑くなりそうですね！水分補給を忘れずに🌞' : 
+        '今日はいい天気ですね！お出かけ日和です☀️';
+    case 'rainy':
+      return '今日は雨模様ですね。傘を忘れずに！☔';
+    case 'cloudy':
+      return '曇り空ですが、過ごしやすそうな気温ですね☁️';
+    case 'snow':
+      return '雪が降っているんですね！暖かくしてくださいね❄️';
+    default:
+      return '今日もよろしくお願いします！';
+  }
+}
+
+// 天気レスポンス生成
+function generateWeatherResponse(currentWeather, userName) {
+  const { weather, temperature, humidity, windSpeed } = currentWeather;
+  
+  let response = `${userName}さん、今日の天気についてお話ししますね！\n\n`;
+  
+  // 基本天気情報
+  response += `現在の気温は${temperature}度で、`;
+  
+  switch (weather?.toLowerCase()) {
+    case 'sunny':
+      response += temperature > 30 ? 
+        '暑い晴れの日ですね🌞 熱中症に気をつけてください！' :
+        'いい天気ですね☀️ お散歩にぴったりです！';
+      break;
+    case 'rainy':
+      response += '雨が降っていますね☔ 濡れないように気をつけてください';
+      break;
+    case 'cloudy':
+      response += '曇り空ですね☁️ 過ごしやすい気温だと思います';
+      break;
+    case 'snow':
+      response += '雪が降っているんですね❄️ 足元に気をつけてくださいね';
+      break;
+    default:
+      response += '今日もいい一日になりそうですね';
+  }
+  
+  // 追加情報
+  if (humidity > 70) {
+    response += '\n湿度が高めなので、じめじめしているかもしれませんね💧';
+  }
+  
+  if (windSpeed > 8) {
+    response += '\n風が強いので、帽子や軽いものが飛ばされないよう注意してくださいね💨';
+  }
+  
+  return response;
+}
+
+// 服装アドバイス生成
+function generateClothingAdvice(currentWeather) {
+  const { weather, temperature, feelsLike } = currentWeather;
+  const temp = feelsLike || temperature;
+  
+  let advice = '';
+  let items = [];
+  
+  // 温度による基本アドバイス
+  if (temp >= 30) {
+    advice = '暑いので、涼しい服装がおすすめです！';
+    items = ['薄手のTシャツ', '短パン・スカート', 'サンダル', '帽子', '日傘'];
+  } else if (temp >= 25) {
+    advice = '暖かいので、軽めの服装で大丈夫そうです';
+    items = ['半袖', '薄手の長袖', 'ジーンズ', 'スニーカー'];
+  } else if (temp >= 20) {
+    advice = '過ごしやすい気温ですね！';
+    items = ['長袖シャツ', 'カーディガン', 'チノパン', '軽めのジャケット'];
+  } else if (temp >= 15) {
+    advice = '少し涼しいので、重ね着がおすすめです';
+    items = ['セーター', 'ジャケット', 'ロングパンツ', 'スニーカー'];
+  } else if (temp >= 10) {
+    advice = '寒いので、暖かい格好でお出かけくださいね';
+    items = ['厚手のセーター', 'コート', 'マフラー', 'ブーツ'];
+  } else {
+    advice = 'とても寒いので、しっかり防寒してください！';
+    items = ['ダウンジャケット', 'マフラー', '手袋', 'ニット帽', 'ブーツ'];
+  }
+  
+  // 天気による追加アドバイス
+  switch (weather?.toLowerCase()) {
+    case 'rainy':
+      advice += ' 雨なので防水対策も忘れずに！';
+      items.push('レインコート', '傘', 'レインブーツ');
+      break;
+    case 'sunny':
+      if (temp > 25) {
+        advice += ' 日差しが強いので紫外線対策も大切です';
+        items.push('日焼け止め', 'サングラス', '帽子');
+      }
+      break;
+    case 'snow':
+      advice += ' 雪なので滑りにくい靴がおすすめです';
+      items.push('スノーブーツ', '防水ジャケット', '手袋');
+      break;
+  }
+  
+  return { advice, items };
+}
+
+// 天気に応じた提案
+function getWeatherSuggestions(currentWeather) {
+  const { weather, temperature } = currentWeather;
+  const suggestions = [];
+  
+  switch (weather?.toLowerCase()) {
+    case 'sunny':
+      if (temperature > 25) {
+        suggestions.push('カフェでアイスドリンク', '日陰で休憩', '室内で涼む');
+      } else {
+        suggestions.push('公園でお散歩', 'ピクニック', '屋外スポーツ');
+      }
+      break;
+    case 'rainy':
+      suggestions.push('映画鑑賞', '読書タイム', '室内カフェ', 'ゲーム');
+      break;
+    case 'cloudy':
+      suggestions.push('ショッピング', '美術館巡り', 'カフェ巡り');
+      break;
+    case 'snow':
+      suggestions.push('雪景色を楽しむ', '温かい飲み物', '室内で過ごす');
+      break;
+  }
+  
+  return suggestions;
+}
+
+// パーソナライズされた活動提案
+function generatePersonalizedActivitySuggestions(currentWeather, userPreferences) {
+  const { weather, temperature } = currentWeather;
+  const isOutdoorLover = userPreferences?.activities === 'outdoor';
+  const isIndoorLover = userPreferences?.activities === 'indoor';
+  
+  let main = '';
+  let options = [];
+  
+  // 天気と個人設定を組み合わせた提案
+  if (weather?.toLowerCase() === 'sunny') {
+    if (isIndoorLover) {
+      main = '晴れてますが、室内で快適に過ごす';
+      options = ['美術館巡り', 'ショッピングモール', 'カフェでまったり', '映画鑑賞'];
+    } else {
+      main = '晴天なのでアウトドア活動';
+      options = temperature > 25 ? 
+        ['水族館', '涼しいカフェ', 'エアコンの効いた施設'] : 
+        ['公園散歩', 'ピクニック', '屋外スポーツ', 'サイクリング'];
+    }
+  } else if (weather?.toLowerCase() === 'rainy') {
+    main = '雨なので室内でゆっくり';
+    options = isOutdoorLover ? 
+      ['室内クライミング', '温泉', 'スポーツジム'] :
+      ['読書', '映画', 'ゲーム', 'お料理', 'オンラインショッピング'];
+  } else {
+    main = '今日は何でもできそうな天気';
+    options = ['カフェ巡り', 'ウィンドウショッピング', '友達と会う', '新しい場所探索'];
+  }
+  
+  return { main, options };
+}
+
+// パーソナライズされた一般会話レスポンス
+function generatePersonalizedResponse(message, userName, userPreferences) {
+  const stylePreference = userPreferences?.style || 'casual';
+  const isWeatherSensitive = userPreferences?.weatherSensitivity === 'high';
+  
+  let responses = [
+    `${userName}さん、興味深いお話ですね！もう少し詳しく教えてください`,
+    `${userName}さんとお話ししていると、いつも新しい発見があります！`,
+    `それは面白いですね、${userName}さん！私も同じように感じることがあります`
+  ];
+  
+  // スタイル設定による個性化
+  if (stylePreference === 'elegant') {
+    responses.push(`${userName}さんの上品な感性、とても素敵だと思います✨`);
+  } else if (stylePreference === 'sporty') {
+    responses.push(`${userName}さんのアクティブな感じ、エネルギーをもらえます！`);
+  } else if (stylePreference === 'cute') {
+    responses.push(`${userName}さん、とってもキュートですね💕`);
+  }
+  
+  // 天気敏感性による配慮
+  if (isWeatherSensitive) {
+    responses.push(`${userName}さんは天気の変化に敏感でいらっしゃるので、体調にはお気をつけくださいね`);
+  }
+  
+  return responses[Math.floor(Math.random() * responses.length)];
+}
+
+// 高度な自然言語処理関数群
+
+// 感情分析（ローカル実装）
+function analyzeSentiment(text) {
+  // Naturalライブラリの代わりに独自の感情分析を使用
+  
+  // 感情的な単語辞書（くだけた表現も含む）
+  const positiveWords = [
+    '嬉しい', '楽しい', 'ハッピー', '良い', 'いいね', '素敵', '最高', '好き', 
+    'ありがとう', 'すごい', 'やったー', 'わーい', 'うれしー', 'たのしー',
+    'いい感じ', 'めっちゃ', 'マジ', '神', 'やばい', 'かっこいい', 'かわいい'
+  ];
+  
+  const negativeWords = [
+    '悲しい', 'つらい', '疲れた', '嫌', '辛い', '困った', '大変', '心配', '不安', '寂しい',
+    'つかれた', 'つかれ', '疲れ', 'だるい', 'しんどい', 'きつい', 'やばい', 
+    'むかつく', 'いやだ', 'めんどい', 'めんどくさい', 'やだ', 'つまんない',
+    'ダメ', 'だめ', '最悪', 'ひどい', 'むり', '無理', 'やってられない'
+  ];
+  
+  const neutralWords = ['普通', 'まあまあ', 'そこそこ', 'いつも通り', 'ふつう'];
+  
+  // 文末の感情表現パターンも考慮
+  const emotionalEndings = {
+    negative: ['なー', 'なあ', 'よー', 'よお', 'はあ', '...', '。。。', '、、、'],
+    positive: ['♪', '！', '!', '✨', '😊', '😄', '🎉']
+  };
+  
+  const words = text.split(/\s+/);
+  let score = 0;
+  
+  // 単語による感情判定
+  words.forEach(word => {
+    if (positiveWords.some(pw => word.includes(pw))) score += 1;
+    if (negativeWords.some(nw => word.includes(nw))) score -= 1;
+  });
+  
+  // 文末表現による感情判定
+  emotionalEndings.negative.forEach(ending => {
+    if (text.endsWith(ending)) score -= 0.5;
+  });
+  emotionalEndings.positive.forEach(ending => {
+    if (text.includes(ending)) score += 0.5;
+  });
+  
+  // 疲労系の特別判定（「なー」「よー」などが付くと更にネガティブ）
+  if ((text.includes('疲れ') || text.includes('つかれ') || text.includes('だるい')) && 
+      (text.includes('なー') || text.includes('よー') || text.includes('はあ'))) {
+    score -= 1;
+  }
+  
+  if (score > 0) return 'positive';
+  if (score < 0) return 'negative';
+  return 'neutral';
+}
+
+// 意図分析（改良版）
+function analyzeIntent(doc, message) {
+  // 優先度順で判定（より具体的なものを先に判定）
+  
+  // 疲労・体調関連（最優先）
+  const fatigueKeywords = [
+    '疲れ', 'つかれ', 'だる', 'しんど', 'きつ', 'ばて', 
+    'へとへと', 'くたくた', 'げんなり', 'ぐったり', '眠い'
+  ];
+  
+  if (fatigueKeywords.some(keyword => message.includes(keyword))) {
+    return 'fatigue_support';
+  }
+  
+  // 天気・服装関連（高優先）
+  const weatherKeywords = [
+    '天気', '気温', '寒い', '暑い', '涼しい', '暖かい', 
+    '雨', '晴れ', '曇り', '雪', '風', '湿度', '気候'
+  ];
+  const clothingKeywords = [
+    '服', '着る', '洋服', 'ファッション', 'コーデ', 
+    '何着る', '服装', '何を着', '着れば', '服選び'
+  ];
+  
+  if (weatherKeywords.some(keyword => message.includes(keyword)) ||
+      clothingKeywords.some(keyword => message.includes(keyword))) {
+    return 'weather_clothing';
+  }
+  
+  // 挨拶の検出
+  const greetingKeywords = [
+    'おはよう', 'こんにちは', 'こんばんは', 'はじめまして', 
+    'やあ', 'hello', 'hi', 'ハロー'
+  ];
+  if (greetingKeywords.some(keyword => message.includes(keyword))) {
+    return 'greeting';
+  }
+  
+  // お別れの検出
+  const farewellKeywords = [
+    'さよなら', 'また今度', 'バイバイ', 'また明日', 
+    'おつかれ', 'bye', 'see you'
+  ];
+  if (farewellKeywords.some(keyword => message.includes(keyword))) {
+    return 'farewell';
+  }
+  
+  // 活動・提案関連
+  const activityKeywords = [
+    '何する', '遊び', '出かける', '家にいる', 'おすすめ', 
+    'プラン', '予定', '行く', '何しよう', 'どこ行く'
+  ];
+  if (activityKeywords.some(keyword => message.includes(keyword))) {
+    return 'activity_suggestion';
+  }
+  
+  // 感謝・褒め言葉
+  const appreciationKeywords = [
+    'ありがとう', 'すごい', 'いいね', '素敵', 'かわいい', 
+    '助かる', '感謝', 'よかった'
+  ];
+  if (appreciationKeywords.some(keyword => message.includes(keyword))) {
+    return 'appreciation';
+  }
+  
+  // リクエスト・依頼の検出
+  const requestKeywords = [
+    '教えて', 'してください', 'お願い', 'できる', 'して', 
+    'やって', 'どうすれば', 'どうしたら'
+  ];
+  if (requestKeywords.some(keyword => message.includes(keyword))) {
+    return 'request';
+  }
+  
+  // 質問の検出（一般的な疑問詞）
+  const questionKeywords = [
+    'どう', 'なに', 'なん', 'いつ', 'どこ', 'なんで', 'どれ', 
+    'どちら', 'どの', 'いくら', 'どのくらい'
+  ];
+  if (message.includes('？') || message.includes('?') || 
+      questionKeywords.some(keyword => message.includes(keyword))) {
+    
+    // 天気関連の質問かどうか再チェック
+    if (weatherKeywords.some(keyword => message.includes(keyword))) {
+      return 'weather_clothing';
+    }
+    return 'question';
+  }
+  
+  return 'general';
+}
+
+// エンティティ抽出
+function extractEntities(doc) {
+  const entities = {
+    places: [],
+    people: [],
+    organizations: [],
+    dates: [],
+    times: [],
+    numbers: []
+  };
+  
+  // 基本的なエンティティ抽出（簡易版）
+  try {
+    if (doc.places) entities.places = doc.places().out('array');
+    if (doc.people) entities.people = doc.people().out('array');
+    if (doc.organizations) entities.organizations = doc.organizations().out('array');
+    if (doc.values) entities.numbers = doc.values().out('array');
+  } catch (error) {
+    // エラーが発生した場合は空配列を返す
+    console.log('Entity extraction error:', error.message);
+  }
+  
+  return entities;
+}
+
+// 音声入力対応のテキスト正規化
+function normalizeForSpeech(text) {
+  // 音声認識でよくある誤変換を修正
+  const corrections = {
+    '気候': '天気',
+    '服そう': '服装',
+    '何きる': '何着る',
+    'つかれた': '疲れた',
+    'うれしい': '嬉しい',
+    'かなしい': '悲しい'
+  };
+  
+  let normalized = text;
+  Object.entries(corrections).forEach(([wrong, correct]) => {
+    normalized = normalized.replace(new RegExp(wrong, 'g'), correct);
+  });
+  
+  return normalized;
+}
+
+// コンテキスト理解を強化した応答生成
+function generateAdvancedResponse(userMessage, intent, sentiment, entities, userName, weatherData, userPreferences) {
+  let response = '';
+  let mood = 'friendly';
+  let suggestions = [];
+  let weatherAdvice = null;
+  
+  // 正規化
+  const normalizedMessage = normalizeForSpeech(userMessage);
+  
+  switch (intent) {
+    case 'greeting':
+      response = generateContextualGreeting(userName, weatherData, sentiment);
+      break;
+      
+    case 'weather_clothing':
+      if (weatherData && weatherData.current) {
+        weatherAdvice = generateClothingAdvice(weatherData.current);
+        response = generateWeatherClothingResponse(userName, weatherData.current, weatherAdvice, sentiment);
+        suggestions = weatherAdvice.items;
+      } else {
+        // 天気データがない場合でも天気に関する一般的な応答
+        response = generateWeatherResponseWithoutData(userName, userMessage, sentiment);
+      }
+      break;
+      
+    case 'fatigue_support':
+      response = generateFatigueResponse(userName, userMessage, weatherData, sentiment);
+      mood = 'caring';
+      suggestions = ['ゆっくり休む', '温かい飲み物', '軽いストレッチ', '好きな音楽を聴く'];
+      break;
+      
+    case 'appreciation':
+      const thankfulResponses = [
+        `${userName}さん、そう言ってもらえて嬉しいです！💕`,
+        `${userName}さんのお役に立てて良かったです✨`,
+        `ありがとうございます、${userName}さん！もっと頑張りますね`,
+        `${userName}さんに喜んでもらえることが私の一番の幸せです♪`
+      ];
+      response = thankfulResponses[Math.floor(Math.random() * thankfulResponses.length)];
+      mood = 'happy';
+      break;
+      
+    case 'activity_suggestion':
+      if (weatherData && weatherData.current) {
+        const activities = generatePersonalizedActivitySuggestions(weatherData.current, userPreferences);
+        response = generateActivityResponse(userName, activities, sentiment);
+        suggestions = activities.options;
+      } else {
+        response = generateNoWeatherDataResponse(userName, 'activity');
+      }
+      break;
+      
+    case 'question':
+      response = generateQuestionResponse(normalizedMessage, userName, weatherData, sentiment);
+      break;
+      
+    case 'farewell':
+      response = generateFarewellResponse(userName, sentiment);
+      mood = 'sad';
+      break;
+      
+    case 'request':
+      response = generateHelpfulResponse(normalizedMessage, userName, sentiment);
+      break;
+      
+    default:
+      response = generateContextualGeneral(normalizedMessage, userName, sentiment, entities);
+  }
+  
+  // 感情に応じてムード調整
+  if (sentiment === 'negative') {
+    mood = 'caring';
+    if (!suggestions.length) {
+      suggestions = ['深呼吸する', 'お茶を飲む', '好きな音楽を聴く'];
+    }
+  } else if (sentiment === 'positive') {
+    mood = 'happy';
+  }
+  
+  return { response, mood, suggestions, weatherAdvice };
+}
+
+// コンテキスト別応答生成関数群
+function generateContextualGreeting(userName, weatherData, sentiment) {
+  const timeOfDay = new Date().getHours();
+  let timeGreeting = '';
+  
+  if (timeOfDay < 10) timeGreeting = 'おはようございます';
+  else if (timeOfDay < 18) timeGreeting = 'こんにちは';
+  else timeGreeting = 'こんばんは';
+  
+  let baseResponse = `${timeGreeting}、${userName}さん！`;
+  
+  if (sentiment === 'positive') {
+    baseResponse += ' 元気そうで何よりです♪';
+  } else if (sentiment === 'negative') {
+    baseResponse += ' 何かお困りのことがあれば、お話し聞きますよ。';
+  }
+  
+  if (weatherData && weatherData.current) {
+    baseResponse += ` ${getWeatherComment(weatherData.current)}`;
+  }
+  
+  return baseResponse;
+}
+
+function generateWeatherClothingResponse(userName, weather, advice, sentiment) {
+  let response = `${userName}さん、今日の服装についてですね！`;
+  
+  if (sentiment === 'negative') {
+    response = `${userName}さん、体調に合わせた服装選びが大切ですね。`;
+  }
+  
+  response += ` ${advice.advice}`;
+  
+  // 具体的なアドバイス追加
+  if (weather.temperature < 10) {
+    response += ' 冷え込むので、重ね着で調整できるようにしてくださいね。';
+  } else if (weather.temperature > 25) {
+    response += ' 暑くなりそうなので、涼しい素材がおすすめです。';
+  }
+  
+  return response;
+}
+
+function generateActivityResponse(userName, activities, sentiment) {
+  let response = `${userName}さん、`;
+  
+  if (sentiment === 'negative') {
+    response += 'リフレッシュできる活動はいかがでしょうか？';
+  } else {
+    response += `今日は${activities.main}はいかがですか？`;
+  }
+  
+  return response;
+}
+
+function generateQuestionResponse(message, userName, weatherData, sentiment) {
+  // 質問の内容を分析して適切な応答
+  if (message.includes('なぜ') || message.includes('どうして')) {
+    return `${userName}さん、いい質問ですね！それについて考えてみましょう。`;
+  } else if (message.includes('いつ') || message.includes('時間')) {
+    return `${userName}さん、タイミングは大切ですよね。状況を見て判断しましょう。`;
+  } else {
+    return `${userName}さんの質問、興味深いです！一緒に考えてみましょう。`;
+  }
+}
+
+function generateNoWeatherDataResponse(userName, type) {
+  if (type === 'clothing') {
+    return `${userName}さん、服装アドバイスをしたいのですが、今日の天気情報があるともっと具体的にお話しできます！`;
+  } else {
+    return `${userName}さん、活動提案をしたいのですが、天気情報があるとより良い提案ができますよ。`;
+  }
+}
+
+function generateFatigueResponse(userName, message, weatherData, sentiment) {
+  // メッセージの内容によって応答を調整
+  let response = `${userName}さん、`;
+  
+  // くだけた表現の検出
+  if (message.includes('なー') || message.includes('よー') || message.includes('はあ')) {
+    response += 'お疲れ様です...本当にお疲れですね😔';
+  } else if (message.includes('つかれた') || message.includes('疲れた')) {
+    response += 'お疲れ様でした。今日も頑張りましたね';
+  } else if (message.includes('だるい') || message.includes('しんどい')) {
+    response += '体調が優れないようですね。無理は禁物ですよ';
+  } else {
+    response += 'なんだかお疲れのようですね';
+  }
+  
+  // 天気情報があれば体調に関するアドバイスを追加
+  if (weatherData && weatherData.current) {
+    const temp = weatherData.current.temperature;
+    const weather = weatherData.current.weather;
+    
+    if (temp < 15) {
+      response += '。寒いので体を温めて、ゆっくり休んでくださいね🧥';
+    } else if (temp > 25) {
+      response += '。暑いので水分補給を忘れずに、涼しい場所で休憩してください💧';
+    } else if (weather === 'rain') {
+      response += '。雨の日は気分も沈みがちですよね。温かい飲み物でも飲んでリラックスしましょう☔';
+    } else {
+      response += '。少し外の空気を吸うのもいいかもしれませんね🌸';
+    }
+  } else {
+    response += '。温かい飲み物を飲んで、少し休憩してみてはいかがでしょう？';
+  }
+  
+  // 激励の言葉を追加
+  const encouragements = [
+    '明日はきっといい日になりますよ',
+    'あまり頑張りすぎず、自分を大切にしてくださいね',
+    '疲れた時は休むのも大切です',
+    'ゆっくり休んで、また元気になりましょう'
+  ];
+  
+  response += ` ${encouragements[Math.floor(Math.random() * encouragements.length)]}✨`;
+  
+  return response;
+}
+
+function generateFarewellResponse(userName, sentiment) {
+  const farewells = [
+    `${userName}さん、またお話ししましょうね！`,
+    `${userName}さん、素敵な時間をありがとうございました。`,
+    `${userName}さん、お疲れ様でした！ゆっくり休んでくださいね。`
+  ];
+  
+  return farewells[Math.floor(Math.random() * farewells.length)];
+}
+
+function generateHelpfulResponse(message, userName, sentiment) {
+  return `${userName}さん、もちろんお手伝いします！何についてお話ししたいですか？`;
+}
+
+function generateContextualGeneral(message, userName, sentiment, entities) {
+  // エンティティに基づいた応答
+  if (entities.places.length > 0) {
+    return `${userName}さん、${entities.places[0]}のお話ですね！興味深いです。`;
+  } else if (entities.times.length > 0) {
+    return `${userName}さん、時間に関するお話ですね。タイミングは大切ですよね。`;
+  } else {
+    const responses = [
+      `${userName}さんのお話、とても興味深いです！`,
+      `${userName}さん、もう少し詳しく教えてください。`,
+      `${userName}さんとこうしてお話しできて嬉しいです。`
+    ];
+    return responses[Math.floor(Math.random() * responses.length)];
+  }
+}
+
+// 天気データなしでの天気関連応答
+function generateWeatherResponseWithoutData(userName, message, sentiment) {
+  const message_lower = message.toLowerCase();
+  
+  // 寒さ・暑さの質問
+  if (message_lower.includes('寒い') || message_lower.includes('寒く')) {
+    return `${userName}さん、今日は寒そうですね。暖かい格好でお出かけくださいね🧥 具体的な天気情報があれば、もっと詳しくアドバイスできますよ！`;
+  } else if (message_lower.includes('暑い') || message_lower.includes('暑く')) {
+    return `${userName}さん、今日は暑そうですね。涼しい服装と水分補給を忘れずに☀️ 詳しい天気情報があれば、より具体的なアドバイスができます！`;
+  } 
+  // 天気の質問全般
+  else if (message_lower.includes('天気') || message_lower.includes('気温')) {
+    return `${userName}さん、天気が気になりますよね！現在の天気データがあれば、詳しい情報やおすすめの服装をお教えできるのですが...🌤️ お住まいの地域の天気はいかがですか？`;
+  }
+  // 服装の質問
+  else if (message_lower.includes('着る') || message_lower.includes('服')) {
+    return `${userName}さん、服装選びですね！天気に合わせた服装が一番ですが、現在の気温や天候が分かればもっと具体的にアドバイスできます👔 今日の天気はどんな感じですか？`;
+  }
+  // 一般的な天気関連
+  else {
+    return `${userName}さん、お天気のことですね！☁️ 天気によって一日の気分も変わりますよね。現在の天気情報があれば、服装や活動のアドバイスもできますよ`;
+  }
+}
+
+// ユーザープロフィール設定API
+app.post('/api/user/profile', (req, res) => {
+  try {
+    const {
+      userId,
+      userName,
+      preferences = {},
+      favoriteActivities = [],
+      clothingStyle = 'casual'
+    } = req.body;
+
+    if (!userId || !userName) {
+      return res.status(400).json({
+        success: false,
+        error: 'ユーザーIDと名前は必須です'
+      });
+    }
+
+    // 簡易的なプロフィール保存（実際のプロジェクトではデータベースを使用）
+    const userProfile = {
+      userId,
+      userName,
+      preferences: {
+        temperature: preferences.temperature || 'moderate', // hot, cold, moderate
+        activities: preferences.activities || 'both', // indoor, outdoor, both  
+        style: preferences.style || clothingStyle,
+        weatherSensitivity: preferences.weatherSensitivity || 'normal' // high, normal, low
+      },
+      favoriteActivities,
+      createdAt: new Date().toISOString(),
+      lastUpdated: new Date().toISOString()
+    };
+
+    res.json({
+      success: true,
+      data: userProfile,
+      message: `${userName}さんのプロフィールを設定しました！`
+    });
+
+  } catch (error) {
+    console.error('プロフィール設定エラー:', error.message);
+    res.status(500).json({ 
+      success: false,
+      error: 'プロフィールの設定に失敗しました' 
+    });
+  }
+});
+
+// ユーザープロフィール取得API
+app.get('/api/user/profile/:userId', (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    // 実際のプロジェクトではデータベースから取得
+    // ここでは仮のプロフィールを返す
+    const mockProfile = {
+      userId,
+      userName: 'ユーザーさん',
+      preferences: {
+        temperature: 'moderate',
+        activities: 'both',
+        style: 'casual',
+        weatherSensitivity: 'normal'
+      },
+      favoriteActivities: ['散歩', 'カフェ', '読書'],
+      createdAt: new Date().toISOString(),
+      lastUpdated: new Date().toISOString()
+    };
+
+    res.json({
+      success: true,
+      data: mockProfile
+    });
+
+  } catch (error) {
+    console.error('プロフィール取得エラー:', error.message);
+    res.status(500).json({ 
+      success: false,
+      error: 'プロフィールの取得に失敗しました' 
+    });
+  }
+});
 
 // 404エラーハンドリング
 app.use((req, res) => {
