@@ -1,6 +1,6 @@
-# Weather Mascot App - Backend
+# 🌤️ Weather Mascot Backend
 
-天気によって変化するマスコットキャラクター育成型天気アプリのバックエンド API
+天気マスコットアプリのバックエンドシステム - Node.js API + Laravel管理システム
 
 ## 技術スタック
 

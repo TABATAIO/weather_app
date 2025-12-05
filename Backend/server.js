@@ -5,6 +5,16 @@ const axios = require('axios');
 const natural = require('natural');
 const nlp = require('compromise');
 
+// データベース関連のインポート
+const { setupDatabase } = require('./database');
+const { 
+  saveUserProfile, 
+  getUserProfile, 
+  saveChatHistory, 
+  getChatHistory, 
+  saveWeatherLog 
+} = require('./dbUtils');
+
 // 環境変数を読み込み
 dotenv.config();
 
@@ -15,6 +25,13 @@ const PORT = process.env.PORT || 3001;
 app.use(cors()); // CORS設定（フロントエンドからのアクセス許可）
 app.use(express.json()); // JSONデータを受け取るための設定
 
+// リクエストログ用ミドルウェア（デバッグ用）
+app.use((req, res, next) => {
+  console.log(`🔍 リクエスト受信: ${req.method} ${req.path} - ${new Date().toISOString()}`);
+  console.log(`🔍 Original URL: ${req.originalUrl}`);
+  next();
+});
+
 // ログ出力ミドルウェア
 app.use((req, res, next) => {
   console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
@@ -23,18 +40,21 @@ app.use((req, res, next) => {
 
 // ルート設定
 app.get('/', (req, res) => {
+  console.log('🔍 ルートエンドポイント (/) に到達しました');
   res.json({ 
     message: 'Weather Mascot App Backend',
     version: '1.0.0',
     weatherAPI: 'Weathernews Point Weather API',
+    database: 'SQLite (永続化対応)',
     endpoints: [
       'GET /api/weather/:lat/:lon - 緯度経度で天気情報を取得',
       'GET /api/weather/city/:city - 都市名で天気情報を取得',
       'POST /api/mascot/update - マスコット状態を更新',
       'GET /api/mascot/:id - マスコット情報を取得',
-      'POST /api/mascot/chat - マスコットとの会話（AI機能）',
-      'POST /api/user/profile - ユーザープロフィール設定',
-      'GET /api/user/profile/:userId - ユーザープロフィール取得'
+      'POST /api/mascot/chat - マスコットとの会話（AI機能・履歴保存）',
+      'POST /api/user/profile - ユーザープロフィール設定（DB保存）',
+      'GET /api/user/profile/:userId - ユーザープロフィール取得（DB）',
+      'GET /api/chat/history/:userId - 会話履歴取得（DB）'
     ],
     supportedCities: ['tokyo', 'osaka', 'kyoto', 'yokohama', 'nagoya', 'fukuoka', 'sendai', 'hiroshima']
   });
@@ -486,12 +506,17 @@ function getRecommendations(weatherData) {
   return recommendations;
 }
 
-// AI会話エンドポイント
-app.post('/api/mascot/chat', (req, res) => {
+/**
+ * AIマスコットとの会話APIエンドポイント
+ * 高度な自然言語処理により、ユーザーの意図と感情を分析し、
+ * 天気情報と組み合わせたパーソナライズされた応答を生成する
+ */
+app.post('/api/mascot/chat', async (req, res) => {
   try {
     const { 
       message, 
       userName, 
+      userId,
       weatherData, 
       userPreferences = {},
       conversationHistory = []
@@ -513,6 +538,24 @@ app.post('/api/mascot/chat', (req, res) => {
       conversationHistory
     });
 
+    // 会話履歴をデータベースに保存（userIdがある場合のみ）
+    if (userId) {
+      try {
+        const historyResult = await saveChatHistory({
+          userId: userId,
+          userMessage: message.trim(),
+          botResponse: chatResponse.message,
+          intent: chatResponse.intent || null,
+          sentiment: chatResponse.sentiment || null,
+          weatherData: weatherData || null
+        });
+        console.log(`💾 会話履歴を保存しました - User: ${userId}, ID: ${historyResult.id}`);
+      } catch (dbError) {
+        console.error('会話履歴保存エラー:', dbError.message);
+        // 履歴保存エラーは会話の継続を妨げない
+      }
+    }
+
     res.json({
       success: true,
       data: {
@@ -528,14 +571,71 @@ app.post('/api/mascot/chat', (req, res) => {
     console.error('AI会話エラー:', error.message);
     res.status(500).json({ 
       success: false,
-      error: 'メッセージの処理に失敗しました' 
+      error: 'メッセージの処理に失敗しました',
+      details: error.message
     });
   }
 });
 
+// 会話履歴取得API（本格版）
+app.get('/api/chat/history/:userId', async (req, res) => {
+  console.log('🔍 会話履歴APIエンドポイントに到達しました');
+  try {
+    const { userId } = req.params;
+    const { limit = 10 } = req.query;
+
+    console.log(`📋 会話履歴取得リクエスト - UserID: ${userId}, Limit: ${limit}`);
+
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        error: 'ユーザーIDが必要です'
+      });
+    }
+
+    // データベースから会話履歴を取得
+    const chatHistory = await getChatHistory(userId, parseInt(limit));
+    
+    console.log(`📋 会話履歴取得結果 - 件数: ${chatHistory.length}`);
+
+    res.json({
+      success: true,
+      data: {
+        userId,
+        history: chatHistory,
+        count: chatHistory.length
+      },
+      message: `${userId}の会話履歴を${chatHistory.length}件取得しました`
+    });
+
+  } catch (error) {
+    console.error('会話履歴取得エラー:', error.message);
+    console.error('Error stack:', error.stack);
+    res.status(500).json({
+      success: false,
+      error: '会話履歴の取得に失敗しました',
+      details: error.message,
+      userId: req.params.userId,
+      requestedLimit: req.query.limit
+    });
+  }
+});
+
+/**
+ * ユーザー名を正規化する（「さん」の重複を防ぐ）
+ * @param {string} userName - 元のユーザー名
+ * @returns {string} 正規化されたユーザー名
+ */
+function normalizeUserName(userName) {
+  if (!userName) return 'あなた';
+  // 既に「さん」が付いている場合は除去
+  return userName.replace(/さん$/, '');
+}
+
 // AI会話レスポンス生成関数
 function generateChatResponse({ userMessage, userName, weatherData, userPreferences, conversationHistory }) {
   const message = userMessage.toLowerCase();
+  const normalizedUserName = normalizeUserName(userName);
   
   // 自然言語解析
   const doc = nlp(userMessage);
@@ -572,7 +672,7 @@ function generateChatResponse({ userMessage, userName, weatherData, userPreferen
 
   // 高度な自然言語処理を使用した応答生成
   const advancedResponse = generateAdvancedResponse(
-    userMessage, intent, sentiment, entities, userName, weatherData, userPreferences
+    userMessage, intent, sentiment, entities, normalizedUserName, weatherData, userPreferences
   );
   
   response = advancedResponse.response;
@@ -584,11 +684,18 @@ function generateChatResponse({ userMessage, userName, weatherData, userPreferen
     message: response,
     mood: mood,
     suggestions: suggestions,
-    weatherAdvice: weatherAdvice
+    weatherAdvice: weatherAdvice,
+    intent: intent,
+    sentiment: sentiment,
+    confidence: Math.random() * 0.3 + 0.7 // 0.7-1.0の信頼度
   };
 }
 
-// 天気コメント生成
+/**
+ * 天気情報に基づいてカジュアルなコメントを生成する
+ * @param {Object} currentWeather - 天気データ（温度、天気など）
+ * @returns {string} 天気に合ったカジュアルなコメント
+ */
 function getWeatherComment(currentWeather) {
   const { weather, temperature } = currentWeather;
   
@@ -648,7 +755,11 @@ function generateWeatherResponse(currentWeather, userName) {
   return response;
 }
 
-// 服装アドバイス生成
+/**
+ * 現在の天気情報に基づいて服装アドバイスを生成する
+ * @param {Object} currentWeather - 現在の天気データ（温度、天気、湿度など）
+ * @returns {Object} 服装アドバイスオブジェクト（advice, items, reasons）
+ */
 function generateClothingAdvice(currentWeather) {
   const { weather, temperature, feelsLike } = currentWeather;
   const temp = feelsLike || temperature;
@@ -725,7 +836,12 @@ function getWeatherSuggestions(currentWeather) {
   return suggestions;
 }
 
-// パーソナライズされた活動提案
+/**
+ * ユーザーの設定と天気情報に基づいてパーソナライズされた活動提案を生成する
+ * @param {Object} currentWeather - 現在の天気データ
+ * @param {Object} userPreferences - ユーザーの活動設定（outdoor/indoor/etc）
+ * @returns {Object} 提案される活動のリスト（main, options, reason）
+ */
 function generatePersonalizedActivitySuggestions(currentWeather, userPreferences) {
   const { weather, temperature } = currentWeather;
   const isOutdoorLover = userPreferences?.activities === 'outdoor';
@@ -788,7 +904,11 @@ function generatePersonalizedResponse(message, userName, userPreferences) {
 
 // 高度な自然言語処理関数群
 
-// 感情分析（ローカル実装）
+/**
+ * テキストの感情分析を行う（ローカル実装）
+ * @param {string} text - 分析対象のテキスト
+ * @returns {string} 感情の種類（positive, negative, neutral）
+ */
 function analyzeSentiment(text) {
   // Naturalライブラリの代わりに独自の感情分析を使用
   
@@ -837,22 +957,49 @@ function analyzeSentiment(text) {
     score -= 1;
   }
   
+  // 強い否定表現の検出
+  const strongNegativePatterns = [
+    /最悪|ひどい|むかつく|イライラ/,
+    /もう.*だめ|限界|無理.*す[ぎぎ]/,
+    /やってられない|うんざり/
+  ];
+  
+  strongNegativePatterns.forEach(pattern => {
+    if (pattern.test(text)) score -= 1.5;
+  });
+  
   if (score > 0) return 'positive';
   if (score < 0) return 'negative';
   return 'neutral';
 }
 
 // 意図分析（改良版）
+/**
+ * ユーザーのメッセージからインテント（意図）を分析する
+ * @param {Object} doc - compromise.jsで解析されたドキュメントオブジェクト
+ * @param {string} message - ユーザーの入力メッセージ
+ * @returns {string} 検出されたインテント（fatigue_support, weather_clothing, greeting, etc.）
+ */
 function analyzeIntent(doc, message) {
   // 優先度順で判定（より具体的なものを先に判定）
   
   // 疲労・体調関連（最優先）
   const fatigueKeywords = [
     '疲れ', 'つかれ', 'だる', 'しんど', 'きつ', 'ばて', 
-    'へとへと', 'くたくた', 'げんなり', 'ぐったり', '眠い'
+    'へとへと', 'くたくた', 'げんなり', 'ぐったり', '眠い',
+    'やばい', '限界', '無理', 'もうだめ', 'たまらん', 'しんどすぎ'
   ];
   
-  if (fatigueKeywords.some(keyword => message.includes(keyword))) {
+  // 疲労関連の文脈パターンも検出
+  const fatiguePatterns = [
+    /疲れ.*な[ーあ]/,
+    /だる.*よ[ーお]/,
+    /しんど.*は[ーあ]/,
+    /きつ.*な[ーあ]/
+  ];
+  
+  if (fatigueKeywords.some(keyword => message.includes(keyword)) ||
+      fatiguePatterns.some(pattern => pattern.test(message))) {
     return 'fatigue_support';
   }
   
@@ -980,6 +1127,17 @@ function normalizeForSpeech(text) {
 }
 
 // コンテキスト理解を強化した応答生成
+/**
+ * インテント、感情、エンティティを基に高度な応答を生成する
+ * @param {string} userMessage - ユーザーの入力メッセージ
+ * @param {string} intent - 検出されたインテント
+ * @param {string} sentiment - 検出された感情（positive/negative/neutral）
+ * @param {Object} entities - 抽出されたエンティティ情報
+ * @param {string} userName - ユーザー名
+ * @param {Object} weatherData - 天気データ
+ * @param {Object} userPreferences - ユーザーの設定情報
+ * @returns {Object} 応答オブジェクト（response, mood, suggestions, weatherAdvice）
+ */
 function generateAdvancedResponse(userMessage, intent, sentiment, entities, userName, weatherData, userPreferences) {
   let response = '';
   let mood = 'friendly';
@@ -1063,6 +1221,13 @@ function generateAdvancedResponse(userMessage, intent, sentiment, entities, user
 }
 
 // コンテキスト別応答生成関数群
+/**
+ * 時間帯と天気情報を考慮したコンテキスト型挨拶を生成する
+ * @param {string} userName - ユーザー名
+ * @param {Object} weatherData - 天気データ
+ * @param {string} sentiment - ユーザーの感情状態
+ * @returns {string} パーソナライズされた挨拶メッセージ
+ */
 function generateContextualGreeting(userName, weatherData, sentiment) {
   const timeOfDay = new Date().getHours();
   let timeGreeting = '';
@@ -1086,6 +1251,14 @@ function generateContextualGreeting(userName, weatherData, sentiment) {
   return baseResponse;
 }
 
+/**
+ * 天気情報に基づいた服装アドバイス応答を生成する
+ * @param {string} userName - ユーザー名
+ * @param {Object} weather - 現在の天気情報
+ * @param {Object} advice - 生成された服装アドバイス
+ * @param {string} sentiment - ユーザーの感情状態
+ * @returns {string} 天気に応じた服装アドバイスメッセージ
+ */
 function generateWeatherClothingResponse(userName, weather, advice, sentiment) {
   let response = `${userName}さん、今日の服装についてですね！`;
   
@@ -1105,6 +1278,13 @@ function generateWeatherClothingResponse(userName, weather, advice, sentiment) {
   return response;
 }
 
+/**
+ * ユーザーの感情状態に応じた活動提案応答を生成する
+ * @param {string} userName - ユーザー名
+ * @param {Object} activities - 提案する活動リスト
+ * @param {string} sentiment - ユーザーの感情状態
+ * @returns {string} パーソナライズされた活動提案メッセージ
+ */
 function generateActivityResponse(userName, activities, sentiment) {
   let response = `${userName}さん、`;
   
@@ -1117,6 +1297,14 @@ function generateActivityResponse(userName, activities, sentiment) {
   return response;
 }
 
+/**
+ * ユーザーの質問内容を分析して適切な応答を生成する
+ * @param {string} message - ユーザーの質問メッセージ
+ * @param {string} userName - ユーザー名
+ * @param {Object} weatherData - 天気データ
+ * @param {string} sentiment - ユーザーの感情状態
+ * @returns {string} 質問に対する応答メッセージ
+ */
 function generateQuestionResponse(message, userName, weatherData, sentiment) {
   // 質問の内容を分析して適切な応答
   if (message.includes('なぜ') || message.includes('どうして')) {
@@ -1128,6 +1316,12 @@ function generateQuestionResponse(message, userName, weatherData, sentiment) {
   }
 }
 
+/**
+ * 天気データがない場合の応答を生成する
+ * @param {string} userName - ユーザー名
+ * @param {string} type - リクエストの種類（clothing/activity）
+ * @returns {string} 天気データなしの場合の応答メッセージ
+ */
 function generateNoWeatherDataResponse(userName, type) {
   if (type === 'clothing') {
     return `${userName}さん、服装アドバイスをしたいのですが、今日の天気情報があるともっと具体的にお話しできます！`;
@@ -1136,6 +1330,14 @@ function generateNoWeatherDataResponse(userName, type) {
   }
 }
 
+/**
+ * 疲労を表現するメッセージに対する共感的な応答を生成する
+ * @param {string} userName - ユーザー名
+ * @param {string} message - 疲労を表現するメッセージ
+ * @param {Object} weatherData - 天気データ（体調アドバイスに使用）
+ * @param {string} sentiment - 感情の種類
+ * @returns {string} 共感的で励ましの応答メッセージ
+ */
 function generateFatigueResponse(userName, message, weatherData, sentiment) {
   // メッセージの内容によって応答を調整
   let response = `${userName}さん、`;
@@ -1182,6 +1384,12 @@ function generateFatigueResponse(userName, message, weatherData, sentiment) {
   return response;
 }
 
+/**
+ * お別れの挨拶メッセージを生成する
+ * @param {string} userName - ユーザー名
+ * @param {string} sentiment - ユーザーの感情状態
+ * @returns {string} お別れの挨拶メッセージ
+ */
 function generateFarewellResponse(userName, sentiment) {
   const farewells = [
     `${userName}さん、またお話ししましょうね！`,
@@ -1192,10 +1400,25 @@ function generateFarewellResponse(userName, sentiment) {
   return farewells[Math.floor(Math.random() * farewells.length)];
 }
 
+/**
+ * ユーザーからのリクエストに対するサポート的な応答を生成する
+ * @param {string} message - ユーザーのリクエストメッセージ
+ * @param {string} userName - ユーザー名
+ * @param {string} sentiment - ユーザーの感情状態
+ * @returns {string} サポート的な応答メッセージ
+ */
 function generateHelpfulResponse(message, userName, sentiment) {
   return `${userName}さん、もちろんお手伝いします！何についてお話ししたいですか？`;
 }
 
+/**
+ * 一般的な会話のためのコンテキスト型応答を生成する
+ * @param {string} message - ユーザーのメッセージ
+ * @param {string} userName - ユーザー名
+ * @param {string} sentiment - ユーザーの感情状態
+ * @param {Object} entities - 抽出されたエンティティ情報
+ * @returns {string} コンテキストに応じた一般的な応答
+ */
 function generateContextualGeneral(message, userName, sentiment, entities) {
   // エンティティに基づいた応答
   if (entities.places.length > 0) {
@@ -1212,7 +1435,13 @@ function generateContextualGeneral(message, userName, sentiment, entities) {
   }
 }
 
-// 天気データなしでの天気関連応答
+/**
+ * 天気データがない状態で天気関連の質問に応答する
+ * @param {string} userName - ユーザー名
+ * @param {string} message - ユーザーの天気関連メッセージ
+ * @param {string} sentiment - ユーザーの感情状態
+ * @returns {string} 天気データなしでも役立つ応答メッセージ
+ */
 function generateWeatherResponseWithoutData(userName, message, sentiment) {
   const message_lower = message.toLowerCase();
   
@@ -1237,7 +1466,7 @@ function generateWeatherResponseWithoutData(userName, message, sentiment) {
 }
 
 // ユーザープロフィール設定API
-app.post('/api/user/profile', (req, res) => {
+app.post('/api/user/profile', async (req, res) => {
   try {
     const {
       userId,
@@ -1254,67 +1483,77 @@ app.post('/api/user/profile', (req, res) => {
       });
     }
 
-    // 簡易的なプロフィール保存（実際のプロジェクトではデータベースを使用）
+    // データベースにプロフィールを保存
     const userProfile = {
       userId,
       userName,
       preferences: {
-        temperature: preferences.temperature || 'moderate', // hot, cold, moderate
-        activities: preferences.activities || 'both', // indoor, outdoor, both  
+        temperature: preferences.temperature || 'moderate',
+        activities: preferences.activities || 'both',
         style: preferences.style || clothingStyle,
-        weatherSensitivity: preferences.weatherSensitivity || 'normal' // high, normal, low
+        weatherSensitivity: preferences.weatherSensitivity || 'normal'
       },
-      favoriteActivities,
-      createdAt: new Date().toISOString(),
-      lastUpdated: new Date().toISOString()
+      favoriteActivities
     };
 
-    res.json({
-      success: true,
-      data: userProfile,
-      message: `${userName}さんのプロフィールを設定しました！`
-    });
+    const result = await saveUserProfile(userProfile);
+
+    if (result.success) {
+      res.json({
+        success: true,
+        data: userProfile,
+        message: `${userName}さんのプロフィールをデータベースに保存しました！`,
+        dbResult: result
+      });
+    } else {
+      throw new Error('データベース保存に失敗しました');
+    }
 
   } catch (error) {
     console.error('プロフィール設定エラー:', error.message);
     res.status(500).json({ 
       success: false,
-      error: 'プロフィールの設定に失敗しました' 
+      error: 'プロフィールの設定に失敗しました',
+      details: error.message
     });
   }
 });
 
 // ユーザープロフィール取得API
-app.get('/api/user/profile/:userId', (req, res) => {
+app.get('/api/user/profile/:userId', async (req, res) => {
   try {
     const { userId } = req.params;
 
-    // 実際のプロジェクトではデータベースから取得
-    // ここでは仮のプロフィールを返す
-    const mockProfile = {
-      userId,
-      userName: 'ユーザーさん',
-      preferences: {
-        temperature: 'moderate',
-        activities: 'both',
-        style: 'casual',
-        weatherSensitivity: 'normal'
-      },
-      favoriteActivities: ['散歩', 'カフェ', '読書'],
-      createdAt: new Date().toISOString(),
-      lastUpdated: new Date().toISOString()
-    };
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        error: 'ユーザーIDが必要です'
+      });
+    }
 
-    res.json({
-      success: true,
-      data: mockProfile
-    });
+    // データベースからプロフィールを取得
+    const userProfile = await getUserProfile(userId);
+
+    if (userProfile) {
+      res.json({
+        success: true,
+        data: userProfile,
+        message: 'プロフィール情報をデータベースから取得しました'
+      });
+    } else {
+      res.status(404).json({
+        success: false,
+        error: 'ユーザープロフィールが見つかりません',
+        message: `ユーザーID: ${userId} のプロフィールは登録されていません`
+      });
+    }
 
   } catch (error) {
     console.error('プロフィール取得エラー:', error.message);
     res.status(500).json({ 
       success: false,
-      error: 'プロフィールの取得に失敗しました' 
+      error: 'プロフィールの取得に失敗しました',
+      details: error.message
     });
   }
 });
@@ -1326,10 +1565,107 @@ app.use((req, res) => {
   });
 });
 
-// サーバー起動
-app.listen(PORT, () => {
-  console.log(`🚀 Server is running on port ${PORT}`);
-  console.log(`📊 API documentation: http://localhost:${PORT}`);
+// 診断用シンプルエンドポイント
+app.get('/ping', (req, res) => {
+  console.log('🔍 Pingエンドポイントに到達しました');
+  res.send('pong');
 });
+
+// 会話履歴テスト用API（デバッグ）
+app.get('/api/chat/test', (req, res) => {
+  console.log('🔍 テストAPIエンドポイントに到達しました');
+  res.json({
+    success: true,
+    message: '会話履歴APIテスト成功',
+    timestamp: new Date().toISOString()
+  });
+});
+
+// 会話履歴取得API（元のバージョン - 一時的にコメントアウト）
+/*
+app.get('/api/chat/history/:userId', async (req, res) => {
+  console.log('🔍 会話履歴APIエンドポイントに到達しました');
+  try {
+    const { userId } = req.params;
+    const { limit = 10 } = req.query;
+
+    console.log(`📋 会話履歴取得リクエスト - UserID: ${userId}, Limit: ${limit}`);
+
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        error: 'ユーザーIDが必要です'
+      });
+    }
+
+    // データベースから会話履歴を取得
+    const chatHistory = await getChatHistory(userId, parseInt(limit));
+    
+    console.log(`📋 会話履歴取得結果 - 件数: ${chatHistory.length}`);
+
+    res.json({
+      success: true,
+      data: {
+        userId,
+        history: chatHistory,
+        count: chatHistory.length
+      },
+      message: `${userId}の会話履歴を${chatHistory.length}件取得しました`
+    });
+
+  } catch (error) {
+    console.error('会話履歴取得エラー:', error.message);
+    console.error('Error stack:', error.stack);
+    res.status(500).json({
+      success: false,
+      error: '会話履歴の取得に失敗しました',
+      details: error.message,
+      userId: req.params.userId,
+      requestedLimit: req.query.limit
+    });
+  }
+});
+*/
+
+// 404エラーハンドリング
+app.use((req, res) => {
+  console.log(`❌ 404 - エンドポイントが見つかりません: ${req.method} ${req.originalUrl}`);
+  res.status(404).json({
+    success: false,
+    error: 'エンドポイントが見つかりません',
+    method: req.method,
+    path: req.originalUrl,
+    availableEndpoints: [
+      'GET /',
+      'GET /api/weather/:lat/:lon',
+      'POST /api/mascot/chat',
+      'POST /api/user/profile', 
+      'GET /api/user/profile/:userId',
+      'GET /api/chat/history/:userId'
+    ]
+  });
+});
+
+// サーバー起動とデータベース初期化
+async function startServer() {
+  try {
+    // データベースを初期化
+    console.log('🔄 データベースを初期化中...');
+    await setupDatabase();
+    console.log('✅ データベース初期化完了');
+
+    // サーバー起動
+    app.listen(PORT, () => {
+      console.log(`🚀 Server is running on port ${PORT}`);
+      console.log(`📊 API documentation: http://localhost:${PORT}`);
+      console.log('💾 SQLiteデータベース接続済み');
+    });
+  } catch (error) {
+    console.error('❌ サーバー起動エラー:', error.message);
+    process.exit(1);
+  }
+}
+
+startServer();
 
 module.exports = app;

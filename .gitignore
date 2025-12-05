@@ -1,0 +1,60 @@
+# Dependencies
+node_modules/
+Backend/node_modules/
+
+# Laravel vendor
+Backend/Laravel/weather-admin/vendor/
+
+# Environment files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Database files
+*.db-journal
+*.db-wal
+*.db-shm
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+
+# Build outputs
+build/
+dist/
+out/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Laravel specific
+Backend/Laravel/weather-admin/storage/*.key
+Backend/Laravel/weather-admin/bootstrap/cache/*.php
+Backend/Laravel/weather-admin/.env.backup
+Backend/Laravel/weather-admin/.phpunit.result.cache
+Backend/Laravel/weather-admin/Homestead.json
+Backend/Laravel/weather-admin/Homestead.yaml
+Backend/Laravel/weather-admin/auth.json
+Backend/Laravel/weather-admin/npm-debug.log
+Backend/Laravel/weather-admin/yarn-error.log
+Backend/Laravel/weather-admin/.vite.config.js.timestamp-*
+Backend/Laravel/weather-admin/.vite.config.ts.timestamp-*
