@@ -51,20 +51,21 @@ npm start
 ### 基本情報
 - **GET** `/` - API 概要とエンドポイント一覧
 
-### 天気情報
-- **GET** `/api/weather/:lat/:lon` - 緯度経度で天気情報を取得
-  - パラメータ: `lat` (緯度), `lon` (経度)
-  - レスポンス: 天気データ（温度、湿度、天気状況など）
+### 天気情報（1kmメッシュピンポイント予報）
+- **GET** `/api/weather/:lat/:lon` - 緯度経度で高精度天気情報を取得
+  - パラメータ: `lat` (緯度), `lon` (経度)  
+  - API: Weathernews 1kmメッシュピンポイント天気予報
+  - レスポンス: 詳細天気データ（天気コード、アイコンURL、短期・中期予報）
 
 - **GET** `/api/weather/city/:city` - 都市名で天気情報を取得
-  - パラメータ: `city` (都市名、例: tokyo, osaka)
-  - レスポンス: 天気データ（温度、湿度、天気状況など）
-  - サポート都市: tokyo, osaka, kyoto, yokohama, nagoya, fukuoka, sendai, hiroshima
+  - パラメータ: `city` (都市名、例: tokyo, osaka, sapporo, naha)
+  - レスポンス: 同上の詳細天気データ
+  - サポート都市: tokyo, osaka, kyoto, yokohama, nagoya, fukuoka, sendai, hiroshima, sapporo, naha
 
 ### マスコット関連
 - **POST** `/api/mascot/update` - マスコット状態を更新
-  - ボディ: `{ weather, temperature, humidity }`
-  - レスポンス: 更新されたマスコット状態
+  - ボディ: `{ weatherCode, temperature, humidity, precipitation, windSpeed, pressure }`
+  - レスポンス: 更新されたマスコット状態（気分、エネルギー、快適度など）
 
 - **GET** `/api/mascot/:id` - マスコット情報を取得
   - パラメータ: `id` (マスコットID)
@@ -85,14 +86,39 @@ npm start
 
 ## API レスポンス例
 
-### 天気情報取得
+### 天気情報取得（1kmメッシュ）
 ```json
 {
   "success": true,
   "data": {
+    "requestId": "18334cb7-744e-4aa5-b150-062e194b1ca9",
     "location": {
       "lat": 35.681236,
       "lon": 139.767125
+    },
+    "current": {
+      "datetime": "2025-12-08T15:00:00+09:00",
+      "weather": "晴れ",
+      "weatherCode": 100,
+      "temperature": 22,
+      "humidity": 73,
+      "precipitation": 0,
+      "windSpeed": 1,
+      "windDirection": "N",
+      "windDirectionCode": 16,
+      "pressure": 1001,
+      "icon": "https://tpf.weathernews.jp/wxicon/152/100.png"
+    },
+    "today": {
+      "date": "2025-12-08T00:00:00+09:00",
+      "maxTemp": 25,
+      "minTemp": 15,
+      "precipitationProbability": 20,
+      "weatherCode": 100
+    },
+    "forecast": {
+      "shortTerm": [...],
+      "mediumTerm": [...]
     },
     "current": {
       "time": "2024-12-01T09:00:00+09:00",

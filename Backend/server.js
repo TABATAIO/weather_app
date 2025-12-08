@@ -22,8 +22,23 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 
 // ミドルウェア設定
-app.use(cors()); // CORS設定（フロントエンドからのアクセス許可）
-app.use(express.json()); // JSONデータを受け取るための設定
+// CORS設定（フロントエンドからのfetchアクセス許可）
+app.use(cors({
+  origin: ['http://localhost:3000', 'http://localhost:8080', 'http://localhost:5000', 'http://127.0.0.1:5500'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  credentials: true
+}));
+
+// JSONデータを受け取るための設定
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// レスポンスヘッダー設定（fetch API対応）
+app.use((req, res, next) => {
+  res.setHeader('Content-Type', 'application/json; charset=utf-8');
+  next();
+});
 
 // リクエストログ用ミドルウェア（デバッグ用）
 app.use((req, res, next) => {
@@ -60,93 +75,24 @@ app.get('/', (req, res) => {
   });
 });
 
-// 天気情報取得API（緯度経度指定）
-app.get('/api/weather/:lat/:lon', async (req, res) => {
-  try {
-    const { lat, lon } = req.params;
-    const { lang = 'ja', hour } = req.query;
-    
-    // Weathernews API呼び出し
-    const apiKey = process.env.WEATHERNEWS_API_KEY;
-    if (!apiKey) {
-      return res.status(500).json({ 
-        error: 'Weathernews APIキーが設定されていません' 
-      });
-    }
-
-    // Weathernews ポイント天気API
-    const params = {
-      lat: parseFloat(lat),
-      lon: parseFloat(lon),
-      lang: lang
-    };
-    
-    if (hour) {
-      params.hour = parseInt(hour);
-    }
-
-    const weatherResponse = await axios.get(
-      'https://wxtech.weathernews.com/api/forecast/point/v1',
-      {
-        params: params,
-        headers: {
-          'X-API-Key': apiKey
-        }
-      }
-    );
-
-    // レスポンスデータの構造に合わせて整形
-    const forecast = weatherResponse.data.forecast[0]; // 最新の予報データ
-    
-    const weatherData = {
-      location: weatherResponse.data.location,
-      current: {
-        time: forecast.time,
-        weather: forecast.weather,
-        temperature: forecast.temp,
-        feelsLike: forecast.feels_like,
-        humidity: forecast.humidity,
-        precipitation: forecast.precip,
-        windSpeed: forecast.wind_speed,
-        windDirection: forecast.wind_dir,
-        cloudCover: forecast.cloud_cover,
-        uvIndex: forecast.uv_index,
-        pressure: forecast.pressure
-      },
-      timestamp: new Date().toISOString()
-    };
-
-    res.json({
-      success: true,
-      data: weatherData
-    });
-
-  } catch (error) {
-    console.error('Weathernews API呼び出しエラー:', error.message);
-    res.status(500).json({ 
-      success: false,
-      error: '天気情報の取得に失敗しました',
-      details: error.response?.data || error.message
-    });
-  }
-});
-
-// 都市名での天気取得（緯度経度変換付き）
+// 都市名での天気取得（緯度経度変換付き）- 1kmメッシュ対応
+// 注意：より具体的なルートを先に定義する必要があります
 app.get('/api/weather/city/:city', async (req, res) => {
   try {
     const city = req.params.city;
-    const { lang = 'ja', hour } = req.query;
     
-    // 主要都市の緯度経度マッピング
+    // 主要都市の緯度経度マッピング（より正確な座標に更新）
     const cityCoordinates = {
-      'tokyo': { lat: 35.681236, lon: 139.767125, name: '東京' },
-      'osaka': { lat: 34.693738, lon: 135.502165, name: '大阪' },
-      'kyoto': { lat: 35.011636, lon: 135.768029, name: '京都' },
-      'yokohama': { lat: 35.447753, lon: 139.642514, name: '横浜' },
-      'nagoya': { lat: 35.181446, lon: 136.906398, name: '名古屋' },
-      'fukuoka': { lat: 33.590355, lon: 130.401716, name: '福岡' },
-      'sendai': { lat: 38.268215, lon: 140.869356, name: '仙台' },
-      'hiroshima': { lat: 34.385295, lon: 132.455293, name: '広島' }
+      'tokyo': { lat: 35.681236, lon: 139.767125, name: '東京', area: '東京都千代田区' },
+      'osaka': { lat: 34.693738, lon: 135.502165, name: '大阪', area: '大阪府大阪市' },
+      'kyoto': { lat: 35.011636, lon: 135.768029, name: '京都', area: '京都府京都市' },
+      'yokohama': { lat: 35.447753, lon: 139.642514, name: '横浜', area: '神奈川県横浜市' },
+      'nagoya': { lat: 35.181446, lon: 136.906398, name: '名古屋', area: '愛知県名古屋市' },
+      'fukuoka': { lat: 33.590355, lon: 130.401716, name: '福岡', area: '福岡県福岡市' },
+      'sendai': { lat: 38.268215, lon: 140.869356, name: '仙台', area: '宮城県仙台市' },
+      'hiroshima': { lat: 34.385295, lon: 132.455293, name: '広島', area: '広島県広島市' },
+      'sapporo': { lat: 43.064171, lon: 141.346939, name: '札幌', area: '北海道札幌市' },
+      'naha': { lat: 26.212401, lon: 127.679138, name: '那覇', area: '沖縄県那覇市' }
     };
 
     const coords = cityCoordinates[city.toLowerCase()];
@@ -156,12 +102,15 @@ app.get('/api/weather/city/:city', async (req, res) => {
         error: `都市 '${city}' はサポートされていません`,
         supportedCities: Object.keys(cityCoordinates).map(key => ({
           key: key,
-          name: cityCoordinates[key].name
+          name: cityCoordinates[key].name,
+          area: cityCoordinates[key].area
         }))
       });
     }
 
-    // Weathernews API直接呼び出し
+    console.log(`🏙️ 都市名天気取得: ${coords.name} (${coords.area})`);
+
+    // 1kmメッシュピンポイント天気予報API呼び出し
     const apiKey = process.env.WEATHERNEWS_API_KEY;
     if (!apiKey) {
       return res.status(500).json({ 
@@ -169,103 +118,377 @@ app.get('/api/weather/city/:city', async (req, res) => {
       });
     }
 
-    const params = {
-      lat: coords.lat,
-      lon: coords.lon,
-      lang: lang
-    };
-    
-    if (hour) {
-      params.hour = parseInt(hour);
-    }
-
     const weatherResponse = await axios.get(
-      'https://wxtech.weathernews.com/api/forecast/point/v1',
+      'https://wxtech.weathernews.com/api/v1/ss1wx',
       {
-        params: params,
+        params: {
+          lat: coords.lat,
+          lon: coords.lon
+        },
         headers: {
           'X-API-Key': apiKey
         }
       }
     );
 
-    const forecast = weatherResponse.data.forecast[0];
-    
+    // エラーチェック
+    if (weatherResponse.data.errors && weatherResponse.data.errors.length > 0) {
+      console.error('❌ Weathernews APIエラー:', weatherResponse.data.errors);
+      return res.status(400).json({
+        success: false,
+        error: 'APIエラーが発生しました',
+        apiErrors: weatherResponse.data.errors
+      });
+    }
+
+    const wxdata = weatherResponse.data.wxdata[0];
+    if (!wxdata) {
+      return res.status(404).json({
+        success: false,
+        error: 'データが見つかりませんでした'
+      });
+    }
+
+    const currentForecast = wxdata.srf[0];
+    const todayMediumForecast = wxdata.mrf[0];
+
+    const weatherName = getWeatherName(currentForecast.wx);
+    const weatherIcon = getWeatherIcon(currentForecast.wx);
+    const windDirectionName = getWindDirection(currentForecast.wnddir);
+
+    const weatherData = {
+      requestId: weatherResponse.data.requestId,
+      location: {
+        lat: coords.lat,
+        lon: coords.lon,
+        city: coords.name,
+        area: coords.area
+      },
+      current: {
+        datetime: currentForecast.date,
+        weather: weatherName,
+        weatherCode: currentForecast.wx,
+        temperature: currentForecast.temp,
+        humidity: currentForecast.rhum,
+        precipitation: currentForecast.prec,
+        windSpeed: currentForecast.wndspd,
+        windDirection: windDirectionName,
+        windDirectionCode: currentForecast.wnddir,
+        pressure: currentForecast.arpress,
+        icon: weatherIcon
+      },
+      today: {
+        date: todayMediumForecast?.date,
+        maxTemp: todayMediumForecast?.maxtemp,
+        minTemp: todayMediumForecast?.mintemp,
+        precipitationProbability: todayMediumForecast?.pop,
+        weatherCode: todayMediumForecast?.wx
+      },
+      forecast: {
+        shortTerm: wxdata.srf.slice(0, 24),
+        mediumTerm: wxdata.mrf.slice(0, 7)
+      },
+      timestamp: new Date().toISOString()
+    };
+
+    // 天気ログをデータベースに保存
+    try {
+      await saveWeatherLog({
+        location: `${coords.name} (${coords.area})`,
+        weatherData: JSON.stringify(weatherData),
+        timestamp: new Date().toISOString()
+      });
+      console.log(`💾 ${coords.name}の天気データをデータベースに保存しました`);
+    } catch (dbError) {
+      console.error('データベース保存エラー:', dbError.message);
+    }
+
     res.json({
       success: true,
-      data: {
-        city: {
-          key: city,
-          name: coords.name,
-          coordinates: {
-            lat: coords.lat,
-            lon: coords.lon
-          }
-        },
-        location: weatherResponse.data.location,
-        current: {
-          time: forecast.time,
-          weather: forecast.weather,
-          temperature: forecast.temp,
-          feelsLike: forecast.feels_like,
-          humidity: forecast.humidity,
-          precipitation: forecast.precip,
-          windSpeed: forecast.wind_speed,
-          windDirection: forecast.wind_dir,
-          cloudCover: forecast.cloud_cover,
-          uvIndex: forecast.uv_index,
-          pressure: forecast.pressure
-        },
-        timestamp: new Date().toISOString()
-      }
+      data: weatherData
     });
 
   } catch (error) {
-    console.error('都市名天気取得エラー:', error.message);
+    console.error('❌ 都市天気取得エラー:', error.message);
+    
+    let errorDetails = error.message;
+    if (error.response?.data) {
+      errorDetails = error.response.data;
+      console.error('API Error Details:', error.response.data);
+    }
+    
     res.status(500).json({ 
       success: false,
       error: '天気情報の取得に失敗しました',
-      details: error.response?.data || error.message
+      details: errorDetails,
+      statusCode: error.response?.status
     });
   }
 });
 
-// マスコット状態更新API
-app.post('/api/mascot/update', (req, res) => {
+// 天気情報取得API（緯度経度指定）- 1kmメッシュピンポイント天気予報
+app.get('/api/weather/:lat/:lon', async (req, res) => {
   try {
-    const { 
-      weather, 
-      temperature, 
-      feelsLike, 
-      humidity, 
-      precipitation, 
-      windSpeed, 
-      cloudCover, 
-      uvIndex 
-    } = req.body;
+    const { lat, lon } = req.params;
     
-    // マスコットの状態を計算（拡張された天気データ対応）
-    const mascotState = calculateMascotState({
-      weather,
-      temperature,
-      feelsLike,
-      humidity,
-      precipitation,
-      windSpeed,
-      cloudCover,
-      uvIndex
-    });
+    // Weathernews API呼び出し
+    const apiKey = process.env.WEATHERNEWS_API_KEY;
+    if (!apiKey) {
+      return res.status(500).json({ 
+        error: 'Weathernews APIキーが設定されていません' 
+      });
+    }
+
+    console.log(`🌤️ 1kmメッシュ天気予報取得開始 - 緯度: ${lat}, 経度: ${lon}`);
+
+    // 1kmメッシュピンポイント天気予報API
+    const weatherResponse = await axios.get(
+      'https://wxtech.weathernews.com/api/v1/ss1wx',
+      {
+        params: {
+          lat: parseFloat(lat),
+          lon: parseFloat(lon)
+        },
+        headers: {
+          'X-API-Key': apiKey
+        }
+      }
+    );
+
+    console.log(`✅ APIレスポンス受信 - RequestID: ${weatherResponse.data.requestId}`);
+
+    // エラーチェック
+    if (weatherResponse.data.errors && weatherResponse.data.errors.length > 0) {
+      console.error('❌ Weathernews APIエラー:', weatherResponse.data.errors);
+      return res.status(400).json({
+        success: false,
+        error: 'APIエラーが発生しました',
+        apiErrors: weatherResponse.data.errors
+      });
+    }
+
+    const wxdata = weatherResponse.data.wxdata[0]; // 最初の地点データ
+    if (!wxdata) {
+      return res.status(404).json({
+        success: false,
+        error: 'データが見つかりませんでした'
+      });
+    }
+
+    // 現在時刻に最も近い短期予報データを取得
+    const currentForecast = wxdata.srf[0]; // 最新の短期予報
+    const todayMediumForecast = wxdata.mrf[0]; // 今日の中期予報
+
+    // 天気コードを天気名に変換
+    const weatherName = getWeatherName(currentForecast.wx);
+    const weatherIcon = getWeatherIcon(currentForecast.wx);
     
+    // 風向を文字列に変換
+    const windDirectionName = getWindDirection(currentForecast.wnddir);
+
+    const weatherData = {
+      requestId: weatherResponse.data.requestId,
+      location: {
+        lat: wxdata.lat,
+        lon: wxdata.lon
+      },
+      current: {
+        datetime: currentForecast.date,
+        weather: weatherName,
+        weatherCode: currentForecast.wx,
+        temperature: currentForecast.temp,
+        humidity: currentForecast.rhum,
+        precipitation: currentForecast.prec,
+        windSpeed: currentForecast.wndspd,
+        windDirection: windDirectionName,
+        windDirectionCode: currentForecast.wnddir,
+        pressure: currentForecast.arpress,
+        icon: weatherIcon
+      },
+      today: {
+        date: todayMediumForecast?.date,
+        maxTemp: todayMediumForecast?.maxtemp,
+        minTemp: todayMediumForecast?.mintemp,
+        precipitationProbability: todayMediumForecast?.pop,
+        weatherCode: todayMediumForecast?.wx
+      },
+      forecast: {
+        shortTerm: wxdata.srf.slice(0, 24), // 24時間分
+        mediumTerm: wxdata.mrf.slice(0, 7)  // 7日分
+      },
+      timestamp: new Date().toISOString()
+    };
+
+    // 天気ログをデータベースに保存
+    try {
+      await saveWeatherLog({
+        location: `${lat},${lon}`,
+        weatherData: JSON.stringify(weatherData),
+        timestamp: new Date().toISOString()
+      });
+      console.log('💾 天気データをデータベースに保存しました');
+    } catch (dbError) {
+      console.error('データベース保存エラー:', dbError.message);
+      // エラーがあってもAPI応答は継続
+    }
+
     res.json({
       success: true,
-      data: mascotState
+      data: weatherData
     });
 
   } catch (error) {
-    console.error('マスコット状態更新エラー:', error.message);
+    console.error('❌ Weathernews API呼び出しエラー:', error.message);
+    
+    // APIエラーの詳細を含める
+    let errorDetails = error.message;
+    if (error.response?.data) {
+      errorDetails = error.response.data;
+      console.error('API Error Details:', error.response.data);
+    }
+    
     res.status(500).json({ 
       success: false,
-      error: 'マスコット状態の更新に失敗しました' 
+      error: '天気情報の取得に失敗しました',
+      details: errorDetails,
+      statusCode: error.response?.status
+    });
+  }
+});
+
+// マスコット状態更新API（新天気データ対応）
+app.post('/api/mascot/update', (req, res) => {
+  try {
+    const { 
+      weatherCode,
+      temperature, 
+      humidity, 
+      precipitation, 
+      windSpeed, 
+      pressure,
+      weatherName
+    } = req.body;
+    
+    console.log(`🎭 マスコット状態更新リクエスト - 天気コード: ${weatherCode}, 気温: ${temperature}℃`);
+    
+    // マスコットの状態を計算（新天気データ対応）
+    const mascotState = calculateMascotState({
+      weatherCode,
+      temperature,
+      humidity,
+      precipitation,
+      windSpeed,
+      pressure
+    });
+    
+    // 追加情報を含める
+    mascotState.weatherInfo = {
+      code: weatherCode,
+      name: weatherName || getWeatherName(weatherCode),
+      icon: getWeatherIcon(weatherCode)
+    };
+    
+    res.json({
+      success: true,
+      data: mascotState,
+      message: `マスコットの気分: ${mascotState.mood}, エネルギー: ${mascotState.energy}%`
+    });
+
+  } catch (error) {
+    console.error('❌ マスコット状態更新エラー:', error.message);
+    res.status(500).json({ 
+      success: false,
+      error: 'マスコット状態の更新に失敗しました',
+      details: error.message
+    });
+  }
+});
+
+// 天気アイコン情報取得API
+app.get('/api/icon/:weatherCode', (req, res) => {
+  try {
+    const weatherCode = parseInt(req.params.weatherCode);
+    
+    if (isNaN(weatherCode) || weatherCode < 100 || weatherCode > 999) {
+      return res.status(400).json({
+        success: false,
+        error: '無効な天気コードです。100-999の範囲で指定してください。'
+      });
+    }
+
+    const weatherInfo = {
+      code: weatherCode,
+      name: getWeatherName(weatherCode),
+      icon: getWeatherIcon(weatherCode),
+      category: getWeatherCategory(weatherCode),
+      timestamp: new Date().toISOString()
+    };
+
+    res.json({
+      success: true,
+      data: weatherInfo
+    });
+
+  } catch (error) {
+    console.error('❌ 天気アイコン取得エラー:', error.message);
+    res.status(500).json({ 
+      success: false,
+      error: '天気アイコン情報の取得に失敗しました',
+      details: error.message
+    });
+  }
+});
+
+// 複数天気コードの一括アイコン取得API
+app.post('/api/weather/icons', (req, res) => {
+  try {
+    const { weatherCodes } = req.body;
+    
+    if (!Array.isArray(weatherCodes) || weatherCodes.length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: '天気コードの配列が必要です。'
+      });
+    }
+
+    if (weatherCodes.length > 50) {
+      return res.status(400).json({
+        success: false,
+        error: '一度に取得できる天気コードは50個までです。'
+      });
+    }
+
+    const weatherIcons = weatherCodes.map(code => {
+      const weatherCode = parseInt(code);
+      
+      if (isNaN(weatherCode) || weatherCode < 100 || weatherCode > 999) {
+        return {
+          code: code,
+          error: '無効な天気コード'
+        };
+      }
+
+      return {
+        code: weatherCode,
+        name: getWeatherName(weatherCode),
+        icon: getWeatherIcon(weatherCode),
+        category: getWeatherCategory(weatherCode)
+      };
+    });
+
+    res.json({
+      success: true,
+      data: weatherIcons,
+      count: weatherIcons.length,
+      timestamp: new Date().toISOString()
+    });
+
+  } catch (error) {
+    console.error('❌ 天気アイコン一括取得エラー:', error.message);
+    res.status(500).json({ 
+      success: false,
+      error: '天気アイコン情報の一括取得に失敗しました',
+      details: error.message
     });
   }
 });
@@ -299,17 +522,118 @@ app.get('/api/mascot/:id', (req, res) => {
   }
 });
 
-// マスコット状態計算関数（拡張版）
+// Weathernews天気コード変換関数
+function getWeatherName(weatherCode) {
+  const weatherCodes = {
+    100: '晴れ', 101: '晴れ時々くもり', 102: '晴れ一時雨', 103: '晴れ時々雨',
+    104: '晴れ一時雪', 105: '晴れ時々雪', 106: '晴れ一時雨か雪', 107: '晴れ時々雨か雪',
+    108: '晴れ一時雨か雷雨', 110: '晴れのち時々くもり', 111: '晴れのちくもり', 112: '晴れのち一時雨',
+    113: '晴れのち時々雨', 114: '晴れのち雨', 115: '晴れのち一時雪', 116: '晴れのち時々雪',
+    117: '晴れのち雪', 118: '晴れのち雨か雪', 119: '晴れのち雨か雷雨', 120: '晴れ朝夕一時雨',
+    121: '晴れ朝の内一時雨', 122: '晴れ夕方一時雨', 123: '晴れ山沿い雷雨', 124: '晴れ山沿い雪',
+    125: '晴れ午後は雷雨', 126: '晴れ昼頃から雨', 127: '晴れ夕方から雨', 128: '晴れ夜は雨',
+    129: '晴れ夜半から雨', 130: '朝の内霧のち晴れ', 131: '晴れ朝方霧', 132: '晴れ朝夕くもり',
+    140: '晴れ時々雨で雷を伴う', 160: '晴れ一時雪か雨', 170: '晴れ時々雪か雨', 181: '晴れのち雪か雨',
+    
+    200: 'くもり', 201: 'くもり時々晴れ', 202: 'くもり一時雨', 203: 'くもり時々雨',
+    204: 'くもり一時雪', 205: 'くもり時々雪', 206: 'くもり一時雨か雪', 207: 'くもり時々雨か雪',
+    208: 'くもり一時雨か雷雨', 209: '霧', 210: 'くもりのち時々晴れ', 211: 'くもりのち晴れ',
+    212: 'くもりのち一時雨', 213: 'くもりのち時々雨', 214: 'くもりのち雨', 215: 'くもりのち一時雪',
+    216: 'くもりのち時々雪', 217: 'くもりのち雪', 218: 'くもりのち雨か雪', 219: 'くもりのち雨か雷雨',
+    220: 'くもり朝夕一時雨', 221: 'くもり朝の内一時雨', 222: 'くもり夕方一時雨', 223: 'くもり日中時々晴れ',
+    224: 'くもり昼頃から雨', 225: 'くもり夕方から雨', 226: 'くもり夜は雨', 227: 'くもり夜半から雨',
+    228: 'くもり昼頃から雪', 229: 'くもり夕方から雪', 230: 'くもり夜は雪', 231: 'くもり海上海岸は霧か霧雨',
+    240: 'くもり時々雨で雷を伴う', 250: 'くもり時々雪で雷を伴う', 260: 'くもり一時雪か雨', 270: 'くもり時々雪か雨',
+    281: 'くもりのち雪か雨',
+    
+    300: '雨', 301: '雨時々晴れ', 302: '雨時々止む', 303: '雨時々雪', 304: '雨か雪',
+    306: '大雨', 308: '雨で暴風を伴う', 309: '雨一時雪', 311: '雨のち晴れ', 313: '雨のちくもり',
+    314: '雨のち時々雪', 315: '雨のち雪', 316: '雨か雪のち晴れ', 317: '雨か雪のちくもり',
+    320: '朝の内雨のち晴れ', 321: '朝の内雨のちくもり', 322: '雨朝晩一時雪', 323: '雨昼頃から晴れ',
+    324: '雨夕方から晴れ', 325: '雨夜は晴れ', 326: '雨夕方から雪', 327: '雨夜は雪',
+    328: '雨一時強く降る', 329: '雨一時みぞれ', 340: '雪か雨', 350: '雨で雷を伴う',
+    361: '雪か雨のち晴れ', 371: '雪か雨のちくもり',
+    
+    400: '雪', 401: '雪時々晴れ', 402: '雪時々止む', 403: '雪時々雨', 405: '大雪',
+    406: '風雪強い', 407: '暴風雪', 409: '雪一時雨', 411: '雪のち晴れ', 413: '雪のちくもり',
+    414: '雪のち雨', 420: '朝の内雪のち晴れ', 421: '朝の内雪のちくもり', 422: '雪昼頃から雨',
+    423: '雪夕方から雨', 424: '雪夜半から雨', 425: '雪一時強く降る', 426: '雪のちみぞれ',
+    427: '雪一時みぞれ', 430: 'みぞれ', 450: '雪で雷を伴う',
+    
+    500: '快晴', 550: '猛暑', 552: '猛暑時々曇り', 553: '猛暑時々雨', 558: '猛暑時々大雨・嵐',
+    562: '猛暑のち曇り', 563: '猛暑のち雨', 568: '猛暑のち大雨・嵐', 572: '曇り時々猛暑',
+    573: '雨時々猛暑', 582: '曇りのち猛暑', 583: '雨のち猛暑',
+    
+    600: 'うすぐもり', 650: '小雨', 800: '雷', 850: '大雨・嵐', 851: '大雨・嵐時々晴れ',
+    852: '大雨・嵐時々曇り', 853: '大雨・嵐時々雨', 854: '大雨・嵐時々雪', 855: '大雨・嵐時々猛暑',
+    859: '大雨・嵐一時大雪', 861: '大雨・嵐のち晴れ', 862: '大雨・嵐のち曇り', 863: '大雨・嵐のち雨',
+    864: '大雨・嵐のち雪', 865: '大雨・嵐のち猛暑', 869: '大雨・嵐のち大雪', 871: '晴れ時々大雨・嵐',
+    872: '曇り時々大雨・嵐', 873: '雨時々大雨・嵐', 874: '雪時々大雨・嵐', 881: '晴れのち大雨・嵐',
+    882: '曇りのち大雨・嵐', 883: '雨のち大雨・嵐', 884: '雪のち大雨・嵐',
+    
+    950: '大雪', 951: '大雪時々晴れ', 952: '大雪時々曇', 953: '大雪一時雨', 954: '大雪時々雪',
+    958: '大雪一時大雨', 961: '大雪のち晴れ', 962: '大雪のち曇', 963: '大雪のち雨',
+    964: '大雪のち雪', 968: '大雪のち大雨・嵐', 971: '晴れ一時大雪', 972: '曇一時大雪',
+    973: '雨一時大雪', 974: '雪一時大雪', 981: '晴れのち大雪', 982: '曇のち大雪',
+    983: '雨のち大雪', 984: '雪のち大雪', 999: 'データなし'
+  };
+  
+  return weatherCodes[weatherCode] || `天気コード${weatherCode}`;
+}
+
+// 天気アイコンURL生成関数
+function getWeatherIcon(weatherCode) {
+  return `https://tpf.weathernews.jp/wxicon/152/${weatherCode}.png`;
+}
+
+// 風向変換関数
+function getWindDirection(windDirectionCode) {
+  const windDirections = {
+    1: 'NNE', 2: 'NE', 3: 'ENE', 4: 'E', 5: 'ESE', 6: 'SE', 7: 'SSE', 8: 'S',
+    9: 'SSW', 10: 'SW', 11: 'WSW', 12: 'W', 13: 'WNW', 14: 'NW', 15: 'NNW', 16: 'N'
+  };
+  
+  return windDirections[windDirectionCode] || '不明';
+}
+
+/**
+ * 天気コードからカテゴリーを取得
+ * @param {number} weatherCode - 天気コード
+ * @returns {string} 天気カテゴリー
+ */
+function getWeatherCategory(weatherCode) {
+  if (weatherCode >= 100 && weatherCode < 200) {
+    return 'sunny'; // 晴れ系
+  } else if (weatherCode >= 200 && weatherCode < 300) {
+    return 'cloudy'; // 曇り系
+  } else if (weatherCode >= 300 && weatherCode < 400) {
+    return 'rainy'; // 雨系
+  } else if (weatherCode >= 400 && weatherCode < 500) {
+    return 'snowy'; // 雪系
+  } else if (weatherCode >= 500 && weatherCode < 600) {
+    return 'foggy'; // 霧系
+  } else if (weatherCode >= 600 && weatherCode < 700) {
+    return 'clear_night'; // 夜間晴れ系
+  } else if (weatherCode >= 700 && weatherCode < 800) {
+    return 'cloudy_night'; // 夜間曇り系
+  } else if (weatherCode >= 800 && weatherCode < 900) {
+    return 'storm'; // 嵐・強風系
+  } else if (weatherCode >= 900 && weatherCode < 1000) {
+    return 'severe'; // 警報・注意報系
+  } else {
+    return 'unknown';
+  }
+}
+
+// マスコット状態計算関数（新天気コード対応版）
 function calculateMascotState(weatherData) {
   const {
-    weather,
+    weatherCode,
     temperature,
-    feelsLike,
     humidity,
     precipitation,
     windSpeed,
-    cloudCover,
-    uvIndex
+    pressure
   } = weatherData;
 
   let mood = 'neutral';
@@ -317,88 +641,120 @@ function calculateMascotState(weatherData) {
   let happiness = 50;
   let comfort = 50;
 
-  // 天気による基本状態変化
-  switch (weather?.toLowerCase()) {
-    case 'sunny':
-    case 'clear':
-      mood = 'happy';
-      energy += 25;
-      happiness += 35;
-      break;
-    case 'rainy':
-    case 'rain':
-      mood = 'sad';
-      energy -= 15;
-      happiness -= 25;
-      break;
-    case 'snow':
-      mood = 'excited';
-      energy += 15;
-      happiness += 20;
-      break;
-    case 'cloudy':
-    case 'clouds':
-      mood = 'calm';
-      energy += 5;
-      happiness += 5;
-      break;
-    default:
-      mood = 'neutral';
-  }
-
-  // 体感温度による調整
-  const tempToUse = feelsLike || temperature;
-  if (tempToUse < 0) {
-    energy -= 20;
-    comfort -= 30;
-    mood = 'freezing';
-  } else if (tempToUse < 10) {
-    energy -= 10;
-    comfort -= 15;
-    if (mood === 'neutral') mood = 'cold';
-  } else if (tempToUse > 35) {
+  // 天気コードによる基本状態変化
+  if (weatherCode >= 100 && weatherCode < 200) {
+    // 晴れ系
+    mood = 'happy';
+    energy += 25;
+    happiness += 35;
+    
+    if (weatherCode >= 500 && weatherCode <= 583) {
+      // 猛暑系
+      mood = 'hot';
+      energy -= 10;
+      comfort -= 20;
+    }
+  } else if (weatherCode >= 200 && weatherCode < 300) {
+    // 曇り系
+    mood = 'calm';
+    energy += 5;
+    happiness += 5;
+    
+    if (weatherCode === 209) {
+      // 霧
+      mood = 'mysterious';
+      comfort -= 5;
+    }
+  } else if (weatherCode >= 300 && weatherCode < 400) {
+    // 雨系
+    mood = 'sad';
     energy -= 15;
-    comfort -= 25;
-    mood = 'hot';
-  } else if (tempToUse > 28) {
-    energy -= 5;
-    comfort -= 10;
-  }
-
-  // 湿度による調整
-  if (humidity > 80) {
+    happiness -= 25;
+    
+    if (weatherCode === 306 || (weatherCode >= 850 && weatherCode <= 884)) {
+      // 大雨・嵐
+      mood = 'worried';
+      energy -= 25;
+      happiness -= 35;
+      comfort -= 30;
+    }
+  } else if (weatherCode >= 400 && weatherCode < 500) {
+    // 雪系
+    mood = 'excited';
+    energy += 15;
+    happiness += 20;
+    
+    if (weatherCode === 405 || (weatherCode >= 950 && weatherCode <= 984)) {
+      // 大雪
+      mood = 'amazed';
+      energy += 10;
+      comfort -= 15;
+    }
+  } else if (weatherCode === 800) {
+    // 雷
+    mood = 'surprised';
+    energy += 10;
+    happiness -= 10;
     comfort -= 20;
-    energy -= 10;
-  } else if (humidity < 30) {
-    comfort -= 10;
   }
 
-  // 降水量による調整
-  if (precipitation > 10) {
-    happiness -= 15;
-    energy -= 10;
-  } else if (precipitation > 0) {
-    happiness -= 5;
+  // 気温による調整（欠測値-9999を考慮）
+  if (temperature !== -9999) {
+    if (temperature < 0) {
+      energy -= 20;
+      comfort -= 30;
+      mood = 'freezing';
+    } else if (temperature < 10) {
+      energy -= 10;
+      comfort -= 15;
+      if (mood === 'neutral') mood = 'cold';
+    } else if (temperature > 35) {
+      energy -= 15;
+      comfort -= 25;
+      mood = 'hot';
+    } else if (temperature > 28) {
+      energy -= 5;
+      comfort -= 10;
+    }
   }
 
-  // 風速による調整
-  if (windSpeed > 10) {
-    energy -= 5;
-    comfort -= 10;
-  } else if (windSpeed > 5) {
-    energy += 5; // 適度な風は気持ちいい
+  // 湿度による調整（欠測値-99を考慮）
+  if (humidity !== -99) {
+    if (humidity > 80) {
+      comfort -= 20;
+      energy -= 10;
+    } else if (humidity < 30) {
+      comfort -= 10;
+    }
   }
 
-  // 雲量による調整
-  if (cloudCover > 80) {
-    energy -= 5;
-  } else if (cloudCover < 20) {
-    happiness += 10;
+  // 降水量による調整（欠測値-9999を考慮）
+  if (precipitation !== -9999) {
+    if (precipitation > 10) {
+      happiness -= 15;
+      energy -= 10;
+    } else if (precipitation > 0) {
+      happiness -= 5;
+    }
   }
 
-  // UV指数による調整
-  if (uvIndex > 8) {
-    comfort -= 15; // 強すぎる紫外線
+  // 風速による調整（欠測値-9999を考慮）
+  if (windSpeed !== -9999) {
+    if (windSpeed > 10) {
+      energy -= 5;
+      comfort -= 10;
+    } else if (windSpeed > 5) {
+      energy += 5; // 適度な風は気持ちいい
+    }
+  }
+
+  // 気圧による調整（欠測値-9999を考慮）
+  if (pressure !== -9999) {
+    if (pressure < 1000) {
+      comfort -= 10; // 低気圧で体調不良
+    } else if (pressure > 1025) {
+      comfort += 5; // 高気圧で快適
+    }
   }
 
   // 値の範囲制限
@@ -417,90 +773,181 @@ function calculateMascotState(weatherData) {
   };
 }
 
-// 天気リアクション取得関数（拡張版）
+// 天気リアクション取得関数（新天気コード対応版）
 function getWeatherReaction(weatherData) {
-  const { weather, temperature, feelsLike, precipitation, windSpeed, uvIndex } = weatherData;
+  const { weatherCode, temperature, precipitation, windSpeed, pressure } = weatherData;
   
-  const reactions = {
-    sunny: [
+  let reactions = [];
+  
+  // 天気コード別リアクション
+  if (weatherCode >= 100 && weatherCode < 200) {
+    // 晴れ系
+    reactions = [
       '今日はいい天気だね！☀️',
       'お散歩日和だよ♪',
       '太陽が気持ちいい～',
-      '洗濯物がよく乾きそう！'
-    ],
-    rainy: [
-      '雨の音って落ち着くよね☔',
-      '傘を忘れずにね！',
-      '雨上がりが楽しみ',
-      'お家でのんびりしよう'
-    ],
-    snow: [
-      '雪だ！雪だ！❄️',
-      '雪遊びしたいな～',
-      '真っ白できれい！',
-      '雪だるま作ろう⛄'
-    ],
-    cloudy: [
+      '洗濯物がよく乾きそう！',
+      '青空がきれいだね！'
+    ];
+    
+    if (weatherCode >= 550 && weatherCode <= 583) {
+      // 猛暑
+      reactions = [
+        'わー！今日は猛暑だね🔥',
+        '暑すぎる～！冷房の下にいよう',
+        'アイスが食べたくなる暑さ🍦',
+        '熱中症に気をつけて！'
+      ];
+    }
+  } else if (weatherCode >= 200 && weatherCode < 300) {
+    // 曇り系
+    reactions = [
       '曇り空も悪くないね☁️',
       'ちょっと涼しいかな',
       'のんびりした天気だね',
       '過ごしやすい気温だね'
-    ]
-  };
-
-  let selectedReactions = reactions[weather?.toLowerCase()] || ['今日も一日がんばろう！'];
+    ];
+    
+    if (weatherCode === 209) {
+      reactions = ['霧がかかって幻想的だね🌫️', '視界が悪いから気をつけて'];
+    }
+  } else if (weatherCode >= 300 && weatherCode < 400) {
+    // 雨系
+    reactions = [
+      '雨の音って落ち着くよね☔',
+      '傘を忘れずにね！',
+      '雨上がりが楽しみ',
+      'お家でのんびりしよう'
+    ];
+    
+    if (weatherCode === 306 || (weatherCode >= 850 && weatherCode <= 884)) {
+      reactions = [
+        '大雨だね！外出は控えめに☔',
+        '嵐みたい...安全な場所にいてね',
+        'すごい雨だ！窓から見てるだけにしよう'
+      ];
+    }
+  } else if (weatherCode >= 400 && weatherCode < 500) {
+    // 雪系
+    reactions = [
+      '雪だ！雪だ！❄️',
+      '雪遊びしたいな～',
+      '真っ白できれい！',
+      '雪だるま作ろう⛄'
+    ];
+    
+    if (weatherCode === 405 || (weatherCode >= 950 && weatherCode <= 984)) {
+      reactions = [
+        'すごい雪だね！❄️❄️',
+        '大雪だから外出注意だよ',
+        '雪かきが大変そう...'
+      ];
+    }
+  } else if (weatherCode === 800) {
+    // 雷
+    reactions = [
+      'ゴロゴロ～雷が鳴ってる⚡',
+      '雷雲が近づいてるね',
+      '雷は怖いけどちょっと迫力があるね'
+    ];
+  } else {
+    reactions = ['今日も一日がんばろう！', '天気をチェックして準備しようね'];
+  }
   
   // 特殊条件での追加リアクション
-  const tempToUse = feelsLike || temperature;
-  if (tempToUse > 30) {
-    selectedReactions.push('暑いから水分補給を忘れずに！🥤');
-  } else if (tempToUse < 5) {
-    selectedReactions.push('寒いから暖かくしてね🧣');
+  if (temperature !== -9999) {
+    if (temperature > 30) {
+      reactions.push('暑いから水分補給を忘れずに！🥤');
+    } else if (temperature < 5) {
+      reactions.push('寒いから暖かくしてね🧣');
+    }
   }
   
-  if (precipitation > 5) {
-    selectedReactions.push('雨が強いから気をつけてね！');
+  if (precipitation !== -9999 && precipitation > 5) {
+    reactions.push('雨が強いから気をつけてね！');
   }
   
-  if (windSpeed > 8) {
-    selectedReactions.push('風が強いから飛ばされないように！💨');
+  if (windSpeed !== -9999 && windSpeed > 8) {
+    reactions.push('風が強いから飛ばされないように！💨');
   }
   
-  if (uvIndex > 7) {
-    selectedReactions.push('紫外線が強いから日焼け止めを！🧴');
+  if (pressure !== -9999 && pressure < 990) {
+    reactions.push('気圧が低いから体調管理に注意してね');
   }
   
-  return selectedReactions[Math.floor(Math.random() * selectedReactions.length)];
+  return reactions[Math.floor(Math.random() * reactions.length)];
 }
 
-// おすすめ行動取得関数
+// おすすめ行動取得関数（新天気コード対応版）
 function getRecommendations(weatherData) {
-  const { weather, temperature, feelsLike, precipitation, uvIndex, windSpeed } = weatherData;
+  const { weatherCode, temperature, precipitation, windSpeed, pressure } = weatherData;
   const recommendations = [];
   
-  const tempToUse = feelsLike || temperature;
-  
-  // 服装アドバイス
-  if (tempToUse > 25) {
-    recommendations.push('軽装で涼しく過ごそう');
-  } else if (tempToUse < 15) {
-    recommendations.push('暖かい服装がおすすめ');
+  // 服装アドバイス（温度基準）
+  if (temperature !== -9999) {
+    if (temperature > 25) {
+      recommendations.push('軽装で涼しく過ごそう');
+    } else if (temperature < 15) {
+      recommendations.push('暖かい服装がおすすめ');
+    } else if (temperature > 30) {
+      recommendations.push('熱中症対策の服装を');
+    } else if (temperature < 5) {
+      recommendations.push('防寒対策をしっかりと');
+    }
   }
   
   // 持ち物アドバイス
-  if (precipitation > 0) {
+  if (precipitation !== -9999 && precipitation > 0) {
     recommendations.push('傘を持参しよう');
+    if (precipitation > 10) {
+      recommendations.push('レインコートもあると安心');
+    }
   }
   
-  if (uvIndex > 6) {
+  // 天気コード別のアドバイス
+  if (weatherCode >= 100 && weatherCode < 200) {
+    // 晴れ系
     recommendations.push('日焼け止めと帽子を忘れずに');
+    if (weatherCode >= 550 && weatherCode <= 583) {
+      recommendations.push('こまめな水分補給を');
+      recommendations.push('涼しい場所で過ごそう');
+    }
+  } else if (weatherCode >= 300 && weatherCode < 400) {
+    // 雨系
+    recommendations.push('室内活動がおすすめ');
+    if (weatherCode === 306 || (weatherCode >= 850 && weatherCode <= 884)) {
+      recommendations.push('外出は控えめに');
+      recommendations.push('安全な場所で待機');
+    }
+  } else if (weatherCode >= 400 && weatherCode < 500) {
+    // 雪系
+    recommendations.push('滑りにくい靴を選ぼう');
+    recommendations.push('防寒具を忘れずに');
+    if (weatherCode === 405 || (weatherCode >= 950 && weatherCode <= 984)) {
+      recommendations.push('不要不急の外出は控えよう');
+    }
+  }
+  
+  // 風速によるアドバイス
+  if (windSpeed !== -9999 && windSpeed > 8) {
+    recommendations.push('風に飛ばされやすいものに注意');
+    if (windSpeed > 15) {
+      recommendations.push('強風のため外出注意');
+    }
+  }
+  
+  // 気圧によるアドバイス
+  if (pressure !== -9999 && pressure < 1000) {
+    recommendations.push('体調管理に注意しよう');
   }
   
   // 活動アドバイス
-  if (weather === 'sunny' && tempToUse < 25) {
+  if (weatherCode >= 100 && weatherCode < 200 && temperature !== -9999 && temperature < 25) {
     recommendations.push('お出かけに最適な天気');
-  } else if (weather === 'rainy') {
-    recommendations.push('室内活動がおすすめ');
+  } else if (weatherCode >= 300 && weatherCode < 400) {
+    recommendations.push('読書や映画鑑賞はいかが？');
+  } else if (weatherCode >= 400 && weatherCode < 500) {
+    recommendations.push('雪景色を楽しもう');
   }
   
   return recommendations;
