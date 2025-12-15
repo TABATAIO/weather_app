@@ -4,6 +4,14 @@ const dotenv = require('dotenv');
 const axios = require('axios');
 const natural = require('natural');
 const nlp = require('compromise');
+const { GoogleGenerativeAI } = require('@google/generative-ai');
+
+// カスタムモジュール
+const nlpService = require('./modules/nlpService');
+const { getWindDirection, getWeatherCategory } = require('./modules/weatherService');
+const responseGenerator = require('./modules/responseGenerator');
+const mascotService = require('./modules/mascotService');
+const chatService = require('./modules/chatService');
 
 // データベース関連のインポート
 const { setupDatabase } = require('./database');
@@ -17,6 +25,8 @@ const {
 
 // 環境変数を読み込み
 dotenv.config();
+
+// Gemini API設定はchatServiceに移行済み
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -34,8 +44,11 @@ app.use(cors({
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// レスポンスヘッダー設定（fetch API対応）
-app.use((req, res, next) => {
+// 静的ファイル（HTML, CSS, JS）を提供
+app.use(express.static(__dirname));
+
+// レスポンスヘッダー設定（API用）
+app.use('/api', (req, res, next) => {
   res.setHeader('Content-Type', 'application/json; charset=utf-8');
   next();
 });
@@ -152,8 +165,8 @@ app.get('/api/weather/city/:city', async (req, res) => {
     const currentForecast = wxdata.srf[0];
     const todayMediumForecast = wxdata.mrf[0];
 
-    const weatherName = getWeatherName(currentForecast.wx);
-    const weatherIcon = getWeatherIcon(currentForecast.wx);
+    const weatherName = mascotService.getWeatherName(currentForecast.wx);
+    const weatherIcon = mascotService.getWeatherIcon(currentForecast.wx);
     const windDirectionName = getWindDirection(currentForecast.wnddir);
 
     const weatherData = {
@@ -280,8 +293,8 @@ app.get('/api/weather/:lat/:lon', async (req, res) => {
     const todayMediumForecast = wxdata.mrf[0]; // 今日の中期予報
 
     // 天気コードを天気名に変換
-    const weatherName = getWeatherName(currentForecast.wx);
-    const weatherIcon = getWeatherIcon(currentForecast.wx);
+    const weatherName = mascotService.getWeatherName(currentForecast.wx);
+    const weatherIcon = mascotService.getWeatherIcon(currentForecast.wx);
     
     // 風向を文字列に変換
     const windDirectionName = getWindDirection(currentForecast.wnddir);
@@ -372,7 +385,7 @@ app.post('/api/mascot/update', (req, res) => {
     console.log(`🎭 マスコット状態更新リクエスト - 天気コード: ${weatherCode}, 気温: ${temperature}℃`);
     
     // マスコットの状態を計算（新天気データ対応）
-    const mascotState = calculateMascotState({
+    const mascotState = mascotService.calculateMascotState({
       weatherCode,
       temperature,
       humidity,
@@ -384,8 +397,8 @@ app.post('/api/mascot/update', (req, res) => {
     // 追加情報を含める
     mascotState.weatherInfo = {
       code: weatherCode,
-      name: weatherName || getWeatherName(weatherCode),
-      icon: getWeatherIcon(weatherCode)
+      name: weatherName || mascotService.getWeatherName(weatherCode),
+      icon: mascotService.getWeatherIcon(weatherCode)
     };
     
     res.json({
@@ -416,13 +429,7 @@ app.get('/api/icon/:weatherCode', (req, res) => {
       });
     }
 
-    const weatherInfo = {
-      code: weatherCode,
-      name: getWeatherName(weatherCode),
-      icon: getWeatherIcon(weatherCode),
-      category: getWeatherCategory(weatherCode),
-      timestamp: new Date().toISOString()
-    };
+    const weatherInfo = mascotService.generateWeatherInfo(weatherCode);
 
     res.json({
       success: true,
@@ -470,8 +477,8 @@ app.post('/api/weather/icons', (req, res) => {
 
       return {
         code: weatherCode,
-        name: getWeatherName(weatherCode),
-        icon: getWeatherIcon(weatherCode),
+        name: mascotService.getWeatherName(weatherCode),
+        icon: mascotService.getWeatherIcon(weatherCode),
         category: getWeatherCategory(weatherCode)
       };
     });
@@ -498,15 +505,8 @@ app.get('/api/mascot/:id', (req, res) => {
   try {
     const mascotId = req.params.id;
     
-    // 仮のマスコット情報（後でデータベース連携）
-    const mascotInfo = {
-      id: mascotId,
-      name: 'ウェザーちゃん',
-      level: 5,
-      experience: 150,
-      mood: 'happy',
-      lastUpdate: new Date().toISOString()
-    };
+    // マスコット情報を生成
+    const mascotInfo = mascotService.generateMascotInfo(mascotId);
 
     res.json({
       success: true,
@@ -522,111 +522,17 @@ app.get('/api/mascot/:id', (req, res) => {
   }
 });
 
-// Weathernews天気コード変換関数
-function getWeatherName(weatherCode) {
-  const weatherCodes = {
-    100: '晴れ', 101: '晴れ時々くもり', 102: '晴れ一時雨', 103: '晴れ時々雨',
-    104: '晴れ一時雪', 105: '晴れ時々雪', 106: '晴れ一時雨か雪', 107: '晴れ時々雨か雪',
-    108: '晴れ一時雨か雷雨', 110: '晴れのち時々くもり', 111: '晴れのちくもり', 112: '晴れのち一時雨',
-    113: '晴れのち時々雨', 114: '晴れのち雨', 115: '晴れのち一時雪', 116: '晴れのち時々雪',
-    117: '晴れのち雪', 118: '晴れのち雨か雪', 119: '晴れのち雨か雷雨', 120: '晴れ朝夕一時雨',
-    121: '晴れ朝の内一時雨', 122: '晴れ夕方一時雨', 123: '晴れ山沿い雷雨', 124: '晴れ山沿い雪',
-    125: '晴れ午後は雷雨', 126: '晴れ昼頃から雨', 127: '晴れ夕方から雨', 128: '晴れ夜は雨',
-    129: '晴れ夜半から雨', 130: '朝の内霧のち晴れ', 131: '晴れ朝方霧', 132: '晴れ朝夕くもり',
-    140: '晴れ時々雨で雷を伴う', 160: '晴れ一時雪か雨', 170: '晴れ時々雪か雨', 181: '晴れのち雪か雨',
-    
-    200: 'くもり', 201: 'くもり時々晴れ', 202: 'くもり一時雨', 203: 'くもり時々雨',
-    204: 'くもり一時雪', 205: 'くもり時々雪', 206: 'くもり一時雨か雪', 207: 'くもり時々雨か雪',
-    208: 'くもり一時雨か雷雨', 209: '霧', 210: 'くもりのち時々晴れ', 211: 'くもりのち晴れ',
-    212: 'くもりのち一時雨', 213: 'くもりのち時々雨', 214: 'くもりのち雨', 215: 'くもりのち一時雪',
-    216: 'くもりのち時々雪', 217: 'くもりのち雪', 218: 'くもりのち雨か雪', 219: 'くもりのち雨か雷雨',
-    220: 'くもり朝夕一時雨', 221: 'くもり朝の内一時雨', 222: 'くもり夕方一時雨', 223: 'くもり日中時々晴れ',
-    224: 'くもり昼頃から雨', 225: 'くもり夕方から雨', 226: 'くもり夜は雨', 227: 'くもり夜半から雨',
-    228: 'くもり昼頃から雪', 229: 'くもり夕方から雪', 230: 'くもり夜は雪', 231: 'くもり海上海岸は霧か霧雨',
-    240: 'くもり時々雨で雷を伴う', 250: 'くもり時々雪で雷を伴う', 260: 'くもり一時雪か雨', 270: 'くもり時々雪か雨',
-    281: 'くもりのち雪か雨',
-    
-    300: '雨', 301: '雨時々晴れ', 302: '雨時々止む', 303: '雨時々雪', 304: '雨か雪',
-    306: '大雨', 308: '雨で暴風を伴う', 309: '雨一時雪', 311: '雨のち晴れ', 313: '雨のちくもり',
-    314: '雨のち時々雪', 315: '雨のち雪', 316: '雨か雪のち晴れ', 317: '雨か雪のちくもり',
-    320: '朝の内雨のち晴れ', 321: '朝の内雨のちくもり', 322: '雨朝晩一時雪', 323: '雨昼頃から晴れ',
-    324: '雨夕方から晴れ', 325: '雨夜は晴れ', 326: '雨夕方から雪', 327: '雨夜は雪',
-    328: '雨一時強く降る', 329: '雨一時みぞれ', 340: '雪か雨', 350: '雨で雷を伴う',
-    361: '雪か雨のち晴れ', 371: '雪か雨のちくもり',
-    
-    400: '雪', 401: '雪時々晴れ', 402: '雪時々止む', 403: '雪時々雨', 405: '大雪',
-    406: '風雪強い', 407: '暴風雪', 409: '雪一時雨', 411: '雪のち晴れ', 413: '雪のちくもり',
-    414: '雪のち雨', 420: '朝の内雪のち晴れ', 421: '朝の内雪のちくもり', 422: '雪昼頃から雨',
-    423: '雪夕方から雨', 424: '雪夜半から雨', 425: '雪一時強く降る', 426: '雪のちみぞれ',
-    427: '雪一時みぞれ', 430: 'みぞれ', 450: '雪で雷を伴う',
-    
-    500: '快晴', 550: '猛暑', 552: '猛暑時々曇り', 553: '猛暑時々雨', 558: '猛暑時々大雨・嵐',
-    562: '猛暑のち曇り', 563: '猛暑のち雨', 568: '猛暑のち大雨・嵐', 572: '曇り時々猛暑',
-    573: '雨時々猛暑', 582: '曇りのち猛暑', 583: '雨のち猛暑',
-    
-    600: 'うすぐもり', 650: '小雨', 800: '雷', 850: '大雨・嵐', 851: '大雨・嵐時々晴れ',
-    852: '大雨・嵐時々曇り', 853: '大雨・嵐時々雨', 854: '大雨・嵐時々雪', 855: '大雨・嵐時々猛暑',
-    859: '大雨・嵐一時大雪', 861: '大雨・嵐のち晴れ', 862: '大雨・嵐のち曇り', 863: '大雨・嵐のち雨',
-    864: '大雨・嵐のち雪', 865: '大雨・嵐のち猛暑', 869: '大雨・嵐のち大雪', 871: '晴れ時々大雨・嵐',
-    872: '曇り時々大雨・嵐', 873: '雨時々大雨・嵐', 874: '雪時々大雨・嵐', 881: '晴れのち大雨・嵐',
-    882: '曇りのち大雨・嵐', 883: '雨のち大雨・嵐', 884: '雪のち大雨・嵐',
-    
-    950: '大雪', 951: '大雪時々晴れ', 952: '大雪時々曇', 953: '大雪一時雨', 954: '大雪時々雪',
-    958: '大雪一時大雨', 961: '大雪のち晴れ', 962: '大雪のち曇', 963: '大雪のち雨',
-    964: '大雪のち雪', 968: '大雪のち大雨・嵐', 971: '晴れ一時大雪', 972: '曇一時大雪',
-    973: '雨一時大雪', 974: '雪一時大雪', 981: '晴れのち大雪', 982: '曇のち大雪',
-    983: '雨のち大雪', 984: '雪のち大雪', 999: 'データなし'
-  };
-  
-  return weatherCodes[weatherCode] || `天気コード${weatherCode}`;
-}
-
-// 天気アイコンURL生成関数
-function getWeatherIcon(weatherCode) {
-  return `https://tpf.weathernews.jp/wxicon/152/${weatherCode}.png`;
-}
-
-// 風向変換関数
-function getWindDirection(windDirectionCode) {
-  const windDirections = {
-    1: 'NNE', 2: 'NE', 3: 'ENE', 4: 'E', 5: 'ESE', 6: 'SE', 7: 'SSE', 8: 'S',
-    9: 'SSW', 10: 'SW', 11: 'WSW', 12: 'W', 13: 'WNW', 14: 'NW', 15: 'NNW', 16: 'N'
-  };
-  
-  return windDirections[windDirectionCode] || '不明';
-}
+// 以下の関数群はmascotServiceに移管されました
+// - getWeatherName
+// - getWeatherIcon
+// - getWindDirection
+// - getWeatherCategory
+// - calculateMascotState
+// - getWeatherReaction
+// - getRecommendations
 
 /**
- * 天気コードからカテゴリーを取得
- * @param {number} weatherCode - 天気コード
- * @returns {string} 天気カテゴリー
- */
-function getWeatherCategory(weatherCode) {
-  if (weatherCode >= 100 && weatherCode < 200) {
-    return 'sunny'; // 晴れ系
-  } else if (weatherCode >= 200 && weatherCode < 300) {
-    return 'cloudy'; // 曇り系
-  } else if (weatherCode >= 300 && weatherCode < 400) {
-    return 'rainy'; // 雨系
-  } else if (weatherCode >= 400 && weatherCode < 500) {
-    return 'snowy'; // 雪系
-  } else if (weatherCode >= 500 && weatherCode < 600) {
-    return 'foggy'; // 霧系
-  } else if (weatherCode >= 600 && weatherCode < 700) {
-    return 'clear_night'; // 夜間晴れ系
-  } else if (weatherCode >= 700 && weatherCode < 800) {
-    return 'cloudy_night'; // 夜間曇り系
-  } else if (weatherCode >= 800 && weatherCode < 900) {
-    return 'storm'; // 嵐・強風系
-  } else if (weatherCode >= 900 && weatherCode < 1000) {
-    return 'severe'; // 警報・注意報系
-  } else {
-    return 'unknown';
-  }
-}
-
-// マスコット状態計算関数（新天気コード対応版）
-function calculateMascotState(weatherData) {
+ * AIマスコットとの会話APIエンドポイント
   const {
     weatherCode,
     temperature,
@@ -767,14 +673,14 @@ function calculateMascotState(weatherData) {
     energy,
     happiness,
     comfort,
-    weatherReaction: getWeatherReaction(weatherData),
-    recommendations: getRecommendations(weatherData),
+    weatherReaction: mascotService.getWeatherReaction(weatherData),
+    recommendations: mascotService.getRecommendations(weatherData),
     timestamp: new Date().toISOString()
   };
 }
 
-// 天気リアクション取得関数（新天気コード対応版）
-function getWeatherReaction(weatherData) {
+/**
+ * AIマスコットとの会話APIエンドポイント
   const { weatherCode, temperature, precipitation, windSpeed, pressure } = weatherData;
   
   let reactions = [];
@@ -955,188 +861,31 @@ function getRecommendations(weatherData) {
 
 /**
  * AIマスコットとの会話APIエンドポイント
- * 高度な自然言語処理により、ユーザーの意図と感情を分析し、
- * 天気情報と組み合わせたパーソナライズされた応答を生成する
+ * chatServiceを使用してモジュール化された会話機能を提供
  */
 app.post('/api/mascot/chat', async (req, res) => {
-  try {
-    const { 
-      message, 
-      userName, 
-      userId,
-      weatherData, 
-      userPreferences = {},
-      conversationHistory = []
-    } = req.body;
-
-    if (!message || message.trim() === '') {
-      return res.status(400).json({
-        success: false,
-        error: 'メッセージが入力されていません'
-      });
-    }
-
-    // AI会話レスポンス生成
-    const chatResponse = generateChatResponse({
-      userMessage: message.trim(),
-      userName: userName || 'あなた',
-      weatherData,
-      userPreferences,
-      conversationHistory
-    });
-
-    // 会話履歴をデータベースに保存（userIdがある場合のみ）
-    if (userId) {
-      try {
-        const historyResult = await saveChatHistory({
-          userId: userId,
-          userMessage: message.trim(),
-          botResponse: chatResponse.message,
-          intent: chatResponse.intent || null,
-          sentiment: chatResponse.sentiment || null,
-          weatherData: weatherData || null
-        });
-        console.log(`💾 会話履歴を保存しました - User: ${userId}, ID: ${historyResult.id}`);
-      } catch (dbError) {
-        console.error('会話履歴保存エラー:', dbError.message);
-        // 履歴保存エラーは会話の継続を妨げない
-      }
-    }
-
-    res.json({
-      success: true,
-      data: {
-        response: chatResponse.message,
-        mood: chatResponse.mood,
-        suggestions: chatResponse.suggestions,
-        weatherAdvice: chatResponse.weatherAdvice,
-        timestamp: new Date().toISOString()
-      }
-    });
-
-  } catch (error) {
-    console.error('AI会話エラー:', error.message);
-    res.status(500).json({ 
-      success: false,
-      error: 'メッセージの処理に失敗しました',
-      details: error.message
-    });
-  }
+  const result = await chatService.handleChatAPI({
+    requestBody: req.body,
+    saveChatHistory
+  });
+  
+  res.status(result.status).json(result);
 });
 
-// 会話履歴取得API（本格版）
+// 会話履歴取得API（chatServiceを使用）
 app.get('/api/chat/history/:userId', async (req, res) => {
   console.log('🔍 会話履歴APIエンドポイントに到達しました');
-  try {
-    const { userId } = req.params;
-    const { limit = 10 } = req.query;
-
-    console.log(`📋 会話履歴取得リクエスト - UserID: ${userId}, Limit: ${limit}`);
-
-    if (!userId) {
-      return res.status(400).json({
-        success: false,
-        error: 'ユーザーIDが必要です'
-      });
-    }
-
-    // データベースから会話履歴を取得
-    const chatHistory = await getChatHistory(userId, parseInt(limit));
-    
-    console.log(`📋 会話履歴取得結果 - 件数: ${chatHistory.length}`);
-
-    res.json({
-      success: true,
-      data: {
-        userId,
-        history: chatHistory,
-        count: chatHistory.length
-      },
-      message: `${userId}の会話履歴を${chatHistory.length}件取得しました`
-    });
-
-  } catch (error) {
-    console.error('会話履歴取得エラー:', error.message);
-    console.error('Error stack:', error.stack);
-    res.status(500).json({
-      success: false,
-      error: '会話履歴の取得に失敗しました',
-      details: error.message,
-      userId: req.params.userId,
-      requestedLimit: req.query.limit
-    });
-  }
+  
+  const result = await chatService.handleChatHistoryAPI({
+    userId: req.params.userId,
+    limit: req.query.limit,
+    getChatHistory
+  });
+  
+  res.status(result.status).json(result);
 });
 
-/**
- * ユーザー名を正規化する（「さん」の重複を防ぐ）
- * @param {string} userName - 元のユーザー名
- * @returns {string} 正規化されたユーザー名
- */
-function normalizeUserName(userName) {
-  if (!userName) return 'あなた';
-  // 既に「さん」が付いている場合は除去
-  return userName.replace(/さん$/, '');
-}
 
-// AI会話レスポンス生成関数
-function generateChatResponse({ userMessage, userName, weatherData, userPreferences, conversationHistory }) {
-  const message = userMessage.toLowerCase();
-  const normalizedUserName = normalizeUserName(userName);
-  
-  // 自然言語解析
-  const doc = nlp(userMessage);
-  const sentiment = analyzeSentiment(userMessage);
-  const intent = analyzeIntent(doc, message);
-  const entities = extractEntities(doc);
-  
-  // 基本的な挨拶パターン
-  const greetings = ['こんにちは', 'おはよう', 'こんばんは', 'はじめまして', 'やあ', 'hello', 'hi'];
-  const farewells = ['さようなら', 'また今度', 'バイバイ', 'また明日', 'おつかれ', 'bye', 'see you'];
-  
-  // 天気関連のキーワード
-  const weatherKeywords = ['天気', '気温', '暑い', '寒い', '雨', '晴れ', '曇り', '雪', '風', '湿度'];
-  
-  // 服装関連のキーワード
-  const clothingKeywords = ['服装', '着る', '洋服', 'ファッション', 'コーデ', '何着る', '服', '何を着', '着れば', '服選び'];
-  
-  // 活動関連のキーワード
-  const activityKeywords = ['何する', '遊び', '出かける', '家にいる', 'おすすめ', 'プラン', '予定'];
-  
-  // 感謝・褒め言葉のキーワード
-  const appreciationKeywords = ['ありがとう', 'すごい', 'いいね', '素敵', 'かわいい', '助かる'];
-  
-  // ユーザー設定による個性化
-  const isOutdoorLover = userPreferences?.activities === 'outdoor';
-  const isIndoorLover = userPreferences?.activities === 'indoor';
-  const isColdSensitive = userPreferences?.weatherSensitivity === 'high';
-  const stylePreference = userPreferences?.style || 'casual';
-  
-  let response = '';
-  let mood = 'friendly';
-  let suggestions = [];
-  let weatherAdvice = null;
-
-  // 高度な自然言語処理を使用した応答生成
-  const advancedResponse = generateAdvancedResponse(
-    userMessage, intent, sentiment, entities, normalizedUserName, weatherData, userPreferences
-  );
-  
-  response = advancedResponse.response;
-  mood = advancedResponse.mood;
-  suggestions = advancedResponse.suggestions || suggestions;
-  weatherAdvice = advancedResponse.weatherAdvice;
-
-  return {
-    message: response,
-    mood: mood,
-    suggestions: suggestions,
-    weatherAdvice: weatherAdvice,
-    intent: intent,
-    sentiment: sentiment,
-    confidence: Math.random() * 0.3 + 0.7 // 0.7-1.0の信頼度
-  };
-}
 
 /**
  * 天気情報に基づいてカジュアルなコメントを生成する
@@ -1163,44 +912,7 @@ function getWeatherComment(currentWeather) {
 }
 
 // 天気レスポンス生成
-function generateWeatherResponse(currentWeather, userName) {
-  const { weather, temperature, humidity, windSpeed } = currentWeather;
-  
-  let response = `${userName}さん、今日の天気についてお話ししますね！\n\n`;
-  
-  // 基本天気情報
-  response += `現在の気温は${temperature}度で、`;
-  
-  switch (weather?.toLowerCase()) {
-    case 'sunny':
-      response += temperature > 30 ? 
-        '暑い晴れの日ですね🌞 熱中症に気をつけてください！' :
-        'いい天気ですね☀️ お散歩にぴったりです！';
-      break;
-    case 'rainy':
-      response += '雨が降っていますね☔ 濡れないように気をつけてください';
-      break;
-    case 'cloudy':
-      response += '曇り空ですね☁️ 過ごしやすい気温だと思います';
-      break;
-    case 'snow':
-      response += '雪が降っているんですね❄️ 足元に気をつけてくださいね';
-      break;
-    default:
-      response += '今日もいい一日になりそうですね';
-  }
-  
-  // 追加情報
-  if (humidity > 70) {
-    response += '\n湿度が高めなので、じめじめしているかもしれませんね💧';
-  }
-  
-  if (windSpeed > 8) {
-    response += '\n風が強いので、帽子や軽いものが飛ばされないよう注意してくださいね💨';
-  }
-  
-  return response;
-}
+
 
 /**
  * 現在の天気情報に基づいて服装アドバイスを生成する
@@ -1256,169 +968,13 @@ function generateClothingAdvice(currentWeather) {
   return { advice, items };
 }
 
-// 天気に応じた提案
-function getWeatherSuggestions(currentWeather) {
-  const { weather, temperature } = currentWeather;
-  const suggestions = [];
-  
-  switch (weather?.toLowerCase()) {
-    case 'sunny':
-      if (temperature > 25) {
-        suggestions.push('カフェでアイスドリンク', '日陰で休憩', '室内で涼む');
-      } else {
-        suggestions.push('公園でお散歩', 'ピクニック', '屋外スポーツ');
-      }
-      break;
-    case 'rainy':
-      suggestions.push('映画鑑賞', '読書タイム', '室内カフェ', 'ゲーム');
-      break;
-    case 'cloudy':
-      suggestions.push('ショッピング', '美術館巡り', 'カフェ巡り');
-      break;
-    case 'snow':
-      suggestions.push('雪景色を楽しむ', '温かい飲み物', '室内で過ごす');
-      break;
-  }
-  
-  return suggestions;
-}
 
-/**
- * ユーザーの設定と天気情報に基づいてパーソナライズされた活動提案を生成する
- * @param {Object} currentWeather - 現在の天気データ
- * @param {Object} userPreferences - ユーザーの活動設定（outdoor/indoor/etc）
- * @returns {Object} 提案される活動のリスト（main, options, reason）
- */
-function generatePersonalizedActivitySuggestions(currentWeather, userPreferences) {
-  const { weather, temperature } = currentWeather;
-  const isOutdoorLover = userPreferences?.activities === 'outdoor';
-  const isIndoorLover = userPreferences?.activities === 'indoor';
-  
-  let main = '';
-  let options = [];
-  
-  // 天気と個人設定を組み合わせた提案
-  if (weather?.toLowerCase() === 'sunny') {
-    if (isIndoorLover) {
-      main = '晴れてますが、室内で快適に過ごす';
-      options = ['美術館巡り', 'ショッピングモール', 'カフェでまったり', '映画鑑賞'];
-    } else {
-      main = '晴天なのでアウトドア活動';
-      options = temperature > 25 ? 
-        ['水族館', '涼しいカフェ', 'エアコンの効いた施設'] : 
-        ['公園散歩', 'ピクニック', '屋外スポーツ', 'サイクリング'];
-    }
-  } else if (weather?.toLowerCase() === 'rainy') {
-    main = '雨なので室内でゆっくり';
-    options = isOutdoorLover ? 
-      ['室内クライミング', '温泉', 'スポーツジム'] :
-      ['読書', '映画', 'ゲーム', 'お料理', 'オンラインショッピング'];
-  } else {
-    main = '今日は何でもできそうな天気';
-    options = ['カフェ巡り', 'ウィンドウショッピング', '友達と会う', '新しい場所探索'];
-  }
-  
-  return { main, options };
-}
 
-// パーソナライズされた一般会話レスポンス
-function generatePersonalizedResponse(message, userName, userPreferences) {
-  const stylePreference = userPreferences?.style || 'casual';
-  const isWeatherSensitive = userPreferences?.weatherSensitivity === 'high';
-  
-  let responses = [
-    `${userName}さん、興味深いお話ですね！もう少し詳しく教えてください`,
-    `${userName}さんとお話ししていると、いつも新しい発見があります！`,
-    `それは面白いですね、${userName}さん！私も同じように感じることがあります`
-  ];
-  
-  // スタイル設定による個性化
-  if (stylePreference === 'elegant') {
-    responses.push(`${userName}さんの上品な感性、とても素敵だと思います✨`);
-  } else if (stylePreference === 'sporty') {
-    responses.push(`${userName}さんのアクティブな感じ、エネルギーをもらえます！`);
-  } else if (stylePreference === 'cute') {
-    responses.push(`${userName}さん、とってもキュートですね💕`);
-  }
-  
-  // 天気敏感性による配慮
-  if (isWeatherSensitive) {
-    responses.push(`${userName}さんは天気の変化に敏感でいらっしゃるので、体調にはお気をつけくださいね`);
-  }
-  
-  return responses[Math.floor(Math.random() * responses.length)];
-}
 
-// 高度な自然言語処理関数群
 
-/**
- * テキストの感情分析を行う（ローカル実装）
- * @param {string} text - 分析対象のテキスト
- * @returns {string} 感情の種類（positive, negative, neutral）
- */
-function analyzeSentiment(text) {
-  // Naturalライブラリの代わりに独自の感情分析を使用
-  
-  // 感情的な単語辞書（くだけた表現も含む）
-  const positiveWords = [
-    '嬉しい', '楽しい', 'ハッピー', '良い', 'いいね', '素敵', '最高', '好き', 
-    'ありがとう', 'すごい', 'やったー', 'わーい', 'うれしー', 'たのしー',
-    'いい感じ', 'めっちゃ', 'マジ', '神', 'やばい', 'かっこいい', 'かわいい'
-  ];
-  
-  const negativeWords = [
-    '悲しい', 'つらい', '疲れた', '嫌', '辛い', '困った', '大変', '心配', '不安', '寂しい',
-    'つかれた', 'つかれ', '疲れ', 'だるい', 'しんどい', 'きつい', 'やばい', 
-    'むかつく', 'いやだ', 'めんどい', 'めんどくさい', 'やだ', 'つまんない',
-    'ダメ', 'だめ', '最悪', 'ひどい', 'むり', '無理', 'やってられない'
-  ];
-  
-  const neutralWords = ['普通', 'まあまあ', 'そこそこ', 'いつも通り', 'ふつう'];
-  
-  // 文末の感情表現パターンも考慮
-  const emotionalEndings = {
-    negative: ['なー', 'なあ', 'よー', 'よお', 'はあ', '...', '。。。', '、、、'],
-    positive: ['♪', '！', '!', '✨', '😊', '😄', '🎉']
-  };
-  
-  const words = text.split(/\s+/);
-  let score = 0;
-  
-  // 単語による感情判定
-  words.forEach(word => {
-    if (positiveWords.some(pw => word.includes(pw))) score += 1;
-    if (negativeWords.some(nw => word.includes(nw))) score -= 1;
-  });
-  
-  // 文末表現による感情判定
-  emotionalEndings.negative.forEach(ending => {
-    if (text.endsWith(ending)) score -= 0.5;
-  });
-  emotionalEndings.positive.forEach(ending => {
-    if (text.includes(ending)) score += 0.5;
-  });
-  
-  // 疲労系の特別判定（「なー」「よー」などが付くと更にネガティブ）
-  if ((text.includes('疲れ') || text.includes('つかれ') || text.includes('だるい')) && 
-      (text.includes('なー') || text.includes('よー') || text.includes('はあ'))) {
-    score -= 1;
-  }
-  
-  // 強い否定表現の検出
-  const strongNegativePatterns = [
-    /最悪|ひどい|むかつく|イライラ/,
-    /もう.*だめ|限界|無理.*す[ぎぎ]/,
-    /やってられない|うんざり/
-  ];
-  
-  strongNegativePatterns.forEach(pattern => {
-    if (pattern.test(text)) score -= 1.5;
-  });
-  
-  if (score > 0) return 'positive';
-  if (score < 0) return 'negative';
-  return 'neutral';
-}
+
+
+
 
 // 意図分析（改良版）
 /**
@@ -1450,19 +1006,40 @@ function analyzeIntent(doc, message) {
     return 'fatigue_support';
   }
   
-  // 天気・服装関連（高優先）
-  const weatherKeywords = [
-    '天気', '気温', '寒い', '暑い', '涼しい', '暖かい', 
-    '雨', '晴れ', '曇り', '雪', '風', '湿度', '気候'
+  // 天気情報問い合わせ（高優先）
+  const weatherInquiryPatterns = [
+    /天気.*[？?]/, /今日.*天気/, /天気.*どう/, /天気.*教えて/, 
+    /天気.*知りたい/, /天気.*分かる/, /外.*天気/, /天候.*どう/
   ];
+  const weatherInquiryKeywords = ['天気は', '天気教えて', '天気どう', '今日の天気'];
+  
+  if (weatherInquiryPatterns.some(pattern => pattern.test(message)) ||
+      weatherInquiryKeywords.some(keyword => message.includes(keyword))) {
+    return 'weather_inquiry';
+  }
+  
+  // 服装相談（天気情報問い合わせの次の優先度）
   const clothingKeywords = [
     '服', '着る', '洋服', 'ファッション', 'コーデ', 
     '何着る', '服装', '何を着', '着れば', '服選び'
   ];
+  const clothingPatterns = [
+    /何.*着/, /服.*選/, /コーデ/, /ファッション/, /着こなし/
+  ];
   
-  if (weatherKeywords.some(keyword => message.includes(keyword)) ||
-      clothingKeywords.some(keyword => message.includes(keyword))) {
+  if (clothingKeywords.some(keyword => message.includes(keyword)) ||
+      clothingPatterns.some(pattern => pattern.test(message))) {
     return 'weather_clothing';
+  }
+  
+  // 一般的な天気関連（温度や状況について）
+  const generalWeatherKeywords = [
+    '気温', '寒い', '暑い', '涼しい', '暖かい', 
+    '雨', '晴れ', '曇り', '雪', '風', '湿度', '気候'
+  ];
+  
+  if (generalWeatherKeywords.some(keyword => message.includes(keyword))) {
+    return 'weather_general';
   }
   
   // 挨拶の検出
@@ -1528,52 +1105,9 @@ function analyzeIntent(doc, message) {
   return 'general';
 }
 
-// エンティティ抽出
-function extractEntities(doc) {
-  const entities = {
-    places: [],
-    people: [],
-    organizations: [],
-    dates: [],
-    times: [],
-    numbers: []
-  };
-  
-  // 基本的なエンティティ抽出（簡易版）
-  try {
-    if (doc.places) entities.places = doc.places().out('array');
-    if (doc.people) entities.people = doc.people().out('array');
-    if (doc.organizations) entities.organizations = doc.organizations().out('array');
-    if (doc.values) entities.numbers = doc.values().out('array');
-  } catch (error) {
-    // エラーが発生した場合は空配列を返す
-    console.log('Entity extraction error:', error.message);
-  }
-  
-  return entities;
-}
 
-// 音声入力対応のテキスト正規化
-function normalizeForSpeech(text) {
-  // 音声認識でよくある誤変換を修正
-  const corrections = {
-    '気候': '天気',
-    '服そう': '服装',
-    '何きる': '何着る',
-    'つかれた': '疲れた',
-    'うれしい': '嬉しい',
-    'かなしい': '悲しい'
-  };
-  
-  let normalized = text;
-  Object.entries(corrections).forEach(([wrong, correct]) => {
-    normalized = normalized.replace(new RegExp(wrong, 'g'), correct);
-  });
-  
-  return normalized;
-}
 
-// コンテキスト理解を強化した応答生成
+// ユーザープロフィール設定API
 /**
  * インテント、感情、エンティティを基に高度な応答を生成する
  * @param {string} userMessage - ユーザーの入力メッセージ
@@ -1599,14 +1133,35 @@ function generateAdvancedResponse(userMessage, intent, sentiment, entities, user
       response = generateContextualGreeting(userName, weatherData, sentiment);
       break;
       
+    case 'weather_inquiry':
+      if (weatherData && weatherData.current) {
+        response = generateWeatherResponse(weatherData.current, userName);
+        suggestions = getWeatherSuggestions(weatherData.current);
+        mood = weatherData.current.weather === 'sunny' ? 'happy' : 'friendly';
+      } else {
+        response = `${userName}さん、天気情報をお調べしますね！現在の位置情報があれば詳しい天気をお教えできますが、天気データの取得ボタンを押していただけますか？🌤️`;
+        suggestions = ['天気データを取得', '位置情報を許可', '手動で地域を入力'];
+      }
+      break;
+      
     case 'weather_clothing':
       if (weatherData && weatherData.current) {
         weatherAdvice = generateClothingAdvice(weatherData.current);
         response = generateWeatherClothingResponse(userName, weatherData.current, weatherAdvice, sentiment);
         suggestions = weatherAdvice.items;
       } else {
-        // 天気データがない場合でも天気に関する一般的な応答
-        response = generateWeatherResponseWithoutData(userName, userMessage, sentiment);
+        response = `${userName}さん、服装アドバイスをしたいのですが、今日の天気情報があるともっと具体的にお話しできます！先に天気データを取得してみてくださいね👔`;
+        suggestions = ['天気データを取得', '一般的な服装のコツ'];
+      }
+      break;
+      
+    case 'weather_general':
+      if (weatherData && weatherData.current) {
+        response = generateWeatherResponse(weatherData.current, userName);
+        suggestions = getWeatherSuggestions(weatherData.current);
+      } else {
+        response = `${userName}さん、お天気のことですね！☁️ 天気によって一日の気分も変わりますよね。現在の天気情報があれば、詳しくお教えできますよ`;
+        suggestions = ['天気データを取得', '天気について相談'];
       }
       break;
       
