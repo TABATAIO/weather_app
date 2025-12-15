@@ -1,59 +1,84 @@
 # 🌤️ Weather Mascot App
 
-天気マスコットアプリケーション - AIチャットと天気情報を組み合わせた対話型システム
+天気マスコットアプリケーション - 高度AIチャット機能を備えた対話型天気システム
 
 ## 📖 プロジェクト概要
 
-このプロジェクトは、天気情報とAIチャットを組み合わせた革新的なアプリケーションです。ユーザーの疲労度や感情を理解し、個人に最適化された天気情報と提案を提供します。
+このプロジェクトは、最新のGemma-3-1b-it AIモデルを活用した高度なチャット機能と、正確な天気情報を組み合わせた革新的なアプリケーションです。ユーザーの感情や疲労度を理解し、パーソナライズされた天気情報と実用的な提案を提供します。
 
-### 🎯 主な機能
+## ✨ 最新機能 (v2.0)
 
-- **AIチャット**: 自然言語処理による対話システム
-- **天気情報**: Weathernews API連携による正確な天気データ
-- **感情分析**: ユーザーの感情や疲労度を分析
-- **個人化**: ユーザープロファイルによるカスタマイズ
-- **管理システム**: Laravel製の包括的な管理ダッシュボード
+### 🤖 高度AIチャット
+- **Gemma-3-1b-it**: Google製の高効率AIモデル搭載
+- **感情解析**: ユーザーの気持ちを理解し共感的な応答
+- **疲労サポート**: 疲れた時の適切なアドバイスとケア
+- **会話履歴**: SQLiteによる永続的な会話記録
+- **ローカルフォールバック**: AI接続時の自然言語処理
 
-## 🏗️ アーキテクチャ
+### 🏗️ モジュラーアーキテクチャ
+- **完全モジュール化**: 5つの専門モジュールによる保守性向上
+- **コード最適化**: server.js 2042行 → 1672行 (370行削減)
+- **エラーハンドリング**: 堅牢なフォールバックシステム
 
 ```
 weather_app/
-├── Backend/           # バックエンドシステム
-│   ├── server.js     # Node.js API サーバー
-│   ├── Laravel/      # Laravel 管理システム
-│   └── weather_app.db # SQLite データベース
-├── Front/            # フロントエンド (予定)
-└── Prototype/        # プロトタイプ・実験
+├── Backend/                    # バックエンドシステム
+│   ├── server.js              # メインAPIサーバー (1,672行)
+│   ├── modules/               # 専門モジュール (1,886行)
+│   │   ├── chatService.js     # AIチャット & 会話履歴管理
+│   │   ├── mascotService.js   # マスコット状態 & リアクション
+│   │   ├── weatherService.js  # 天気データ処理
+│   │   ├── nlpService.js      # 自然言語解析
+│   │   └── responseGenerator.js # 高度応答生成
+│   ├── Laravel/               # 管理システム
+│   └── weather_app.db         # SQLite データベース
+├── Front/                     # フロントエンド (開発中)
+└── Prototype/                 # プロトタイプ・実験
 ```
 
-### 🔧 技術スタック
+## 🔧 技術スタック
 
-#### バックエンド
-- **Node.js + Express.js**: RESTful API
-- **SQLite**: データベース
+### 🚀 AI & NLP
+- **Gemma-3-1b-it**: 最新Google AIモデル (コスト効率的)
 - **Natural.js**: 自然言語処理
-- **Compromise.js**: 高度な言語分析
+- **Compromise.js**: 高度な言語分析・構文解析
+- **感情分析**: リアルタイム感情認識
 
-#### 管理システム
-- **Laravel 12.x**: 管理ダッシュボード
-- **Tailwind CSS**: スタイリング
+### ⚡ バックエンド
+- **Node.js + Express.js**: 高性能RESTful API
+- **SQLite**: 軽量データベース (会話履歴・ユーザープロファイル)
+- **モジュラー設計**: 保守性・拡張性重視
+
+### 🎨 管理システム
+- **Laravel 12.x**: 現代的な管理ダッシュボード
+- **Tailwind CSS**: レスポンシブUI
 - **Chart.js**: データ可視化
 
-#### 外部API
-- **Weathernews API**: リアルタイム天気データ
+### 🌐 外部API
+- **Weathernews API**: 1km精度のリアルタイム天気データ
+- **Google Gemini API**: 最新AI言語モデル
 
-## 🚀 セットアップ & 起動
+## 🚀 クイックスタート
 
-### 1. バックエンドAPI (Node.js)
+### 1. 環境変数設定
+
+```bash
+cd Backend
+cp .env.example .env
+# GEMINI_API_KEY=your_api_key_here を設定
+# WEATHERNEWS_API_KEY=your_api_key_here を設定
+```
+
+### 2. バックエンドAPI起動
 
 ```bash
 cd Backend
 npm install
-node server.js
-# → http://localhost:3000
+npm run dev  # または node server.js
+# → http://localhost:3001
 ```
 
-### 2. 管理システム (Laravel)
+### 3. 管理システム起動 (オプション)
 
 ```bash
 cd Backend/Laravel/weather-admin
@@ -62,88 +87,189 @@ php artisan serve --port=8080
 # → http://localhost:8080
 ```
 
+## 🎯 API エンドポイント
+
+### 💬 チャット機能
+- `POST /api/mascot/chat` - AIチャット (Gemma-3-1b-it)
+- `GET /api/chat/history/:userId` - 会話履歴取得
+
+### 🌤️ 天気情報
+- `GET /api/weather/coordinates` - 座標指定天気取得
+- `GET /api/weather/city/:cityName` - 都市名天気取得
+
+### 🎭 マスコット機能
+- `POST /api/mascot/update` - マスコット状態更新
+- `GET /api/mascot/:id` - マスコット情報取得
+- `GET /api/icon/:weatherCode` - 天気アイコン取得
+
 ## 📊 データベース構造
 
-### ユーザープロファイル (`user_profiles`)
-- `user_id`: ユーザー識別子
-- `user_name`: ユーザー名
-- `temperature_preference`: 温度設定
-- `activity_preference`: 活動設定
-- `style_preference`: 会話スタイル
-- `weather_sensitivity`: 天気感度
-- `favorite_activities`: 好みの活動
+### 🗣️ チャット履歴 (`chat_history`)
+```sql
+- id: INTEGER PRIMARY KEY
+- user_id: TEXT (ユーザー識別子)
+- user_message: TEXT (ユーザーメッセージ)
+- bot_response: TEXT (AI応答)
+- intent: TEXT (意図分析: fatigue_support, weather_inquiry, etc.)
+- sentiment: TEXT (感情分析: positive, negative, neutral)
+- weather_data: TEXT (関連天気データ)
+- created_at: DATETIME
+```
 
-### チャット履歴 (`chat_history`)
-- `user_id`: ユーザー識別子
-- `user_message`: ユーザーメッセージ
-- `bot_response`: AI応答
-- `intent`: インテント分析結果
-- `sentiment`: 感情分析結果
-- `weather_data`: 天気データ
+### 👤 ユーザープロファイル (`user_profiles`)
+```sql
+- user_id: TEXT PRIMARY KEY
+- user_name: TEXT
+- temperature_preference: TEXT (温度設定)
+- activity_preference: TEXT (活動設定) 
+- style_preference: TEXT (会話スタイル)
+- weather_sensitivity: TEXT (天気感度)
+- favorite_activities: TEXT (好みの活動)
+```
+
+### 🌦️ 天気ログ (`weather_logs`)
+```sql
+- id: INTEGER PRIMARY KEY
+- location: TEXT (地域情報)
+- weather_data: TEXT (天気データJSON)
+- created_at: DATETIME
+```
 
 ## 🌟 主要機能詳細
 
-### AIチャットシステム
-- **自然言語処理**: 日本語対応の高度な言語理解
-- **疲労検出**: 「疲れたなー」などのカジュアル表現認識
-- **コンテキスト保持**: 会話の文脈を理解
-- **個人化応答**: ユーザー設定に基づく最適化
+### 🤖 AIチャットシステム
+- **Gemma-3-1b-it統合**: Google製最新AIモデル
+- **感情解析**: ポジティブ/ネガティブ/中性の認識
+- **疲労サポート**: 「疲れた」「だるい」などの表現に共感的応答
+- **コンテキスト理解**: 会話の流れを把握した対話
+- **パーソナライゼーション**: ユーザー設定に基づく最適化
 
-### 天気情報連携
-- **Weathernews API**: プロフェッショナル気象データ
-- **地点別予報**: 詳細な地域天気情報
-- **活動提案**: 天気に応じた行動アドバイス
+### 🌦️ 天気情報連携
+- **Weathernews API**: 1km精度のプロフェッショナル気象データ
+- **リアルタイム予報**: 短期・中期予報の詳細情報
+- **活動提案**: 天気に応じた服装・行動アドバイス
+- **地域対応**: 全国の詳細な地点別天気情報
 
-### 管理ダッシュボード
-- **ユーザー管理**: プロファイル編集・削除
-- **チャット分析**: 感情・インテント統計
-- **データ可視化**: グラフ・チャートによる洞察
-- **CSVエクスポート**: データのダウンロード
+### 📊 管理ダッシュボード (Laravel)
+- **ユーザー管理**: プロファイル編集・削除・検索
+- **チャット分析**: 感情・インテント統計の可視化
+- **天気データ管理**: 履歴・ログの確認・分析
+- **CSVエクスポート**: 全データの一括ダウンロード
 
-## 🔗 API エンドポイント
+## 💡 使用例
 
-### ユーザー管理
-- `POST /api/users/profile` - プロファイル作成・更新
-- `GET /api/users/profile/:userId` - プロファイル取得
+### チャット例
+```bash
+curl -X POST http://localhost:3001/api/mascot/chat \
+  -H "Content-Type: application/json" \
+  -d '{
+    "message": "今日疲れた...",
+    "userName": "田中さん",
+    "userId": "user123"
+  }'
 
-### チャット
-- `POST /api/chat` - チャット送信
-- `GET /api/chat/history/:userId` - 履歴取得
+# 応答例:
+{
+  "response": "田中さん、お疲れ様でした！今日も頑張りましたね✨ 温かいお茶でも飲んで、ゆっくり休んでくださいね。",
+  "mood": "caring",
+  "suggestions": ["温かい飲み物", "軽いストレッチ", "好きな音楽"]
+}
+```
 
-### 天気情報
-- `GET /api/weather/:location` - 天気取得
+### 天気取得例
+```bash
+curl "http://localhost:3001/api/weather/city/東京"
+
+# 応答: 詳細な天気データ + マスコット情報
+```
 
 ## 📈 開発ロードマップ
 
-### Phase 1: ✅ 完了
-- [x] Node.js APIサーバー構築
-- [x] SQLiteデータベース統合
-- [x] 自然言語処理実装
-- [x] Weathernews API連携
-- [x] Laravel管理システム
-- [x] 疲労度検出機能
+### ✅ Phase 1: AIチャット基盤 (完了)
+- [x] Gemma-3-1b-it AI統合
+- [x] モジュラー設計実装
+- [x] 会話履歴システム
+- [x] 感情・インテント分析
+- [x] SQLiteデータベース構築
 
-### Phase 2: 🚧 開発中
-- [ ] フロントエンドUI構築
-- [ ] 音声入力対応
-- [ ] リアルタイム通知
+### 🚧 Phase 2: フロントエンド開発 (進行中)
+- [ ] React/Vue.js UI実装
+- [ ] リアルタイムチャット画面
+- [ ] マスコットアニメーション
+- [ ] レスポンシブデザイン
 
-### Phase 3: 📋 計画中
-- [ ] 機械学習による予測
-- [ ] マルチユーザー対応
-- [ ] モバイルアプリ
+### 🎯 Phase 3: 高度機能 (計画中)
+- [ ] 音声対話機能
+- [ ] プッシュ通知システム  
+- [ ] 多言語対応
+- [ ] マシンラーニング予測
 
-## 🤝 貢献
+## 🛠️ 開発環境
+
+### 必要な環境
+- **Node.js**: v18.0.0+
+- **npm**: v8.0.0+
+- **PHP**: v8.1+ (Laravel管理システム用)
+- **Composer**: v2.0+ (Laravel依存関係)
+
+### 推奨開発ツール
+- **VSCode**: エディタ
+- **Postman**: API testing
+- **SQLite Browser**: データベース管理
+
+## 🔧 トラブルシューティング
+
+### よくある問題
+
+**Q: Gemini APIエラーが発生する**
+```bash
+# .envファイルでAPIキー確認
+GEMINI_API_KEY=your_actual_api_key
+
+# APIキー取得: https://aistudio.google.com/app/apikey
+```
+
+**Q: 天気データが取得できない**
+```bash
+# Weathernews APIキー設定確認
+WEATHERNEWS_API_KEY=your_weathernews_key
+```
+
+**Q: データベースエラー**
+```bash
+# データベースファイル権限確認
+chmod 664 Backend/weather_app.db
+```
+
+## 🤝 貢献・開発参加
 
 プロジェクトへの貢献を歓迎します！
 
+### 貢献方法
 1. リポジトリをフォーク
 2. フィーチャーブランチ作成 (`git checkout -b feature/amazing-feature`)
 3. 変更をコミット (`git commit -m 'Add amazing feature'`)
-4. ブランチにプッシュ (`git push origin feature/amazing-feature`)
+4. ブランチにプッシュ (`git push origin feature/amazing-feature`)  
 5. プルリクエスト作成
 
+### 開発ガイドライン
+- **コードスタイル**: ESLint + Prettier準拠
+- **コミットメッセージ**: [Conventional Commits](https://conventionalcommits.org/)形式
+- **テスト**: 新機能には必ずテストを追加
+
+## 📞 サポート・連絡先
+
+- **Issue報告**: [GitHub Issues](https://github.com/your-repo/issues)
+- **機能要望**: [Feature Requests](https://github.com/your-repo/issues)
+- **質問・議論**: [Discussions](https://github.com/your-repo/discussions)
+
 ## 📄 ライセンス
+
+このプロジェクトはMITライセンスの下で公開されています。詳細は [LICENSE](LICENSE) ファイルを参照してください。
+
+---
+
+**🌟 Star this repo if you find it helpful!**
 
 このプロジェクトはMITライセンスの下で公開されています。
 
