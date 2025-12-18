@@ -144,7 +144,9 @@ function getCityCoordinates(cityName) {
 async function fetchWeatherData(lat, lon) {
   const apiUrl = `https://wxtech.weathernews.com/wxdata/1km_v2.cgi?zoom=12&layout=json&lat=${lat}&lon=${lon}`;
   
-  console.log(`🌤️ Weathernews API呼び出し: ${apiUrl}`);
+  console.log('\n🌤️ ===== 天気API デバッグ情報 =====');
+  console.log('📤 リクエストURL:', apiUrl);
+  console.log(`🌍 座標: 緯度${lat}, 経度${lon}`);
   
   const response = await axios.get(apiUrl, {
     timeout: 10000,
@@ -152,9 +154,16 @@ async function fetchWeatherData(lat, lon) {
       'User-Agent': 'WeatherApp/1.0'
     }
   });
+
+  console.log('📥 生APIレスポンス:');
+  console.log('━'.repeat(60));
+  console.log(JSON.stringify(response.data, null, 2));
+  console.log('━'.repeat(60));
   
   const wxdata = response.data;
   console.log('✅ Weathernews APIレスポンス取得完了');
+  
+  // ... 既存の処理を続行 ...
   
   // レスポンス構造の確認
   if (!wxdata || !wxdata.srf || !Array.isArray(wxdata.srf)) {
