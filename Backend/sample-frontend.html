@@ -559,7 +559,7 @@
                 // 天気データとマスコット状態を並行取得
                 const [weatherData, mascotState] = await Promise.allSettled([
                     getWeatherByCity(city),
-                    currentWeatherData ? updateMascotState(currentWeatherData) : null
+                    currentWeatherData ? updateMascotState(currentWeatherData) : Promise.resolve(null)
                 ]);
                 
                 // 天気データの処理
