@@ -1,3 +1,11 @@
+<!-- ----------------------------------------------------------------------------
+ライブサーバーでの起動時注意事項
+起動すると自動でブラウザが開きますが、仕様上何度もリロードが起こってしまうため、
+１、まず一回起動したのちサーバーを閉じてください。（この時自動で開いたブラウザのタブは残しておいてください）
+２、再度ライブサーバーを起動し（この時自動で開いた新たなタブは閉じてください）
+３、最初に開いたタブで操作してください。
+---------------------------------------------------------------------------- -->
+
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -297,6 +305,9 @@
         // 現在のデータを保持
         let currentWeatherData = null;
         let currentMascotState = null;
+        let isLoading = false;
+        let loadingTimeout = null;
+        let isInitialized = false;
         
         // API関数群（frontend-sample.jsから）
         async function getWeatherByCity(city) {
@@ -464,6 +475,10 @@
         }
         
         function showError(message) {
+            // 既存のエラーメッセージを削除
+            const existingErrors = document.querySelectorAll('.error');
+            existingErrors.forEach(error => error.remove());
+            
             const errorDiv = document.createElement('div');
             errorDiv.className = 'error';
             errorDiv.textContent = message;
@@ -473,55 +488,145 @@
                 errorDiv.remove();
             }, 5000);
         }
+
+        // ローディング状態の表示/非表示
+        function showLoadingState() {
+            const weatherName = document.getElementById('weather-name');
+            const mascotMood = document.getElementById('mascot-mood');
+            const weatherReaction = document.getElementById('weather-reaction');
+            
+            if (weatherName) weatherName.textContent = '天気情報を取得中...';
+            if (mascotMood) mascotMood.textContent = '気分: 読み込み中...';
+            if (weatherReaction) weatherReaction.textContent = 'マスコットの反応を取得中...';
+        }
+
+        function hideLoadingState() {
+            // ローディング状態の解除（データが正常に表示されていれば何もしない）
+        }
         
-        // 都市変更
+        // 都市変更（デバウンス付き）
         async function changeCity() {
+            if (isLoading) {
+                console.log('⏳ 既に読み込み中です...');
+                return;
+            }
+
             const citySelect = document.getElementById('city-select');
             const selectedCity = citySelect.value;
             
-            await loadWeatherData(selectedCity);
+            // 現在の都市と同じ場合はスキップ
+            if (currentWeatherData && currentWeatherData.location === selectedCity) {
+                console.log(`📍 ${selectedCity}は既に選択されています`);
+                return;
+            }
+            
+            console.log(`🔄 都市変更: ${selectedCity}`);
+            
+            // 前回のタイムアウトをクリア
+            if (loadingTimeout) {
+                clearTimeout(loadingTimeout);
+            }
+            
+            // 500ms後に実行（デバウンス - 少し長めに）
+            loadingTimeout = setTimeout(() => {
+                loadWeatherData(selectedCity);
+            }, 500);
         }
         
-        // 天気データの読み込み
+        // 天気データの読み込み（並行処理 + ローディング状態管理）
         async function loadWeatherData(city = 'tokyo') {
+            if (isLoading) {
+                console.log('⏳ 既に読み込み中です、スキップします');
+                return;
+            }
+
+            // 同一都市の重複リクエストをチェック
+            if (currentWeatherData && currentWeatherData.location === city) {
+                console.log(`📍 ${city}のデータは既に取得済みです`);
+                return;
+            }
+
+            isLoading = true;
+            const requestId = Date.now();
+            console.log(`🔄 [${requestId}] ${city}の天気データ取得開始`);
+            
             try {
                 console.log(`🌤️ ${city}の天気データを取得中...`);
                 
-                // 1. 天気データを取得
-                const weatherData = await getWeatherByCity(city);
-                if (!weatherData) return;
+                // ローディング表示
+                showLoadingState();
                 
-                currentWeatherData = weatherData;
-                displayWeatherData(weatherData);
+                // 天気データとマスコット状態を並行取得
+                const [weatherData, mascotState] = await Promise.allSettled([
+                    getWeatherByCity(city),
+                    currentWeatherData ? updateMascotState(currentWeatherData) : null
+                ]);
                 
-                // 2. マスコット状態を更新
-                const mascotState = await updateMascotState(weatherData);
-                if (!mascotState) return;
+                // 天気データの処理
+                if (weatherData.status === 'fulfilled' && weatherData.value) {
+                    currentWeatherData = weatherData.value;
+                    displayWeatherData(weatherData.value);
+                    
+                    // マスコット状態が取得できなかった場合、天気データで更新
+                    if (!mascotState.value && weatherData.value) {
+                        const newMascotState = await updateMascotState(weatherData.value);
+                        if (newMascotState) {
+                            currentMascotState = newMascotState;
+                            displayMascotState(newMascotState);
+                        }
+                    }
+                } else {
+                    console.error('天気データの取得に失敗:', weatherData.reason);
+                    showError('天気データの取得に失敗しました');
+                    return;
+                }
                 
-                currentMascotState = mascotState;
-                displayMascotState(mascotState);
+                // マスコット状態の処理
+                if (mascotState.status === 'fulfilled' && mascotState.value) {
+                    currentMascotState = mascotState.value;
+                    displayMascotState(mascotState.value);
+                }
                 
-                console.log('✅ 天気データとマスコット状態の更新完了');
+                console.log(`✅ [${requestId}] データ更新完了`);
+                hideLoadingState();
                 
             } catch (error) {
-                console.error('❌ データ取得エラー:', error);
+                console.error(`❌ [${requestId}] データ取得エラー:`, error);
                 showError('データの取得中にエラーが発生しました');
+                hideLoadingState();
+            } finally {
+                isLoading = false;
+                console.log(`🔚 [${requestId}] 処理終了`);
             }
         }
         
-        // チャット機能
+        // チャット機能（送信中の重複防止付き）
+        let isSendingChat = false;
+        
         async function sendChatMessage() {
+            if (isSendingChat) {
+                console.log('⏳ メッセージ送信中です...');
+                return;
+            }
+
             const chatInput = document.getElementById('chat-input');
             const chatResponse = document.getElementById('chat-response');
             const message = chatInput.value.trim();
             
             if (!message) return;
             
+            isSendingChat = true;
             chatResponse.innerHTML = '<div class="loading">マスコットが考えています...</div>';
             chatInput.value = '';
+            chatInput.disabled = true;
             
             try {
-                const response = await chatWithMascot(message, 'ユーザー', currentWeatherData);
+                const response = await Promise.race([
+                    chatWithMascot(message, 'ユーザー', currentWeatherData),
+                    new Promise((_, reject) => 
+                        setTimeout(() => reject(new Error('タイムアウト')), 10000)
+                    )
+                ]);
                 
                 if (response) {
                     chatResponse.innerHTML = `
@@ -537,22 +642,66 @@
                 }
             } catch (error) {
                 console.error('チャットエラー:', error);
-                chatResponse.innerHTML = '<div class="error">エラーが発生しました</div>';
+                if (error.message === 'タイムアウト') {
+                    chatResponse.innerHTML = '<div class="error">応答がタイムアウトしました。もう一度お試しください。</div>';
+                } else {
+                    chatResponse.innerHTML = '<div class="error">エラーが発生しました</div>';
+                }
+            } finally {
+                isSendingChat = false;
+                chatInput.disabled = false;
+                chatInput.focus();
             }
         }
         
-        // Enterキーでチャット送信
-        document.addEventListener('DOMContentLoaded', () => {
+        // 初期化処理（重複実行防止）
+        function initializeApp() {
+            if (isInitialized) {
+                console.log('⚠️  アプリは既に初期化済みです');
+                return;
+            }
+
+            console.log('🚀 天気マスコットアプリを初期化中...');
+            
             const chatInput = document.getElementById('chat-input');
+            const citySelect = document.getElementById('city-select');
+            
+            if (!chatInput || !citySelect) {
+                console.error('❌ 必要な要素が見つかりません');
+                return;
+            }
+            
+            // チャット入力のイベントリスナー
             chatInput.addEventListener('keypress', (e) => {
-                if (e.key === 'Enter') {
+                if (e.key === 'Enter' && !isSendingChat) {
                     sendChatMessage();
                 }
             });
             
-            // 初期データ読み込み
-            loadWeatherData();
-        });
+            // 都市選択の変更イベント（デバウンス付き）
+            citySelect.addEventListener('change', changeCity);
+            
+            isInitialized = true;
+            console.log('✅ イベントリスナーの設定完了');
+            
+            // 初期データ読み込み（一度だけ実行）
+            setTimeout(() => {
+                if (!currentWeatherData && !isLoading) {
+                    console.log('🌤️ 初期天気データを読み込み開始');
+                    loadWeatherData();
+                } else {
+                    console.log('📋 既にデータが存在または読み込み中のためスキップ');
+                }
+            }, 200);
+        }
+
+        // DOMContentLoaded + リロード対応
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initializeApp);
+        } else {
+            // 既にDOMが読み込まれている場合（ライブリロード等）
+            initializeApp();
+        }
     </script>
 </body>
 </html>
