@@ -19,8 +19,7 @@ class UserManagementController extends Controller
         // 検索機能
         if ($request->filled('search')) {
             $search = $request->search;
-            $query->where('user_name', 'like', "%{$search}%")
-                  ->orWhere('user_id', 'like', "%{$search}%");
+            $query->where('user_name', 'like', "%{$search}%")->orWhere('user_id', 'like', "%{$search}%");
         }
 
         // フィルター機能

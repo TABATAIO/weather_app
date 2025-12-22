@@ -529,7 +529,10 @@
             
             // 500ms後に実行（デバウンス - 少し長めに）
             loadingTimeout = setTimeout(() => {
-                loadWeatherData(selectedCity);
+                // 再度isLoadingをチェック（競合状態を防ぐ）
+                if (!isLoading) {
+                    loadWeatherData(selectedCity);
+                }
             }, 500);
         }
         

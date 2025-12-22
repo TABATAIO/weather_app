@@ -78,4 +78,40 @@ class AdminController extends Controller
 
         return view('admin.chat-analytics', compact('sentimentData', 'intentStats'));
     }
+
+    // マスコット設定画面表示
+    public function mascotSettings()
+    {
+        $mascot = (object) [
+            'initial_name' => 'ウェザーちゃん',
+            'character_species' => 'cloud_spirit',
+            'character_description' => '',
+            'second_form_name' => '',
+            'evolution_level_1_to_2' => 11,
+            'max_level_second_form' => 25,
+            'image_size' => 'medium',
+            'enable_animation' => true,
+            'enable_bounce' => false,
+            'color_filter' => 'none'
+        ];
+        return view('admin.mascot-settings', compact('mascot'));
+    }
+
+    // マスコットの情報更新
+    public function updateMascot(Request $request)
+    {
+        $validated = $request->validate([
+            'initial_name' => 'required|string|max:50',
+            'character_species' => 'required|in:cloud_spirit,weather_fairy,storm_guardian,sky_dragon',
+            'character_description' => 'nullable|string|max:500',
+            'second_form_name' => 'nullable|string|max:50',
+            'evolution_level_1_to_2' => 'required|integer|min:2|max:50',
+            'max_level_second_form' => 'required|integer|min:15|max:100',
+            'image_size' => 'required|in:small,medium,large',
+            'enable_animation' => 'boolean',
+            'enable_bounce' => 'boolean',
+            'color_filter' => 'required|in:none,warm,cool,sepia,grayscale'
+        ]);
+        return redirect()->route('admin.mascot.settings')->with('success', 'マスコットの設定が完了しました。');
+    }
 }
