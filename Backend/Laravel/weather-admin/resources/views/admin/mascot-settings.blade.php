@@ -15,6 +15,25 @@
         </p>
     </div>
 
+    <!-- フラッシュメッセージ -->
+    @if (session('success'))
+        <div class="mb-6 bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-lg flex items-center">
+            <i class="fas fa-check-circle text-green-600 mr-3"></i>
+            <div>
+                <strong>成功：</strong> {{ session('success') }}
+            </div>
+        </div>
+    @endif
+
+    @if (session('error'))
+        <div class="mb-6 bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg flex items-center">
+            <i class="fas fa-exclamation-circle text-red-600 mr-3"></i>
+            <div>
+                <strong>エラー：</strong> {{ session('error') }}
+            </div>
+        </div>
+    @endif
+
     <form action="{{ route('admin.mascot.update') }}" method="POST" class="space-y-8">
         @csrf
         @method('PUT')
@@ -83,11 +102,11 @@
             </div>
         </div>
 
-        <!-- 進化ルート設定（第一・第二進化） -->
+        <!-- 進化ルート設定（第一・第二・第三進化） -->
         <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
             <h2 class="text-xl font-semibold text-gray-900 mb-4 flex items-center">
                 <i class="fas fa-arrow-up text-purple-600 mr-2"></i>
-                進化ルート設定（共通）
+                進化ルート設定（共通・分岐）
             </h2>
             
             <!-- 進化ステージ表示 -->
@@ -136,55 +155,182 @@
                     @enderror
                 </div>
 
-                <!-- 第三形態以降（未設定） -->
-                <div class="text-center p-4 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
+                <!-- 第三形態以降（分岐有り） -->
+                <div class="text-center p-4 bg-purple-50 rounded-lg border-2 border-purple-200">
                     <div class="mb-4 flex justify-center">
-                        <div class="w-20 h-20 bg-gray-200 rounded-lg flex items-center justify-center text-4xl text-gray-400">
-                            ❓
+                        <div class="w-20 h-20 bg-purple-100 rounded-lg flex items-center justify-center text-2xl">
+                            🌟
                         </div>
                     </div>
-                    <h3 class="font-semibold text-gray-500">第三形態以降</h3>
-                    <p class="text-sm text-gray-500 mt-1">成長システム後に設定</p>
+                    <h3 class="font-semibold text-gray-900">第三形態（分岐）</h3>
+                    <p class="text-sm text-gray-600 mt-1">性格によって２つのルートに分岐</p>
                     <div class="mt-2">
-                        <span class="px-2 py-1 bg-gray-100 text-gray-600 rounded-full text-xs">
-                            未定
+                        <span class="px-2 py-1 bg-purple-100 text-purple-800 rounded-full text-xs">
+                            レベル 26以上
                         </span>
                     </div>
                 </div>
             </div>
 
-            <!-- 進化条件設定 -->
-            <div class="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                    <label for="evolution_level_1_to_2" class="block text-sm font-medium text-gray-700 mb-2">
-                        第一→第二進化レベル
-                    </label>
-                    <input type="number" 
-                           id="evolution_level_1_to_2" 
-                           name="evolution_level_1_to_2" 
-                           value="{{ old('evolution_level_1_to_2', $mascot->evolution_level_1_to_2 ?? 11) }}"
-                           min="2" 
-                           max="50"
-                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                    @error('evolution_level_1_to_2')
-                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                    @enderror
-                </div>
+            <!-- 第三形態分岐設定 -->
+            <div class="mt-8">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                    <i class="fas fa-code-branch text-purple-600 mr-2"></i>
+                    第三形態分岐設定（性格分岐）
+                </h3>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- 進化タイプ１（活発・エネルギッシュ） -->
+                    <div class="bg-gradient-to-br from-orange-50 to-red-50 rounded-lg p-6 border-2 border-orange-200">
+                        <div class="flex items-center mb-4">
+                            <div class="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center text-white font-bold mr-3">
+                                01
+                            </div>
+                            <h4 class="text-lg font-semibold text-gray-900">活発タイプ</h4>
+                        </div>
+                        
+                        <div class="space-y-4">
+                            <!-- 第三形態名前（活発） -->
+                            <div>
+                                <label for="third_form_active_name" class="block text-sm font-medium text-gray-700 mb-2">
+                                    活発系第三形態名
+                                </label>
+                                <input type="text" 
+                                       id="third_form_active_name" 
+                                       name="third_form_active_name" 
+                                       value="{{ old('third_form_active_name', $mascot->third_form_active_name ?? '') }}"
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                                       placeholder="例: サンダーウェザー">
+                                @error('third_form_active_name')
+                                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                                @enderror
+                            </div>
+                            
+                            <!-- プレビュー画像エリア -->
+                            <div class="text-center">
+                                <div class="mb-2">
+                                    <img src="{{ asset('images/character03_active.jpg') }}" 
+                                         alt="活発系第三形態" 
+                                         class="w-16 h-16 object-contain mx-auto rounded-lg bg-white p-2 shadow-sm"
+                                         id="character3-active-image">
+                                </div>
+                                <p class="text-xs text-gray-600">エネルギッシュな性格</p>
+                            </div>
+                        </div>
+                    </div>
 
-                <div>
-                    <label for="max_level_second_form" class="block text-sm font-medium text-gray-700 mb-2">
-                        第二形態最大レベル
-                    </label>
-                    <input type="number" 
-                           id="max_level_second_form" 
-                           name="max_level_second_form" 
-                           value="{{ old('max_level_second_form', $mascot->max_level_second_form ?? 25) }}"
-                           min="15" 
-                           max="100"
-                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                    @error('max_level_second_form')
-                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                    @enderror
+                    <!-- 進化タイプ２（穏やか・平和的） -->
+                    <div class="bg-gradient-to-br from-blue-50 to-green-50 rounded-lg p-6 border-2 border-blue-200">
+                        <div class="flex items-center mb-4">
+                            <div class="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold mr-3">
+                                02
+                            </div>
+                            <h4 class="text-lg font-semibold text-gray-900">穏やかタイプ</h4>
+                        </div>
+                        
+                        <div class="space-y-4">
+                            <!-- 第三形態名前（穏やか） -->
+                            <div>
+                                <label for="third_form_calm_name" class="block text-sm font-medium text-gray-700 mb-2">
+                                    穏やか系第三形態名
+                                </label>
+                                <input type="text" 
+                                       id="third_form_calm_name" 
+                                       name="third_form_calm_name" 
+                                       value="{{ old('third_form_calm_name', $mascot->third_form_calm_name ?? '') }}"
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                       placeholder="例: セレニティウェザー">
+                                @error('third_form_calm_name')
+                                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                                @enderror
+                            </div>
+                            
+                            <!-- プレビュー画像エリア -->
+                            <div class="text-center">
+                                <div class="mb-2">
+                                    <img src="{{ asset('images/character03_calm.jpg') }}" 
+                                         alt="穏やか系第三形態" 
+                                         class="w-16 h-16 object-contain mx-auto rounded-lg bg-white p-2 shadow-sm"
+                                         id="character3-calm-image">
+                                </div>
+                                <p class="text-xs text-gray-600">平和的な性格</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 進化条件設定 -->
+            <div class="mt-8">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                    <i class="fas fa-sliders-h text-blue-600 mr-2"></i>
+                    進化条件設定
+                </h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label for="evolution_level_1_to_2" class="block text-sm font-medium text-gray-700 mb-2">
+                            第一→第二進化レベル
+                        </label>
+                        <input type="number" 
+                               id="evolution_level_1_to_2" 
+                               name="evolution_level_1_to_2" 
+                               value="{{ old('evolution_level_1_to_2', $mascot->evolution_level_1_to_2 ?? 11) }}"
+                               min="2" 
+                               max="50"
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        @error('evolution_level_1_to_2')
+                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                        @enderror
+                    </div>
+                    <!-- 第二→第三進化レベル -->
+                    <div>
+                        <label for="evolution_level_2_to_3" class="block text-sm font-medium text-gray-700 mb-2">
+                            第二→第三進化レベル
+                        </label>
+                        <input type="number" 
+                               id="evolution_level_2_to_3" 
+                               name="evolution_level_2_to_3" 
+                               value="{{ old('evolution_level_2_to_3', $mascot->evolution_level_2_to_3 ?? 25) }}"
+                               min="15" 
+                               max="100"
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        @error('evolution_level_2_to_3')
+                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                        @enderror
+                    </div>
+                    <!-- 性格判断しきい値(%) -->
+                    <div>
+                        <label for="personality_threshold" class="block text-sm font-medium text-gray-700 mb-2">
+                            性格判断しきい値(%)
+                        </label>
+                        <input type="number"
+                               id="personality_threshold"
+                               name="personality_threshold"
+                               value="{{ old('personality_threshold', $mascot->personality_threshold ?? 60) }}"
+                               min="50"
+                               max="90"
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        <p class="text-xs text-gray-500 mt-1">60以上で活発、未満で穏やか</p>
+                        @error('personality_threshold')
+                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                        @enderror
+                    </div>
+                    <!-- 第三形態最大レベル -->
+                    <div>
+                        <label for="max_level_third_form" class="block text-sm font-medium text-gray-700 mb-2">
+                            第三形態最大レベル
+                        </label>
+                        <input type="number" 
+                               id="max_level_third_form" 
+                               name="max_level_third_form" 
+                               value="{{ old('max_level_third_form', $mascot->max_level_third_form ?? 50) }}"
+                               min="30" 
+                               max="100"
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                        @error('max_level_third_form')
+                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                        @enderror
+                    </div>
                 </div>
             </div>
         </div>
@@ -263,7 +409,7 @@
                 <i class="fas fa-eye text-blue-600 mr-2"></i>
                 キャラクター進化プレビュー
             </h3>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 <!-- 第一形態プレビュー -->
                 <div class="bg-white rounded-lg p-6 shadow-sm">
                     <div class="text-center mb-4">
@@ -301,6 +447,44 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- 第三形態（活発）プレビュー -->
+                <div class="bg-white rounded-lg p-6 shadow-sm">
+                    <div class="text-center mb-4">
+                        <div class="mb-3">
+                            <img src="{{ asset('images/character03_active.jpg') }}" 
+                                 alt="第三形態（活発）プレビュー" 
+                                 class="w-24 h-24 object-contain mx-auto rounded-lg bg-gray-50 p-2 shadow-sm transition-transform hover:scale-105"
+                                 id="preview-image3-active">
+                        </div>
+                        <h4 class="font-medium text-gray-900 text-lg" id="preview-name3-active">未設定</h4>
+                        <p class="text-sm text-gray-600">第三形態（活発系）</p>
+                        <div class="mt-2">
+                            <span class="px-3 py-1 bg-orange-100 text-orange-800 rounded-full text-xs font-medium">
+                                活発タイプ
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 第三形態（穏やか）プレビュー -->
+                <div class="bg-white rounded-lg p-6 shadow-sm">
+                    <div class="text-center mb-4">
+                        <div class="mb-3">
+                            <img src="{{ asset('images/character03_calm.jpg') }}" 
+                                 alt="第三形態（穏やか）プレビュー" 
+                                 class="w-24 h-24 object-contain mx-auto rounded-lg bg-gray-50 p-2 shadow-sm transition-transform hover:scale-105"
+                                 id="preview-image3-calm">
+                        </div>
+                        <h4 class="font-medium text-gray-900 text-lg" id="preview-name3-calm">未設定</h4>
+                        <p class="text-sm text-gray-600">第三形態（穏やか系）</p>
+                        <div class="mt-2">
+                            <span class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium">
+                                穏やかタイプ
+                            </span>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -332,11 +516,19 @@
         // 第二形態
         const secondName = document.getElementById('second_form_name').value || '未設定';
         const evolutionLevel = document.getElementById('evolution_level_1_to_2').value || '11';
-        const maxLevel = document.getElementById('max_level_second_form').value || '25';
+        const thirdEvolutionLevel = document.getElementById('evolution_level_2_to_3').value || '25';
         
         document.getElementById('preview-name2').textContent = secondName;
-        document.getElementById('preview-level2').textContent = `第二形態（レベル ${evolutionLevel}-${maxLevel}）`;
-        document.getElementById('stage2-level').textContent = `レベル ${evolutionLevel}-${maxLevel}`;
+        document.getElementById('preview-level2').textContent = `第二形態（レベル ${evolutionLevel}-${parseInt(thirdEvolutionLevel) - 1}）`;
+        document.getElementById('stage2-level').textContent = `レベル ${evolutionLevel}-${parseInt(thirdEvolutionLevel) - 1}`;
+
+        // 第三形態（活発）
+        const thirdActiveName = document.getElementById('third_form_active_name').value || '未設定';
+        document.getElementById('preview-name3-active').textContent = thirdActiveName;
+
+        // 第三形態（穏やか）
+        const thirdCalmName = document.getElementById('third_form_calm_name').value || '未設定';
+        document.getElementById('preview-name3-calm').textContent = thirdCalmName;
 
         // 画像サイズ設定の反映
         const imageSize = document.getElementById('image_size').value;
@@ -346,7 +538,7 @@
             'large': 'w-32 h-32'
         };
         
-        document.querySelectorAll('#preview-image1, #preview-image2').forEach(img => {
+        document.querySelectorAll('#preview-image1, #preview-image2, #preview-image3-active, #preview-image3-calm').forEach(img => {
             img.className = img.className.replace(/w-\d+\s+h-\d+/, sizeClasses[imageSize]);
         });
 
@@ -360,7 +552,7 @@
             'grayscale': 'grayscale'
         };
 
-        document.querySelectorAll('#preview-image1, #preview-image2').forEach(img => {
+        document.querySelectorAll('#preview-image1, #preview-image2, #preview-image3-active, #preview-image3-calm').forEach(img => {
             // 既存のフィルタークラスを削除
             img.className = img.className.replace(/sepia-\[[\d.]+\]|hue-rotate-\[[\d]+deg\]|grayscale/g, '');
             if (filterClasses[colorFilter]) {
@@ -372,7 +564,7 @@
         const enableAnimation = document.querySelector('input[name="enable_animation"]:checked');
         const enableBounce = document.querySelector('input[name="enable_bounce"]:checked');
         
-        document.querySelectorAll('#preview-image1, #preview-image2').forEach(img => {
+        document.querySelectorAll('#preview-image1, #preview-image2, #preview-image3-active, #preview-image3-calm').forEach(img => {
             if (enableAnimation) {
                 img.classList.add('transition-transform', 'hover:scale-105');
             } else {
@@ -391,7 +583,8 @@
     document.addEventListener('DOMContentLoaded', function() {
         const inputs = [
             'initial_name', 'second_form_name', 
-            'evolution_level_1_to_2', 'max_level_second_form',
+            'third_form_active_name', 'third_form_calm_name',
+            'evolution_level_1_to_2', 'evolution_level_2_to_3',
             'image_size'
         ];
         
