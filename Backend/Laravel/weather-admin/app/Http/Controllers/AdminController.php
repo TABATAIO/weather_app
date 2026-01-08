@@ -101,10 +101,9 @@ class AdminController extends Controller
             'third_form_active_name' => 'nullable|string|max:50',
             'third_form_calm_name' => 'nullable|string|max:50',
             'evolution_level_1_to_2' => 'required|integer|min:2|max:50',
-            'evolution_level_2_to_3' => 'required|integer|min:15|max:100',
-            'max_level_second_form' => 'required|integer|min:15|max:100',
+            'evolution_level_2_to_3' => 'required|integer|min:15|max:100|gt:evolution_level_1_to_2',
             'max_level_third_form' => 'required|integer|min:30|max:150',
-            'personality_threshold' => 'required|integer|min:0|max:100',
+            'personality_threshold' => 'required|integer|min:50|max:90',
             'image_size' => 'required|in:small,medium,large',
             'enable_animation' => 'boolean',
             'enable_bounce' => 'boolean',
@@ -123,8 +122,8 @@ class AdminController extends Controller
             //第1形態の画像処理
             if ($request->hasFile('first_form_image')) {
                 // 古い画像を削除
-                if ($mascot->first_form_image && Storage::exists($mascot->first_form_image)) {
-                    \Storage::delete('public/' . $mascot->first_form_image);
+                if ($mascot->first_form_image && Storage::disk('public')->exists($mascot->first_form_image)) {
+                    Storage::disk('public')->delete($mascot->first_form_image);
                 }
                 // 新しい画像を保存
                 $firstImagePath = $request->file('first_form_image')->store('mascots', 'public');
@@ -133,8 +132,8 @@ class AdminController extends Controller
             // 第二形態の画像処理
             if ($request->hasFile('second_form_image')) {
                 // 古い画像を削除
-                if ($mascot->second_form_image && Storage::exists($mascot->second_form_image)) {
-                    \Storage::delete('public/' . $mascot->second_form_image);
+                if ($mascot->second_form_image && Storage::disk('public')->exists($mascot->second_form_image)) {
+                    Storage::disk('public')->delete($mascot->second_form_image);
                 }
                 // 新しい画像を保存
                 $secondImagePath = $request->file('second_form_image')->store('mascots', 'public');
@@ -143,8 +142,8 @@ class AdminController extends Controller
             // 第三形態（活発）の画像処理
             if ($request->hasFile('third_form_active_image')) {
                 // 古い画像を削除
-                if ($mascot->third_form_active_image && Storage::exists($mascot->third_form_active_image)) {
-                    \Storage::delete('public/' . $mascot->third_form_active_image);
+                if ($mascot->third_form_active_image && Storage::disk('public')->exists($mascot->third_form_active_image)) {
+                    Storage::disk('public')->delete($mascot->third_form_active_image);
                 }
                 // 新しい画像を保存
                 $thirdActiveImagePath = $request->file('third_form_active_image')->store('mascots', 'public');
@@ -153,8 +152,8 @@ class AdminController extends Controller
             // 第三形態（穏やか）の画像処理
             if ($request->hasFile('third_form_calm_image')) {
                 // 古い画像を削除
-                if ($mascot->third_form_calm_image && Storage::exists($mascot->third_form_calm_image)) {
-                    \Storage::delete('public/' . $mascot->third_form_calm_image);
+                if ($mascot->third_form_calm_image && Storage::disk('public')->exists($mascot->third_form_calm_image)) {
+                    Storage::disk('public')->delete($mascot->third_form_calm_image);
                 }
                 // 新しい画像を保存
                 $thirdCalmImagePath = $request->file('third_form_calm_image')->store('mascots', 'public');
@@ -165,7 +164,8 @@ class AdminController extends Controller
 
             return redirect()->route('admin.mascot.settings')->with('success', 'マスコットの設定が正常に保存されました。');
         } catch (\Exception $e) {
-            return redirect()->route('admin.mascot.settings')->with('error', 'マスコットの設定の保存中にエラーが発生しました。' . $e->getMessage());
+            \Log::error('マスコットの設定の保存中にエラーが発生しました。', ['exception' => $e]);
+            return redirect()->route('admin.mascot.settings')->with('error', 'マスコットの設定の保存中にエラーが発生しました。');
         }
     }
 }

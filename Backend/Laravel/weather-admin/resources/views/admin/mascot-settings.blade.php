@@ -163,7 +163,7 @@
                         </div>
                     </div>
                     <h3 class="font-semibold text-gray-900">第三形態（分岐）</h3>
-                    <p class="text-sm text-gray-600 mt-1">性格によって２つのルートに分岐</p>
+                    <p class="text-sm text-gray-600 mt-1">性格によって2つのルートに分岐</p>
                     <div class="mt-2">
                         <span class="px-2 py-1 bg-purple-100 text-purple-800 rounded-full text-xs">
                             レベル 26以上
@@ -403,6 +403,81 @@
             </div>
         </div>
 
+        <!-- 画像アップロード設定 -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <h2 class="text-xl font-semibold text-gray-900 mb-4 flex items-center">
+                <i class="fas fa-upload text-green-600 mr-2"></i>
+                カスタム画像アップロード（オプション）
+            </h2>
+            <p class="text-sm text-gray-600 mb-6">各形態のカスタム画像をアップロードできます。アップロードしない場合はデフォルト画像が使用されます。</p>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- 第一形態画像 -->
+                <div>
+                    <label for="first_form_image" class="block text-sm font-medium text-gray-700 mb-2">
+                        第一形態画像
+                    </label>
+                    <input type="file" 
+                           id="first_form_image" 
+                           name="first_form_image" 
+                           accept="image/jpeg,image/png,image/jpg,image/gif"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    <p class="text-xs text-gray-500 mt-1">形式: JPEG, PNG, GIF / 最大: 2MB</p>
+                    @error('first_form_image')
+                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                    @enderror
+                </div>
+
+                <!-- 第二形態画像 -->
+                <div>
+                    <label for="second_form_image" class="block text-sm font-medium text-gray-700 mb-2">
+                        第二形態画像
+                    </label>
+                    <input type="file" 
+                           id="second_form_image" 
+                           name="second_form_image" 
+                           accept="image/jpeg,image/png,image/jpg,image/gif"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                    <p class="text-xs text-gray-500 mt-1">形式: JPEG, PNG, GIF / 最大: 2MB</p>
+                    @error('second_form_image')
+                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                    @enderror
+                </div>
+
+                <!-- 第三形態（活発）画像 -->
+                <div>
+                    <label for="third_form_active_image" class="block text-sm font-medium text-gray-700 mb-2">
+                        第三形態（活発タイプ）画像
+                    </label>
+                    <input type="file" 
+                           id="third_form_active_image" 
+                           name="third_form_active_image" 
+                           accept="image/jpeg,image/png,image/jpg,image/gif"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent">
+                    <p class="text-xs text-gray-500 mt-1">形式: JPEG, PNG, GIF / 最大: 2MB</p>
+                    @error('third_form_active_image')
+                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                    @enderror
+                </div>
+
+                <!-- 第三形態（穏やか）画像 -->
+                <div>
+                    <label for="third_form_calm_image" class="block text-sm font-medium text-gray-700 mb-2">
+                        第三形態（穏やかタイプ）画像
+                    </label>
+                    <input type="file" 
+                           id="third_form_calm_image" 
+                           name="third_form_calm_image" 
+                           accept="image/jpeg,image/png,image/jpg,image/gif"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    <p class="text-xs text-gray-500 mt-1">形式: JPEG, PNG, GIF / 最大: 2MB</p>
+                    @error('third_form_calm_image')
+                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                    @enderror
+                </div>
+            </div>
+        </div>
+
         <!-- プレビューエリア -->
         <div class="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border border-blue-200 p-6">
             <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
@@ -517,10 +592,11 @@
         const secondName = document.getElementById('second_form_name').value || '未設定';
         const evolutionLevel = document.getElementById('evolution_level_1_to_2').value || '11';
         const thirdEvolutionLevel = document.getElementById('evolution_level_2_to_3').value || '25';
+        const thirdEvoLevel = parseInt(thirdEvolutionLevel) || 25;
         
         document.getElementById('preview-name2').textContent = secondName;
-        document.getElementById('preview-level2').textContent = `第二形態（レベル ${evolutionLevel}-${parseInt(thirdEvolutionLevel) - 1}）`;
-        document.getElementById('stage2-level').textContent = `レベル ${evolutionLevel}-${parseInt(thirdEvolutionLevel) - 1}`;
+        document.getElementById('preview-level2').textContent = `第二形態（レベル ${evolutionLevel}-${thirdEvoLevel - 1}）`;
+        document.getElementById('stage2-level').textContent = `レベル ${evolutionLevel}-${thirdEvoLevel - 1}`;
 
         // 第三形態（活発）
         const thirdActiveName = document.getElementById('third_form_active_name').value || '未設定';
