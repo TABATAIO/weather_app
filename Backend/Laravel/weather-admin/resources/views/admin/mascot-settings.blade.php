@@ -34,7 +34,7 @@
         </div>
     @endif
 
-    <form action="{{ route('admin.mascot.update') }}" method="POST" class="space-y-8">
+    <form action="{{ route('admin.mascot.update') }}" method="POST" enctype="multipart/form-data" class="space-y-8">
         @csrf
         @method('PUT')
 
