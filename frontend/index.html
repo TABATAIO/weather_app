@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weather App</title>
+    <link rel="stylesheet" href="css/destyle.css">
+    <link rel="stylesheet" href="css/main.css">
+    <script defer src="js/script.js"></script>
+</head>
+
+<body>
+<!-- header -->
+<div id="header">
+    <header class="header">
+    <div class="app-logo"><img src="img/logo.jpg" alt="logo">
+    </div>
+    <div class="header-buttons">
+    <button class="btn">検索</button>
+    <button class="btn">現在地</button>
+    </div>
+    </header>
+</div>
+
+<!-- main -->
+    <main>
+        <section class="character">
+            <div class="character-img"><img src="img/character01.png" alt="character"></div>
+
+        </section>
+
+        <section class="today">
+            <p class="location">名古屋</p>
+            <div class="today-main">
+                    <div class="weather-illustration">🌤️</div>
+                <div class="temp">
+                    <span class="temp-max">28°</span>
+                    <span class="temp-sep">/</span>
+                    <span class="temp-min">18°</span>
+                </div>
+            </div>
+        </section>
+        <section class="weekly">
+
+            <!-- 日付ヘッダー行 -->
+            <div class="weekly-row">
+                <span class="city-name"></span>
+                <span>1日目</span>
+                <span>2日目</span>
+                <span>3日目</span>
+                <span>4日目</span>
+                <span>5日目</span>
+                <span>6日目</span>
+                <span>7日目</span>
+            </div>
+
+            <div class="weekly-row">
+                <span class="city-name">札幌</span>
+                <span>☀️ 30/22</span>
+                <span>☀️ 31/23</span>
+                <span>🌤️ 29/22</span>
+                <span>☁️ 28/21</span>
+                <span>🌧️ 26/20</span>
+                <span>☀️ 27/21</span>
+                <span>☀️ 28/22</span>
+            </div>
+
+            <div class="weekly-row">
+                <span class="city-name">東京</span>
+                <span>☀️ 29/22</span>
+                <span>🌤️ 30/23</span>
+                <span>🌤️ 28/22</span>
+                <span>☁️ 27/21</span>
+                <span>🌧️ 26/20</span>
+                <span>☀️ 27/21</span>
+                <span>☀️ 28/22</span>
+            </div>
+
+            <div class="weekly-row">
+                <span class="city-name">名古屋</span>
+                <span>☀️ 30/23</span>
+                <span>☀️ 31/24</span>
+                <span>🌤️ 29/23</span>
+                <span>☁️ 28/22</span>
+                <span>🌧️ 27/21</span>
+                <span>☀️ 28/22</span>
+                <span>☀️ 29/23</span>
+            </div>
+
+            <div class="weekly-row">
+                <span class="city-name">大阪</span>
+                <span>☀️ 31/22</span>
+                <span>☀️ 32/23</span>
+                <span>🌤️ 30/22</span>
+                <span>☁️ 29/21</span>
+                <span>🌧️ 27/20</span>
+                <span>☀️ 28/21</span>
+                <span>☀️ 29/22</span>
+            </div>
+
+            <div class="weekly-row">
+                <span class="city-name">福岡</span>
+                <span>☀️ 29/22</span>
+                <span>🌤️ 30/23</span>
+                <span>🌤️ 28/22</span>
+                <span>☁️ 27/21</span>
+                <span>🌧️ 26/20</span>
+                <span>☀️ 27/21</span>
+                <span>☀️ 28/22</span>
+            </div>
+
+            <div class="weekly-row">
+                <span class="city-name">那覇</span>
+                <span>☀️ 28/21</span>
+                <span>🌤️ 29/22</span>
+                <span>🌤️ 27/21</span>
+                <span>☁️ 26/20</span>
+                <span>🌧️ 25/19</span>
+                <span>☀️ 26/20</span>
+                <span>☀️ 27/21</span>
+            </div>
+
+            <!-- <div class="city">
+                <p>東京</p>
+                <span>☀️</span>
+                <small>30° / 22°</small>
+            </div>
+            <div class="city">
+                <p>大阪</p>
+                <span>🌤️</span>
+                <small>29° / 21°</small>
+            </div>
+            <div class="city">
+                <p>札幌</p>
+                <span>☁️</span>
+                <small>22° / 15°</small>
+            </div>
+            <div class="city">
+                <p>福岡</p>
+                <span>🌧️</span>
+                <small>26° / 20°</small>
+            </div>
+            <div class="city">
+                <p>仙台</p>
+                <span>⛅</span>
+                <small>25° / 18°</small>
+            </div>
+            <div class="city">
+                <p>那覇</p>
+                <span>☀️</span>
+                <small>32° / 27°</small>
+            </div> -->
+        </section>
+    </main>
+<!-- footer -->
+<div id="footer"></div>
+</body>
+</html>
