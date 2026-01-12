@@ -31,7 +31,6 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('mascot_settings', function (Blueprint $table) {
-            //
             $table->dropColumn([
                 'third_form_active_name',
                 'third_form_calm_name',

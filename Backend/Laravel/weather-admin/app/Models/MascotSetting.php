@@ -129,13 +129,37 @@ class MascotSetting extends Model
         return asset('images/character03_calm.jpg');
     }
 
-    //性格による第三形態の判断
+    /**
+     * Determine the personality type for third form evolution.
+     * Returns 'active' or 'calm' based on stored type, personality score, or default.
+     *
+     * @return string
+     */
     public function getThirdFormTypeAttribute()
     {
+        // まず、データベース上に third_form_type が明示的に保存されている場合はそれを優先
+        $storedType = $this->attributes['third_form_type'] ?? null;
+        if (in_array($storedType, ['active', 'calm'], true)) {
+            return $storedType;
+        }
+
+        // 明示的な値がない場合は、性格スコアと閾値に基づいて判定（存在する場合）
+        $score = $this->attributes['personality_score'] ?? null;
+        $threshold = $this->personality_threshold ?? null;
+
+        if (is_numeric($score) && is_numeric($threshold)) {
+            return $score >= $threshold ? 'active' : 'calm';
+        }
+
+        // データがない場合のフォールバック（従来挙動を維持）
         return 'active';
     }
 
-    //現在の性格に基づく第三形態の名前を取得
+    /**
+     * Get the current third form name based on personality type.
+     *
+     * @return string|null
+     */
     public function getCurrentThirdFormNameAttribute()
     {
         return $this->third_form_type === 'active' 
@@ -143,7 +167,11 @@ class MascotSetting extends Model
             : $this->third_form_calm_name;
     }
 
-    //現在の性格に基づく画像URLを取得
+    /**
+     * Get the current third form image URL based on personality type.
+     *
+     * @return string
+     */
     public function getCurrentThirdFormImageUrlAttribute()
     {
         return $this->third_form_type === 'active' 
