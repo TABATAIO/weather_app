@@ -10,38 +10,66 @@
 </head>
 
 <body>
+<div class="app">
 <!-- header -->
 <div id="header">
     <header class="header">
     <div class="app-logo"><img src="img/logo.jpg" alt="logo">
     </div>
     <div class="header-buttons">
-    <button class="btn">検索</button>
-    <button class="btn">現在地</button>
+    <button class="app-btn"><img src="img/search.png" alt="search"></button>
+    <button class="app-btn"><img src="img/location.png" alt="location"></button>
     </div>
     </header>
 </div>
 
 <!-- main -->
     <main>
-        <section class="character">
-            <div class="character-img"><img src="img/character01.png" alt="character"></div>
 
-        </section>
+    <input type="radio" name="weather" id="sunny" checked>
+    <input type="radio" name="weather" id="cloudy">
+    <input type="radio" name="weather" id="rainy">
 
-        <section class="today">
-            <p class="location">名古屋</p>
-            <div class="today-main">
-                    <div class="weather-illustration">🌤️</div>
-                <div class="temp">
-                    <span class="temp-max">28°</span>
-                    <span class="temp-sep">/</span>
-                    <span class="temp-min">18°</span>
-                </div>
+    <div class="header-buttons weather-switch">
+        <label for="sunny">☀️</label>
+        <label for="cloudy">☁️</label>
+        <label for="rainy">🌧️</label>
+    </div>
+
+    <section class="weather-hero">
+        <div class="character-area">
+        <div class="character-img">
+            <img src="img/character01.png" alt="">
+        </div>
+        </div>
+
+        <div class="today-area">
+        <div class="today-main">
+            <div class="weather-illustration">
+                <span class="icon sunny">☀️</span>
+                <span class="icon cloudy">☁️</span>
+                <span class="icon rainy">🌧️</span>
             </div>
-        </section>
-        <section class="weekly">
+            <div class="temp">
+                <span class="temp-set sunny">
+                    <span class="max">30°</span>/
+                    <span class="min">22°</span>
+                </span>
+                <span class="temp-set cloudy">
+                    <span class="max">28°</span>/
+                    <span class="min">20°</span>
+                </span>
+                <span class="temp-set rainy">
+                    <span class="max">28°</span>/
+                    <span class="min">22°</span>
+                </span>
+            </div> 
+        </div>
+        </div>
+    </section>
 
+
+        <section class="weekly">
             <!-- 日付ヘッダー行 -->
             <div class="weekly-row">
                 <span class="city-name"></span>
@@ -154,5 +182,6 @@
     </main>
 <!-- footer -->
 <div id="footer"></div>
+</div>
 </body>
 </html>
