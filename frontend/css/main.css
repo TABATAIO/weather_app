@@ -1,130 +1,203 @@
 body {
-margin: 0;
-font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
-background: #eaf3ff;
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
+  background: #eaf3ff;
 }
 
 .app {
-width: 390px;
-height: 844px;
-margin: 0 auto;
-background: #ffffff;
-border-radius: 24px;
-box-shadow: 0 10px 30px rgba(0,0,0,0.15);
-display: flex;
-flex-direction: column;
+  width: 390px;
+  height: 100dvh;
+  margin: 0 auto;
+  background: #ffffff;
+  border-radius: 24px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
 }
 
+/* ===== ヘッダー ===== */
 .header {
-display: flex;
-justify-content: space-between;
-align-items: center;
-padding: 16px;
-margin-top: 40px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+  margin-top: 40px;
 }
 
 .app-logo img {
-width: 50px;
+  width: 50px;
 }
+
+.app-btn img {
+  width: 50px;
+  margin-right: 10px;
+}
+
+/* ===== 天気切り替え ===== */
+.weather-switch input {
+  display: none;
+}
+
+.weather-switch label {
+  font-size: 24px;
+  padding: 8px 12px;
+  cursor: pointer;
+}
+
+/* ===== メイン ===== */
+.weather-hero {
+  padding: 24px 0 32px;
+}
+
+/* キャラ背景 */
+.character-area {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  position: relative;
+}
+
+/* キャラ */
 .character-img {
-text-align: center;
-margin-top: 5px;
+  position: absolute;
+  inset: 0;
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
 }
+
 .character-img img {
-width: 350px;
-height: auto;
-}
-.header-buttons .btn {
-margin-left: 8px;
-padding: 6px 12px;
-border: none;
-border-radius: 12px;
-background: #4da3ff;
-color: #fff;
+  width: 330px;
+  max-width: 90%;
+  height: auto;
 }
 
-.mascot {
-text-align: center;
-margin-top: 8px;
-}
-
-.mascot-img {
-font-size: 64px;
-}
-
-.today {
-text-align: center;
-margin: 16px 0;
-}
-
-.location {
-font-size: 18px;
-margin-bottom: 8px;
+/* ===== 今日の天気 ===== */
+.today-area {
+  padding: 16px 0 24px;
+  text-align: center;
 }
 
 .today-main {
-display: flex;
-justify-content: center;
-align-items: center;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
+/* 天気アイコン */
 .weather-illustration {
-font-size: 56px;
-margin-right: 16px;
+  font-size: 56px;
+  margin-right: 16px;
 }
 
+.weather-illustration .icon {
+  display: none;
+}
+
+/* 気温 */
 .temp {
-display: flex;
-align-items: baseline;
-gap: 4px;
+  font-size: 28px;
+  font-weight: bold;
 }
 
-.temp-max {
-font-size: 28px;
-font-weight: bold;
-  color: #e53935; /* 赤 */
+.temp-set {
+  display: none;
 }
 
-.temp-min {
-font-size: 28px;
-font-weight: bold;
-  color: #1e88e5; /* 青 */
+/* 最高 / 最低 気温の色 */
+.temp-set .max {
+  color: #ff4800;
 }
 
-.temp-sep {
-font-size: 28px;
-color: #333;
+.temp-set .min {
+  color: #0062c5;
 }
 
-/* ===== Weekly Table Layout ===== */
+/* ===== 週間天気 ===== */
 .weekly {
-padding: 8px 12px 16px;
-display: flex;
-flex-direction: column;
-gap: 6px;
-font-size: 12px;
+  padding: 8px 12px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 12px;
 }
 
 .weekly-row {
-display: grid;
-grid-template-columns: 64px repeat(7, 1fr);
-align-items: center;
-background: #f4f8ff;
-border-radius: 12px;
-padding: 6px 4px;
+  display: grid;
+  grid-template-columns: 64px repeat(7, 1fr);
+  align-items: center;
+  background: #f4f8ff;
+  border-radius: 12px;
+  padding: 6px 4px;
 }
 
 .weekly-row:first-child {
-background: transparent;
-font-weight: 600;
+  background: transparent;
+  font-weight: 600;
 }
 
 .weekly-row span {
-text-align: center;
+  text-align: center;
 }
 
 .city-name {
-text-align: left;
-padding-left: 6px;
-font-weight: 600;
+  text-align: left;
+  padding-left: 6px;
+  font-weight: 600;
+}
+
+/* ===== 天気別切り替え（JSなし） ===== */
+
+/* 晴れ */
+#sunny:checked ~ .weather-hero .character-area {
+  background-image: url("../img/main_sunny.png");
+}
+
+#sunny:checked ~ .weather-hero .today-area {
+  background-color: #ff9a4c;
+}
+
+#sunny:checked ~ .weather-hero .icon.sunny {
+  display: inline;
+}
+
+#sunny:checked ~ .weather-hero .temp-set.sunny {
+  display: inline;
+}
+
+/* 曇り */
+#cloudy:checked ~ .weather-hero .character-area {
+  background-image: url("../img/main_cloudy.png");
+}
+
+#cloudy:checked ~ .weather-hero .today-area {
+  background-color: #D9D9D9;
+}
+
+#cloudy:checked ~ .weather-hero .icon.cloudy {
+  display: inline;
+}
+
+#cloudy:checked ~ .weather-hero .temp-set.cloudy {
+  display: inline;
+}
+
+/* 雨 */
+#rainy:checked ~ .weather-hero .character-area {
+  background-image: url("../img/main_rain.png");
+}
+
+#rainy:checked ~ .weather-hero .today-area {
+  background-color: #81beff;
+}
+
+#rainy:checked ~ .weather-hero .icon.rainy {
+  display: inline;
+}
+
+#rainy:checked ~ .weather-hero .temp-set.rainy {
+  display: inline;
 }
