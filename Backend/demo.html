@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>そらちゃん - 天気マスコットAI（デモ版）</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Hiragino Sans', 'Yu Gothic', -apple-system, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .demo-header {
+            text-align: center;
+            padding: 20px;
+            color: white;
+        }
+
+        .demo-title {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .demo-subtitle {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+
+        .demo-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            height: calc(100vh - 140px);
+        }
+
+        .city-selector {
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        #city-select {
+            padding: 10px 15px;
+            border-radius: 8px;
+            background: white;
+            color: black;
+            font-size: 16px;
+            border: none;
+            outline: none;
+            transition: border-color 0.3s ease;
+        }
+
+        #city-select:focus {
+            border-color: #667eea;
+        }
+
+        .weather-panel {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        .chat-panel {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 0;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            backdrop-filter: blur(10px);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .weather-info {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .current-temp {
+            font-size: 4em;
+            font-weight: bold;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin: 20px 0;
+        }
+
+        .weather-desc {
+            font-size: 1.5em;
+            color: #666;
+            margin-bottom: 20px;
+        }
+
+        .weather-details {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        .detail-item {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .detail-label {
+            font-size: 0.9em;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .detail-value {
+            font-size: 1.3em;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .mascot-section {
+            background: linear-gradient(135deg, #ffeaa7, #fab1a0);
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .mascot-avatar {
+            font-size: 4em;
+            margin: 10px 0;
+        }
+
+        .mascot-status {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #2d3436;
+        }
+
+        .chat-header {
+            background: linear-gradient(135deg, #74b9ff, #0984e3);
+            color: white;
+            padding: 20px;
+            border-radius: 20px 20px 0 0;
+            text-align: center;
+        }
+
+        .chat-history {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            background: #f8f9fa;
+            max-height: 400px;
+        }
+
+        .chat-message {
+            display: flex;
+            margin: 15px 0;
+            animation: fadeInUp 0.3s ease-out;
+        }
+
+        .user-message {
+            flex-direction: row-reverse;
+        }
+
+        .message-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2em;
+            margin: 0 10px;
+            flex-shrink: 0;
+        }
+
+        .user-message .message-avatar {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        .bot-message .message-avatar {
+            background: linear-gradient(135deg, #74b9ff, #0984e3);
+            color: white;
+        }
+
+        .message-bubble {
+            max-width: 70%;
+            padding: 12px 18px;
+            border-radius: 18px;
+            word-wrap: break-word;
+        }
+
+        .user-message .message-bubble {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border-bottom-right-radius: 4px;
+        }
+
+        .bot-message .message-bubble {
+            background: white;
+            color: #333;
+            border: 2px solid #e9ecef;
+            border-bottom-left-radius: 4px;
+        }
+
+        .chat-input-container {
+            padding: 20px;
+            background: white;
+            border-radius: 0 0 20px 20px;
+        }
+
+        .input-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 25px;
+            border: 2px solid #e9ecef;
+        }
+
+        .input-wrapper:focus-within {
+            border-color: #667eea;
+        }
+
+        #chat-input {
+            flex: 1;
+            border: none;
+            background: transparent;
+            padding: 8px 15px;
+            font-size: 16px;
+            outline: none;
+        }
+
+        #send-button {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            border: none;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.2s ease;
+        }
+
+        #send-button:hover {
+            transform: scale(1.05);
+        }
+
+        #send-button:active {
+            transform: scale(0.95);
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+            color: #666;
+        }
+
+        .typing-indicator {
+            display: flex;
+            align-items: center;
+            margin: 10px 0;
+        }
+
+        .typing-dots {
+            background: white;
+            border: 2px solid #e9ecef;
+            border-radius: 18px;
+            padding: 12px 16px;
+            margin-left: 10px;
+        }
+
+        .typing-dots span {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #667eea;
+            margin: 0 2px;
+            animation: typing 1.4s infinite both;
+        }
+
+        .typing-dots span:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes typing {
+            0%, 80%, 100% { opacity: 0.3; transform: scale(0.8); }
+            40% { opacity: 1; transform: scale(1); }
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* レスポンシブ対応 */
+        @media (max-width: 768px) {
+            .demo-container {
+                grid-template-columns: 1fr;
+                height: auto;
+            }
+            
+            .demo-title {
+                font-size: 2em;
+            }
+            
+            .current-temp {
+                font-size: 3em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="demo-header">
+        <h1 class="demo-title">🌤️ そらちゃん</h1>
+        <p class="demo-subtitle">あなたの天気アシスタントAI</p>
+    </div>
+
+    <div class="demo-container">
+        <!-- 天気情報パネル -->
+        <div class="weather-panel">
+            <div class="weather-info">
+                <div class="city-selector">
+                    <select name="city" id="city-select">
+                        <option value="tokyo" selected>東京</option>
+                        <option value="osaka">大阪</option>
+                        <option value="nagoya">名古屋</option>
+                        <option value="sapporo">札幌</option>
+                        <option value="fukuoka">福岡</option>
+                    </select>
+                </div>
+                <div id="location" class="weather-desc">東京</div>
+                <div id="current-temp" class="current-temp">--°</div>
+                <div id="weather-desc" class="weather-desc">読み込み中...</div>
+            </div>
+
+            <div class="weather-details">
+                <div class="detail-item">
+                    <div class="detail-label">降水確率</div>
+                    <div id="precipitation-prob" class="detail-value">--%</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">湿度</div>
+                    <div id="humidity" class="detail-value">--%</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">風速</div>
+                    <div id="wind-speed" class="detail-value">--m/s</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">降水量</div>
+                    <div id="precipitation" class="detail-value">--mm</div>
+                </div>
+            </div>
+
+            <div class="mascot-section">
+                <div class="mascot-avatar">☀️</div>
+                <div class="mascot-status" id="mascot-status">今日もいい天気ですね！</div>
+            </div>
+        </div>
+
+        <!-- チャットパネル -->
+        <div class="chat-panel">
+            <div class="chat-header">
+                <h3>💬 そらちゃんと話そう</h3>
+            </div>
+            
+            <div class="chat-history" id="chat-history">
+                <div class="chat-message bot-message">
+                    <div class="message-avatar">🤖</div>
+                    <div class="message-bubble">
+                        こんにちは！私はそらちゃんです🌈<br>
+                        今日の天気について何でも聞いてくださいね！
+                    </div>
+                </div>
+            </div>
+            
+            <div class="chat-input-container">
+                <div class="input-wrapper">
+                    <input type="text" id="chat-input" placeholder="天気について聞いてみてください..." maxlength="200">
+                    <button id="send-button">➤</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="loading" id="loading">
+        <p>データを読み込み中...</p>
+    </div>
+
+    <script>
+        // グローバル変数
+        let currentWeatherData = null;
+        let isSendingChat = false;
+        let conversationHistory = []; // 会話履歴を保持する配列
+
+        // 初期化
+        document.addEventListener('DOMContentLoaded', function() {
+            loadWeatherData();
+            setupEventListeners();
+        });
+
+        function setupEventListeners() {
+            const chatInput = document.getElementById('chat-input');
+            const sendButton = document.getElementById('send-button');
+            const citySelect = document.getElementById('city-select');
+
+            // 都市選択変更時
+            citySelect.addEventListener('change', function() {
+                const selectedCity = citySelect.value;
+                console.log('🏙️ 選択された都市:', selectedCity);
+                loadWeatherDataForCity(selectedCity);
+            });
+
+            // エンターキーでメッセージ送信
+            chatInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    sendMessage();
+                }
+            });
+
+            // 送信ボタンクリック
+            sendButton.addEventListener('click', sendMessage);
+        }
+
+        // 指定都市の天気データの読み込み
+        async function loadWeatherDataForCity(cityCode= 'tokyo') {
+            try {
+                console.log(`🌤️ ${cityCode}の天気データを取得中...`);
+                showLoading(true);
+
+                const response = await fetch(`http://localhost:3001/api/weather/city/${cityCode}`);
+                const data = await response.json();
+
+                if (data.success) {
+                    currentWeatherData = data.data;
+                    console.log('✅ 天気データ取得成功:', currentWeatherData);
+                    displayWeatherData(data.data, cityCode);
+                } else {
+                    console.error('❌ 天気データ取得エラー:', data.error);
+                    displayError('天気データの取得に失敗しました');
+                }
+
+            } catch (error) {
+                console.error('❌ API通信エラー:', error);
+                displayError('サーバーとの通信に失敗しました');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        // 天気データの読み込み
+        async function loadWeatherData() {
+            await loadWeatherDataForCity('tokyo');
+        }
+
+        // 天気データの表示
+        function displayWeatherData(weatherData, cityCode = 'tokyo') {
+            const { current } = weatherData;
+            
+            // 都市名の表示を更新
+            const cityNames = {
+                'tokyo': '東京',
+                'osaka': '大阪',
+                'nagoya': '名古屋',
+                'sapporo': '札幌',
+                'fukuoka': '福岡'
+            };
+            document.getElementById('location').textContent = cityNames[cityCode] || '東京';
+            
+            document.getElementById('current-temp').textContent = `${current.temperature}°`;
+            document.getElementById('weather-desc').textContent = current.weather || '不明';
+            document.getElementById('precipitation-prob').textContent = 
+                `${current.precipitationProbability || 0}%`;
+            document.getElementById('humidity').textContent = `${current.humidity || 0}%`;
+            document.getElementById('wind-speed').textContent = `${current.windSpeed || 0}m/s`;
+            document.getElementById('precipitation').textContent = `${current.precipitation || 0}mm`;
+
+            // マスコットの状態更新
+            updateMascotDisplay(current);
+        }
+
+        // マスコット表示の更新
+        function updateMascotDisplay(weatherCurrent) {
+            const mascotAvatar = document.querySelector('.mascot-avatar');
+            const mascotStatus = document.getElementById('mascot-status');
+
+            let avatar = '☀️';
+            let status = '今日もいい天気ですね！';
+
+            if (weatherCurrent.weather && weatherCurrent.weather.includes('雨')) {
+                avatar = '☔';
+                status = '雨の日は室内で過ごしましょう';
+            } else if (weatherCurrent.weather && weatherCurrent.weather.includes('曇')) {
+                avatar = '☁️';
+                status = '曇り空ですが過ごしやすそうです';
+            } else if (weatherCurrent.temperature > 30) {
+                avatar = '🌡️';
+                status = '暑い日ですね！水分補給をお忘れなく';
+            } else if (weatherCurrent.temperature < 5) {
+                avatar = '❄️';
+                status = '寒い日ですね。暖かくしてお過ごしください';
+            }
+
+            mascotAvatar.textContent = avatar;
+            mascotStatus.textContent = status;
+        }
+
+        // メッセージ送信
+        async function sendMessage() {
+            if (isSendingChat) return;
+
+            const chatInput = document.getElementById('chat-input');
+            const message = chatInput.value.trim();
+
+            if (!message) return;
+
+            // 天気データが存在しない場合は取得
+            if (!currentWeatherData) {
+                console.log('🌤️ 天気データが未取得のため、先に取得します...');
+                await loadWeatherData();
+            }
+
+            // ユーザーメッセージを追加
+            addMessage(message, true);
+            chatInput.value = '';
+            
+            isSendingChat = true;
+            showTypingIndicator();
+
+            try {
+                // 会話履歴を準備（最新5件まで）
+                const recentHistory = conversationHistory.slice(-5);
+                console.log('📝 送信する会話履歴:', recentHistory);
+                console.log('🌤️ 送信する天気データ:', currentWeatherData);
+                
+                // 天気データがない場合の警告
+                if (!currentWeatherData) {
+                    console.warn('⚠️ 天気データが不足しています！再取得を試行します...');
+                    await loadWeatherData(); // 天気データを再取得
+                }
+                
+                const requestData = {
+                    message: message,
+                    userName: 'ユーザー',
+                    weatherData: currentWeatherData,
+                    conversationHistory: recentHistory, // 会話履歴を送信
+                    userId: 'demo_user'
+                };
+                
+                console.log('📡 送信するリクエストデータ:', JSON.stringify(requestData, null, 2));
+                
+                const response = await fetch('http://localhost:3001/api/mascot/chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(requestData)
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    hideTypingIndicator();
+                    const botResponse = data.data.response;
+                    addMessage(botResponse, false);
+                    
+                    // 会話履歴に追加
+                    conversationHistory.push({
+                        userMessage: message,
+                        response: botResponse,
+                        timestamp: new Date().toISOString()
+                    });
+                    
+                    console.log('💾 会話履歴更新:', conversationHistory.length, '件');
+                } else {
+                    hideTypingIndicator();
+                    addMessage('申し訳ございません。エラーが発生しました。', false);
+                }
+            } catch (error) {
+                console.error('チャットエラー:', error);
+                hideTypingIndicator();
+                addMessage('通信エラーが発生しました。', false);
+            } finally {
+                isSendingChat = false;
+            }
+        }
+
+        // メッセージをチャットに追加
+        function addMessage(message, isUser) {
+            const chatHistory = document.getElementById('chat-history');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `chat-message ${isUser ? 'user-message' : 'bot-message'}`;
+
+            const avatar = isUser ? '👤' : '🤖';
+            
+            messageDiv.innerHTML = `
+                <div class="message-avatar">${avatar}</div>
+                <div class="message-bubble">${message}</div>
+            `;
+
+            chatHistory.appendChild(messageDiv);
+            chatHistory.scrollTop = chatHistory.scrollHeight;
+        }
+
+        // タイピングインジケーター表示
+        function showTypingIndicator() {
+            const chatHistory = document.getElementById('chat-history');
+            const typingDiv = document.createElement('div');
+            typingDiv.className = 'typing-indicator';
+            typingDiv.id = 'typing-indicator';
+            
+            typingDiv.innerHTML = `
+                <div class="message-avatar">🤖</div>
+                <div class="typing-dots">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+            `;
+
+            chatHistory.appendChild(typingDiv);
+            chatHistory.scrollTop = chatHistory.scrollHeight;
+        }
+
+        // タイピングインジケーター非表示
+        function hideTypingIndicator() {
+            const typingIndicator = document.getElementById('typing-indicator');
+            if (typingIndicator) {
+                typingIndicator.remove();
+            }
+        }
+
+        // ローディング表示
+        function showLoading(show) {
+            const loading = document.getElementById('loading');
+            loading.style.display = show ? 'block' : 'none';
+        }
+
+        // エラー表示
+        function displayError(message) {
+            document.getElementById('weather-desc').textContent = message;
+        }
+    </script>
+</body>
+</html>
