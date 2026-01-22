@@ -67,14 +67,17 @@ class MissionManager {
             }
         ];
 
-        // 保存されたミッションがあれば使用、なければデフォルト
-        const savedMissions = Storage.get('missions');
-        if (savedMissions) {
-            this.missions = savedMissions;
-        } else {
-            this.missions = defaultMissions;
-            this.saveMissions();
-        }
+        //発表ようにリロードで達成率をリセット可に　本番では下のコメントアウトを有効化し、こっちをコメントアウト
+        this.missions = defaultMissions;
+
+        // // 保存されたミッションがあれば使用、なければデフォルト
+        // const savedMissions = Storage.get('missions');
+        // if (savedMissions) {
+        //     this.missions = savedMissions;
+        // } else {
+        //     this.missions = defaultMissions;
+        //     this.saveMissions();
+        // }
     }
 
     /**
