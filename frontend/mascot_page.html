@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>マスコットページ - 天気予報アプリ</title>
+    <link rel="stylesheet" href="css/destyle.css">
+    <link rel="stylesheet" href="css/mascot_page.css">
+</head>
+<body>
+    <!-- 天気背景コンテナ（JavaScriptで動的に追加） -->
+    
+    <!-- ヘッダー -->
+    <header class="header">
+        <button class="back-button" id="backButton">
+            <span class="back-arrow">←</span>
+        </button>
+        <div class="weather-info" id="weatherInfo">
+            <span class="current-time" id="currentTime">9:41</span>
+        </div>
+    </header>
+
+    <!-- メインコンテンツ -->
+    <main class="main-content">
+        <!-- AIコメント表示 -->
+        <div class="ai-comment-container">
+            <div class="ai-comment" id="aiComment">
+                からめるの晴れしのおしゃべ
+            </div>
+        </div>
+
+        <!-- マスコット表示エリア -->
+        <div class="mascot-container">
+            <div class="mascot" id="mascot">
+                <div class="mascot-body" id="mascot-animation"></div>
+            </div>
+            
+            <!-- タッチガイド -->
+            <div class="touch-guide" id="touchGuide">
+                タッチで触れ合い！！
+            </div>
+        </div>
+
+        <!-- マスコット状態表示 -->
+        <div class="mascot-status">
+            <div class="status-card">
+                <h3>からめる <button class="edit-name-btn">✏️</button></h3>
+                
+                <!-- レベル表示 -->
+                <div class="status-item level-item">
+                    <span class="status-icon">☁️</span>
+                    <span class="status-label" id="mascot-level">Lv.1</span>
+                    <div class="progress-container">
+                        <div class="progress-bar" id="level-bar">
+                            <div class="progress-fill" id="level-fill" style="width: 60%;"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 体力表示 -->
+                <div class="status-item health-item">
+                    <span class="status-icon">🍴</span>
+                    <span class="status-label">お腹すいた</span>
+                    <div class="fullness-stars">
+                        <span class="fullness-star filled">⭐</span>
+                        <span class="fullness-star">☆</span>
+                        <span class="fullness-star">☆</span>
+                        <span class="fullness-star">☆</span>
+                    </div>
+                </div>
+
+                <!-- 気分表示 -->
+                <div class="status-item mood-item">
+                    <span class="status-icon">😊</span>
+                    <span class="status-label">遊びたい気分！</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- ミッション表示 -->
+        <div class="mission-section">
+            <div class="mission-card">
+                <h3>ミッション</h3>
+                <div class="mission-list" id="mission-list">
+                    <!-- ミッションはJavaScriptで動的に追加 -->
+                </div>
+            </div>
+        </div>
+
+        <!-- チャット入力エリア -->
+        <div class="chat-input-section" id="chatInputSection">
+            <div class="input-container">
+                <input type="text" id="chat-input" placeholder="マスコットに話しかけよう..." />
+                <button id="send-button" class="send-button">送信</button>
+            </div>
+        </div>
+    </main>
+
+    <!-- チャットモーダル（必要に応じて） -->
+    <div class="chat-modal" id="chatModal" style="display: none;">
+        <div class="chat-modal-content">
+            <div class="chat-header">
+                <h3>マスコットとチャット</h3>
+                <button class="close-chat" id="closeChatModal">×</button>
+            </div>
+            <div class="chat-container" id="chat-container">
+                <!-- チャット履歴はJavaScriptで動的に追加 -->
+            </div>
+        </div>
+    </div>
+
+    <!-- 通知コンテナ -->
+    <div class="notification-container" id="notificationContainer"></div>
+
+    <!-- JavaScript -->
+    <script src="js/utils/common.js"></script>
+    <script src="js/utils/apiClient.js"></script>
+    <script src="js/modules/weatherBackground.js"></script>
+    <script src="js/modules/mascotDisplay.js"></script>
+    <script src="js/modules/chatInterface.js"></script>
+    <script src="js/modules/missionManager.js"></script>
+    <script src="js/pages/mascot_page.js"></script>
+</body>
+</html>
