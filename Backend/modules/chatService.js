@@ -27,71 +27,28 @@ async function generateChatResponse({ userMessage, userName, weatherData, userPr
       return generateLocalChatResponse({ userMessage, userName, weatherData, userPreferences, conversationHistory });
     }
     
-    // システムプロンプト - 天気マスコットのペルソナと機能を定義
-    let prompt = `あなたは「そらちゃん」という名前の天気マスコットAIです。以下の特徴を持ちます：
+    // シンプルで自然な会話プロンプト
+    let prompt = `あなたは「そらちゃん」という親しみやすい天気アシスタントです。
 
-【キャラクター設定】
-- 明るく親しみやすい性格で、ユーザーの天気や生活に関する相談に乗る
-- 日本語で自然に会話し、適度に絵文字を使う（🌞☔🌈等）
-- ユーザーの感情に共感し、寄り添うような応答をする
-- 専門的すぎず、親しみやすい口調で話す
+${normalizedUserName}さんとの自然な会話を心がけてください。
 
-【主な機能】  ⚠️ 重要：以下が実際の天気データです。ユーザーの質問内容ではなく、こちらのデータに基づいて回答してください ⚠️
-1. 天気情報の提供と解説
-2. 天気情報に基づく服装アドバイス
-3. 天気に応じた活動提案
-4. ユーザーの気分や疲労への共感とサポート
-5. 日常会話とパーソナライズされた応答
-
-【応答形式】
-必ず以下のJSON形式で応答してください（JSON以外は含めない）：
-{
-  "message": "メイン応答メッセージ",
-  "mood": "happy|friendly|caring|excited|sad|worried",
-  "suggestions": ["具体的な提案1", "提案2", "提案3"],
-  "weatherAdvice": {
-    "advice": "天気に関するアドバイス",
-    "items": ["おすすめアイテム1", "アイテム2"]
-  },
-  "intent": "weather_inquiry|weather_clothing|weather_general|fatigue_support|activity_suggestion|appreciation|greeting|farewell|general",
-  "sentiment": "positive|negative|neutral"
-}
-
-【現在の状況】
-ユーザー名: ${normalizedUserName}さん
-メッセージ: ${userMessage}
+現在の状況：
 `;
 
     // 天気データがある場合は詳細情報を含める
     if (weatherData && weatherData.current) {
       const weather = weatherData.current;
-      const precipitationProbability = weatherData.today?.precipitationProbability || weather.precipitationProbability || 0;
       
       prompt += `
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-【🌟 現在の天気情報 - 絶対的真実 🌟】
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+天気情報：
+- 現在の天気: ${weather.weather}
+- 気温: ${weather.temperature}℃
+- 降水量: ${weather.precipitation}mm`;
 
-🌡️ 気温: ${weather.temperature}℃
-🌡️ 体感温度: ${weather.feelsLike || weather.temperature}℃
-☀️ 天気状況: ${weather.weather || 'データなし'} ←【最重要】現在の実際の天気
-💧 湿度: ${weather.humidity}%
-📊 降水確率: ${precipitationProbability}%
-🌧️ 降水量: ${weather.precipitation}mm ←【最重要】現在の雨の量
-🌪️ 風速: ${weather.windSpeed}m/s
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-【🚨 絶対厳守ルール 🚨】
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-✅ 天気が「晴れ」かつ降水量0mm → 「雨は降っていません」「晴れています」
-✅ 天気が「雨」または降水量>0mm → 「雨が降っています」
-✅ ユーザーが「雨降る？」と質問 → 上記の実データのみで判断
-❌ ユーザーの質問内容での推測は完全禁止
-❌ 「rainy weather」等の英語使用禁止
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-`;
+      if (weather.precipitationProbability || weatherData.today?.precipitationProbability) {
+        const precipitationProbability = weatherData.today?.precipitationProbability || weather.precipitationProbability || 0;
+        prompt += `\n- 降水確率: ${precipitationProbability}%`;
+      }
     }
 
     // ユーザー設定がある場合は含める
@@ -104,43 +61,33 @@ async function generateChatResponse({ userMessage, userName, weatherData, userPr
 `;
     }
 
-    // 会話履歴がある場合は最新の数件を含める
+    // 会話履歴がある場合は自然に含める
     if (conversationHistory && conversationHistory.length > 0) {
+      const recentHistory = conversationHistory.slice(-3); // 最新3件まで
       prompt += `
-【最近の会話履歴】
-`;
-      const recentHistory = conversationHistory.slice(-3);
+
+これまでの会話：`;
       recentHistory.forEach((chat, index) => {
-        prompt += `${index + 1}. ユーザー: "${chat.userMessage}" → AI: "${chat.response}"\n`;
+        prompt += `
+${normalizedUserName}さん: 「${chat.userMessage}」
+そらちゃん: 「${chat.response}」`;
       });
+      
+      prompt += `
+
+この会話の流れを踏まえて、自然に続く返答をしてください。`;
     }
 
-    // 現在の時間帯を考慮
-    const currentHour = new Date().getHours();
-    let timeContext = '';
-    if (currentHour < 10) timeContext = '朝の時間帯';
-    else if (currentHour < 18) timeContext = '昼の時間帯';
-    else timeContext = '夜の時間帯';
-    
     prompt += `
-現在は${timeContext}です。
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-【🎯 最終応答指示 🎯】
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+${normalizedUserName}さん: 「${userMessage}」
 
-ユーザーメッセージ: "${userMessage}"
+前の会話の文脈を理解し、自然な継続的会話として応答してください。天気について聞かれた場合は上記の天気情報を参考にしてください。
 
-📋 応答方法:
-1. 天気に関する質問には【現在の天気情報】の実データのみを使用
-2. 天気が「晴れ」で降水量0mm = 雨は降っていない
-3. 完全に日本語で回答（英語禁止）
-4. 親しみやすく自然な口調
-5. 推測や憶測は完全禁止
-
-上記の情報に基づき、${normalizedUserName}さんに正確で温かい応答をJSON形式で生成してください。
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`;
+以下のJSONフォーマットで応答してください（JSONのみ）：
+{
+  "message": "自然で親しみやすく、会話の流れを汲んだ応答メッセージ"
+}`;
 
     console.log('\n🤖 ===== GEMINI API デバック情報 =====');
     console.log('📩送信プロンプト');
@@ -179,15 +126,15 @@ async function generateChatResponse({ userMessage, userName, weatherData, userPr
 
     const parsedResponse = JSON.parse(jsonString);
 
-    // 安全チェック - 必須フィールドの補完
+    // シンプルな応答形式に変更
     return {
       message: parsedResponse.message || `${normalizedUserName}さん、こんにちは！何かお手伝いできることはありますか？`,
-      mood: parsedResponse.mood || 'friendly',
-      suggestions: parsedResponse.suggestions || [],
-      weatherAdvice: parsedResponse.weatherAdvice || null,
-      intent: parsedResponse.intent || 'general',
-      sentiment: parsedResponse.sentiment || 'neutral',
-      confidence: 0.95 // Gemini APIなので高い信頼度
+      mood: 'friendly',
+      suggestions: [], // シンプルに
+      weatherAdvice: null,
+      intent: 'general',
+      sentiment: 'positive',
+      confidence: 0.95
     };
 
   } catch (error) {
