@@ -1,4 +1,66 @@
 Script started on Tue Jan 20 16:10:43 2026
 [1m[7m%[27m[1m[0m                                                                                                            [0m[27m[24m[Jkondouyuuta@Mac-2 weather_app % [K[?2004hgit push
 [K[K[A[32C[4Cconfig --global http.postBuffer 524288000[1B[A[32C[1C[1C[1C[1C[1C[1C[1C[1C[1C[1C[1C[1C[1C[1C[1C[1C[1C[1C[1C[1C[1C[1C[1C[1C[1C[1C[1C[1C[1C[1C[1C[1C[1C[1C[1C[1C[1C[1C[1C[1C[1C[1C[1C[1C[1C[1B[K[A[77C                                       g  [7mhero: <section class="weather-hero">[27m[36D[27mh[27me[27mr[27mo[27m:[27m [27m<[27ms[27me[27mc[27mt[27mi[27mo[27mn[27m [27mc[27ml[27ma[27ms[27ms[27m=[27m"[27mw[27me[27ma[27mt[27mh[27me[27mr[27m-[27mh[27me[27mr[27mo[27m"[27m>[?2004l[1Bzsh: parse error near `\n'
+[1m[7m%[27m[1m[0m                                                                                                            [0m[27m[24m[Jkondouyuuta@Mac-2 weather_app % [K[?2004h[7mgit stash[27m[9D[27mg[27mi[27mt[27m [27ms[27mt[27ma[27ms[27mh[?2004l
+No local changes to save
+[1m[7m%[27m[1m[0m                                                                                                            [0m[27m[24m[Jkondouyuuta@Mac-2 weather_app % [K[?2004h[7mgit pull origin main[27m[20D[27mg[27mi[27mt[27m [27mp[27mu[27ml[27ml[27m [27mo[27mr[27mi[27mg[27mi[27mn[27m [27mm[27ma[27mi[27mn[?2004l
+remote: Enumerating objects: 10, done.[K
+remote: Counting objects:  14% (1/7)[Kremote: Counting objects:  28% (2/7)[Kremote: Counting objects:  42% (3/7)[Kremote: Counting objects:  57% (4/7)[Kremote: Counting objects:  71% (5/7)[Kremote: Counting objects:  85% (6/7)[Kremote: Counting objects: 100% (7/7)[Kremote: Counting objects: 100% (7/7), done.[K
+remote: Compressing objects:  20% (1/5)[Kremote: Compressing objects:  40% (2/5)[Kremote: Compressing objects:  60% (3/5)[Kremote: Compressing objects:  80% (4/5)[Kremote: Compressing objects: 100% (5/5)[Kremote: Compressing objects: 100% (5/5), done.[K
+remote: Total 10 (delta 3), reused 4 (delta 2), pack-reused 3 (from 1)[K
+Unpacking objects:  10% (1/10)Unpacking objects:  20% (2/10)Unpacking objects:  30% (3/10)Unpacking objects:  40% (4/10)Unpacking objects:  50% (5/10)Unpacking objects:  60% (6/10)Unpacking objects:  70% (7/10)Unpacking objects:  80% (8/10)Unpacking objects:  90% (9/10)Unpacking objects: 100% (10/10)Unpacking objects: 100% (10/10), 3.57 KiB | 260.00 KiB/s, done.
+From https://github.com/TABATAIO/weather_app
+ * branch            main       -> FETCH_HEAD
+   28a05be..0ac3e8f  main       -> origin/main
+Updating b11c032..0ac3e8f
+Fast-forward
+ .../Laravel/weather-admin/app/Http/Controllers/AdminController.php   | 104 [32m++++[m[31m-[m
+ .../weather-admin/app/Http/Controllers/UserManagementController.php  |   3 [32m+[m[31m-[m
+ Backend/Laravel/weather-admin/app/Models/MascotSetting.php           | 181 [32m++++++++[m
+ .../migrations/2025_12_19_053505_create_mascot_settings_table.php    |  45 [32m++[m
+ .../2025_12_22_075037_add_image_paths_to_mascot_settings_table.php   |  29 [32m++[m
+ ...5_12_22_111820_add_third_form_fields_to_mascot_settings_table.php |  45 [32m++[m
+ Backend/Laravel/weather-admin/public/images/character01.png          | Bin [31m0[m -> [32m15979[m bytes
+ Backend/Laravel/weather-admin/public/images/character02.png          | Bin [31m0[m -> [32m14776[m bytes
+ Backend/Laravel/weather-admin/public/images/character03_active.jpg   | Bin [31m0[m -> [32m5956[m bytes
+ Backend/Laravel/weather-admin/public/images/character03_calm.jpg     | Bin [31m0[m -> [32m9885[m bytes
+ Backend/Laravel/weather-admin/resources/images/character01.png       | Bin [31m0[m -> [32m15979[m bytes
+ Backend/Laravel/weather-admin/resources/images/character02.png       | Bin [31m0[m -> [32m14776[m bytes
+ .../weather-admin/resources/views/admin/mascot-settings.blade.php    | 690 [32m+++++++++++++++++++++++++++++++[m
+ .../weather-admin/resources/views/components/feature-card.blade.php  |  22 [32m+[m
+ .../weather-admin/resources/views/components/stat-card.blade.php     |  13 [32m+[m
+ .../Laravel/weather-admin/resources/views/layouts/admin.blade.php    |  75 [32m++[m[31m--[m
+ .../weather-admin/resources/views/partials/admin-footer.blade.php    |  17 [32m+[m
+ .../weather-admin/resources/views/partials/admin-header.blade.php    |  49 [32m+++[m
+ .../weather-admin/resources/views/partials/admin-scripts.blade.php   |  39 [32m++[m
+ .../weather-admin/resources/views/partials/admin-styles.blade.php    | 135 [32m++++++[m
+ .../weather-admin/resources/views/partials/login-required.blade.php  |  25 [32m++[m
+ .../weather-admin/resources/views/partials/recent-activity.blade.php |  61 [32m+++[m
+ Backend/Laravel/weather-admin/resources/views/welcome.blade.php      | 404 [32m++++++[m[31m------------[m
+ Backend/Laravel/weather-admin/routes/web.php                         |   3 [32m+[m
+ Backend/sample-frontend.html                                         | 202 [32m+++++++[m[31m--[m
+ Backend/weather_app.db                                               | Bin [31m1757184[m -> [32m2596864[m bytes
+ frontend/css/main.css                                                |   6 [32m+[m[31m-[m
+ 27 files changed, 1802 insertions(+), 346 deletions(-)
+ create mode 100644 Backend/Laravel/weather-admin/app/Models/MascotSetting.php
+ create mode 100644 Backend/Laravel/weather-admin/database/migrations/2025_12_19_053505_create_mascot_settings_table.php
+ create mode 100644 Backend/Laravel/weather-admin/database/migrations/2025_12_22_075037_add_image_paths_to_mascot_settings_table.php
+ create mode 100644 Backend/Laravel/weather-admin/database/migrations/2025_12_22_111820_add_third_form_fields_to_mascot_settings_table.php
+ create mode 100644 Backend/Laravel/weather-admin/public/images/character01.png
+ create mode 100644 Backend/Laravel/weather-admin/public/images/character02.png
+ create mode 100644 Backend/Laravel/weather-admin/public/images/character03_active.jpg
+ create mode 100644 Backend/Laravel/weather-admin/public/images/character03_calm.jpg
+ create mode 100644 Backend/Laravel/weather-admin/resources/images/character01.png
+ create mode 100644 Backend/Laravel/weather-admin/resources/images/character02.png
+ create mode 100644 Backend/Laravel/weather-admin/resources/views/admin/mascot-settings.blade.php
+ create mode 100644 Backend/Laravel/weather-admin/resources/views/components/feature-card.blade.php
+ create mode 100644 Backend/Laravel/weather-admin/resources/views/components/stat-card.blade.php
+ create mode 100644 Backend/Laravel/weather-admin/resources/views/partials/admin-footer.blade.php
+ create mode 100644 Backend/Laravel/weather-admin/resources/views/partials/admin-header.blade.php
+ create mode 100644 Backend/Laravel/weather-admin/resources/views/partials/admin-scripts.blade.php
+ create mode 100644 Backend/Laravel/weather-admin/resources/views/partials/admin-styles.blade.php
+ create mode 100644 Backend/Laravel/weather-admin/resources/views/partials/login-required.blade.php
+ create mode 100644 Backend/Laravel/weather-admin/resources/views/partials/recent-activity.blade.php
+[1m[7m%[27m[1m[0m                                                                                                            [0m[27m[24m[Jkondouyuuta@Mac-2 weather_app % [K[?2004h[7mgit stash pop[27m[13D[27mg[27mi[27mt[27m [27ms[27mt[27ma[27ms[27mh[27m [27mp[27mo[27mp[?2004l
+No stash entries found.
 [1m[7m%[27m[1m[0m                                                                                                            [0m[27m[24m[Jkondouyuuta@Mac-2 weather_app % [K[?2004h
