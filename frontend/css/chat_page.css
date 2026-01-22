@@ -1,0 +1,553 @@
+@charset "UTF-8";
+
+/* ====================
+   基本設定
+   ==================== */
+* {
+    box-sizing: border-box;
+}
+
+html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    overflow-x: hidden;
+    background-image: url(../img/main_sunny.png);
+}
+
+/* ====================
+   天気背景
+   ==================== */
+.weather-background {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+    transition: all 0.5s ease;
+    background: linear-gradient(180deg, #4A90E2 0%, #87CEEB 100%);
+}
+
+/* 晴天 */
+.weather-background.sunny {
+    background: linear-gradient(180deg, #4A90E2 0%, #87CEEB 50%, #FFE4B5 100%);
+}
+
+/* 曇り */
+.weather-background.cloudy {
+    background: linear-gradient(180deg, #708090 0%, #B0C4DE 100%);
+}
+
+/* 雨 */
+.weather-background.rainy {
+    background: linear-gradient(180deg, #2F4F4F 0%, #696969 50%, #4682B4 100%);
+}
+
+/* 雪 */
+.weather-background.snowy {
+    background: linear-gradient(180deg, #F0F8FF 0%, #E6E6FA 100%);
+}
+
+/* ====================
+   天気エフェクト
+   ==================== */
+.rain-effect {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+}
+
+.raindrop {
+    position: absolute;
+    width: 2px;
+    height: 15px;
+    background: rgba(255, 255, 255, 0.6);
+    border-radius: 50%;
+    animation: rain-fall linear infinite;
+}
+
+@keyframes rain-fall {
+    0% {
+        top: -20px;
+        opacity: 1;
+    }
+    100% {
+        top: 100vh;
+        opacity: 0;
+    }
+}
+
+.snow-effect {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+}
+
+.snowflake {
+    position: absolute;
+    color: white;
+    font-size: 16px;
+    animation: snow-fall linear infinite;
+}
+
+@keyframes snow-fall {
+    0% {
+        top: -20px;
+        opacity: 1;
+    }
+    100% {
+        top: 100vh;
+        opacity: 0;
+    }
+}
+
+.sun-effect {
+    position: absolute;
+    top: 50px;
+    right: 50px;
+    pointer-events: none;
+}
+
+.sun {
+    font-size: 60px;
+    animation: sun-shine 2s ease-in-out infinite alternate;
+}
+
+@keyframes sun-shine {
+    0% {
+        transform: rotate(0deg) scale(1);
+        filter: drop-shadow(0 0 10px rgba(255, 255, 0, 0.5));
+    }
+    100% {
+        transform: rotate(10deg) scale(1.1);
+        filter: drop-shadow(0 0 20px rgba(255, 255, 0, 0.8));
+    }
+}
+
+/* ====================
+   ヘッダー
+   ==================== */
+.header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 20px;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    z-index: 100;
+}
+
+.back-button {
+    background: none;
+    border: none;
+    font-size: 18px;
+    color: white;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 50%;
+    transition: background 0.2s ease;
+}
+
+.back-button:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.back-arrow {
+    font-size: 20px;
+}
+
+.weather-info {
+    color: white;
+    font-weight: 600;
+}
+
+.room-title{
+    color: blue;
+    background-color: white;
+    padding: 5px 10px;
+    border-radius: 10px;
+}
+
+/* ====================
+   メインコンテンツ
+   ==================== */
+.main-content {
+    padding-top: 80px;
+    padding-bottom: 100px;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    height: 100vh;
+}
+
+/* ====================
+   AIコメント
+   ==================== */
+.ai-comment-container {
+    padding: 0 20px;
+    display: flex;
+    justify-content: center;
+}
+
+.ai-comment {
+    background: white;
+    border-radius: 20px;
+    padding: 15px 20px;
+    position: relative;
+    max-width: 280px;
+    text-align: center;
+    font-size: 14px;
+    line-height: 1.4;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    animation: comment-appear 0.5s ease-out;
+}
+
+.ai-comment::after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 10px solid transparent;
+    border-top: 10px solid white;
+}
+
+@keyframes comment-appear {
+    0% {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ====================
+   マスコット表示エリア
+   ==================== */
+.mascot-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+}
+
+.mascot {
+    position: relative;
+    font-size: 120px;
+    cursor: pointer;
+}
+
+.mascot-body {
+    width: 80vw;
+    height: 20vh;
+    position: relative;
+    z-index: 2;
+    background-image: url(../img/character01.png);
+    background-size: cover;
+    background-position: center;
+}
+
+/* ====================
+   チャット履歴表示エリア
+   ==================== */
+.chat-history-section {
+    padding: 0 20px;
+    flex: 1;
+    min-height: 0;
+}
+
+.chat-history-container {
+    background: white;
+    border-radius: 20px;
+    padding: 20px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    height: 100%;
+    min-height: 250px;
+    overflow-y: auto;
+    position: relative;
+}
+
+.chat-history-container:empty::before {
+    content: "会話履歴がここに表示されます";
+    color: #999;
+    font-size: 14px;
+    text-align: center;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 100%;
+}
+
+.history-message {
+    padding: 12px 16px;
+    border-radius: 16px;
+    max-width: 80%;
+    font-size: 14px;
+    line-height: 1.4;
+    margin-bottom: 8px;
+}
+
+.history-message.user {
+    background: #4CAF50;
+    color: white;
+    align-self: flex-end;
+    margin-left: auto;
+}
+
+.history-message.ai {
+    background: #F0F0F0;
+    color: #333;
+    align-self: flex-start;
+    margin-right: auto;
+}
+
+/* ====================
+   チャット入力エリア
+   ==================== */
+.chat-input-section {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    padding: 15px 20px;
+    border-top: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.input-container {
+    display: flex;
+    gap: 10px;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+#chat-input {
+    flex: 1;
+    padding: 12px 16px;
+    border: 1px solid #ddd;
+    border-radius: 25px;
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.2s ease;
+}
+
+#chat-input:focus {
+    border-color: #4CAF50;
+}
+
+.send-button {
+    background: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 25px;
+    padding: 12px 20px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.send-button:hover {
+    background: #45a049;
+}
+
+.send-button:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+}
+
+/* ====================
+   チャットモーダル
+   ==================== */
+.chat-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 20px;
+}
+
+.chat-modal-content {
+    background: white;
+    border-radius: 20px;
+    width: 100%;
+    max-width: 400px;
+    height: 500px;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+.chat-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 20px;
+    border-bottom: 1px solid #eee;
+}
+
+.chat-header h3 {
+    margin: 0;
+    font-size: 16px;
+    color: #333;
+}
+
+.close-chat {
+    background: none;
+    border: none;
+    font-size: 20px;
+    cursor: pointer;
+    color: #999;
+    padding: 4px;
+    border-radius: 4px;
+    transition: background 0.2s ease;
+}
+
+.close-chat:hover {
+    background: rgba(0, 0, 0, 0.1);
+}
+
+.chat-container {
+    flex: 1;
+    padding: 15px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.chat-message {
+    max-width: 80%;
+    padding: 8px 12px;
+    border-radius: 12px;
+    font-size: 13px;
+    line-height: 1.4;
+}
+
+.chat-message.user {
+    align-self: flex-end;
+    background: #4CAF50;
+    color: white;
+}
+
+.chat-message.ai {
+    align-self: flex-start;
+    background: #F0F0F0;
+    color: #333;
+}
+
+.typing-indicator {
+    align-self: flex-start;
+    padding: 8px 12px;
+}
+
+.typing-dots {
+    display: flex;
+    gap: 4px;
+}
+
+.typing-dots span {
+    width: 6px;
+    height: 6px;
+    background: #999;
+    border-radius: 50%;
+    animation: typing-bounce 1.4s ease-in-out infinite both;
+}
+
+.typing-dots span:nth-child(1) {
+    animation-delay: -0.32s;
+}
+
+.typing-dots span:nth-child(2) {
+    animation-delay: -0.16s;
+}
+
+@keyframes typing-bounce {
+    0%, 80%, 100% {
+        transform: scale(0);
+        opacity: 0.5;
+    }
+    40% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+/* ====================
+   通知
+   ==================== */
+
+
+/* ====================
+   レスポンシブ
+   ==================== */
+@media (max-width: 480px) {
+    .header {
+        height: 50px;
+        padding: 0 15px;
+    }
+    
+    .main-content {
+        padding-top: 70px;
+        padding-bottom: 90px;
+        gap: 15px;
+        height: 100vh;
+    }
+    
+    .chat-history-container {
+        padding: 15px;
+        min-height: 200px;
+    }
+    
+    .mascot {
+        font-size: 100px;
+    }
+    
+    .ai-comment {
+        max-width: 240px;
+        font-size: 13px;
+        padding: 12px 16px;
+    }
+    
+    .chat-input-section {
+        padding: 12px 15px;
+    }
+}
+
+@media (min-width: 768px) {
+    .main-content {
+        max-width: 600px;
+        margin: 0 auto;
+    }
+    
+    .chat-modal-content {
+        max-width: 500px;
+        height: 600px;
+    }
+}
