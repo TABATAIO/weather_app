@@ -54,6 +54,25 @@ weather_app/
 
 ## 🔄 更新履歴
 
+### 🐳 v2.3 - Docker環境改良・API修正 (2026年1月23日)
+#### 🔧 重要な修正・改良
+- **🔄 APIエンドポイント修正**: `/api`エンドポイントが正常に動作するよう修正
+- **🐳 Docker環境安定化**: コンテナ再起動・ビルド手順の改善
+- **📊 エラーハンドリング強化**: 404エラーハンドラーの重複削除と最適化
+- **🔍 デバッグ機能向上**: より詳細なログ出力とエラー追跡
+
+#### 🛠️ 技術的改善点
+- **Docker イメージ再構築**: `--no-cache`オプションによる確実なビルド
+- **ルーティング最適化**: Express.jsルート定義の順序と構造改善
+- **コンテナ管理**: `docker compose down` → `build` → `up`の標準化
+- **API情報エンドポイント**: `/api` で利用可能な全エンドポイント一覧表示
+
+#### 📋 修正されたAPIエンドポイント
+- ✅ `GET /api` - API情報とエンドポイント一覧
+- ✅ `GET /api/weather/city/:city` - 都市別天気情報
+- ✅ `POST /api/mascot/chat` - AIチャット機能
+- ✅ その他すべてのAPIエンドポイント
+
 ### 🐳 v2.2 - Docker化対応 (2026年1月23日)
 #### 🌟 主要な新機能
 - **🐳 完全Docker化**: 1コマンドで全環境構築
@@ -237,18 +256,24 @@ php artisan serve --port=8080
 ### 🌟 デモページ
 - `GET /demo.html` - **統合デモページ** (天気情報 + AIチャット)
 
+### � API情報
+- `GET /api` - **API情報一覧** - 利用可能な全エンドポイントとサービス状態
+
 ### 💬 チャット機能
 - `POST /api/mascot/chat` - AIチャット (Gemma-3-1b-it)
 - `GET /api/chat/history/:userId` - 会話履歴取得
 
 ### 🌤️ 天気情報
-- `GET /api/weather/coordinates` - 座標指定天気取得
-- `GET /api/weather/city/:cityName` - 都市名天気取得
+- `GET /api/weather/:lat/:lon` - 緯度経度指定天気取得
+- `GET /api/weather/city/:city` - 都市名天気取得（tokyo, osaka, kyoto, など）
 
 ### 🎭 マスコット機能
 - `POST /api/mascot/update` - マスコット状態更新
 - `GET /api/mascot/:id` - マスコット情報取得
-- `GET /api/icon/:weatherCode` - 天気アイコン取得
+
+### 👤 ユーザー管理
+- `POST /api/user/profile` - ユーザープロフィール設定
+- `GET /api/user/profile/:userId` - ユーザープロフィール取得
 
 ## 📊 データベース構造
 
@@ -382,30 +407,54 @@ curl "http://localhost:3001/api/weather/city/東京"
 
 ### Docker環境での問題
 
+**Q: APIエンドポイントが見つからない（404エラー）**
+```bash
+# 解決方法: コンテナを完全に再構築
+docker compose down              # 全コンテナ停止
+docker compose build --no-cache  # キャッシュなしでビルド
+docker compose up -d             # バックグラウンドで起動
+
+# 動作確認
+curl http://localhost:3001/api   # API情報表示
+curl http://localhost:3001/api/weather/city/tokyo  # 天気情報テスト
+```
+
 **Q: Dockerコンテナが起動しない**
 ```bash
 # Docker Desktop起動確認
 docker --version
 docker-compose --version
 
-# ポート競合確認（3000, 8000, 8080）
-lsof -i :3000
+# ポート競合確認（3001, 8000, 8080）
+lsof -i :3001
 lsof -i :8000
 lsof -i :8080
 
 # 既存コンテナ停止
-docker-compose down -v
+docker compose down -v
 ./start.sh  # 再起動
 ```
 
 **Q: データベースエラー**
 ```bash
 # ログ確認
-docker-compose logs weather-backend
+docker logs weather-backend
 
 # データボリューム削除して再初期化
-docker-compose down -v
-docker-compose up --build
+docker compose down -v
+docker compose up --build
+```
+
+**Q: コンテナがunhealthy状態**
+```bash
+# ヘルスチェック確認
+docker ps  # STATUS列を確認
+
+# 詳細ログ確認
+docker logs weather-backend --tail 20
+
+# 必要に応じて再構築
+docker compose restart weather-backend
 ```
 
 **Q: 権限エラー（start.sh実行時）**
@@ -478,4 +527,4 @@ chmod 664 Backend/weather_app.db
 
 ---
 
-*最終更新: 2026年1月23日 - v2.2 Docker化対応*
+*最終更新: 2026年1月23日 - v2.3 Docker環境改良・API修正*

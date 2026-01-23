@@ -29,7 +29,7 @@ sleep 15
 
 #ステータス確認
 echo "Checking container status..."
-if curl -s http://localhost:3001/api/status &> /dev/null; then
+if curl -s http://localhost:3001/ &> /dev/null; then
     echo "Weather app services started successfully!"
 else
     echo "Failed to start weather app services. Please check the logs for more details."

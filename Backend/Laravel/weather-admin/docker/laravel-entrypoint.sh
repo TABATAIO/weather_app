@@ -13,10 +13,21 @@ echo "Generating application key..."
 php artisan key:generate --force
 
 #データベースのディレクトリ確認
-if [ ! -d "/var/www/strage/database" ]; then
+if [ ! -d "/var/www/storage/database" ]; then
     echo "Creating database directory..."
-    mkdir -p /var/www/strage/database
-    chown -R www-data:www-data /var/www/strage/database
+    mkdir -p /var/www/storage/database
+fi
+
+# データベースディレクトリの権限を確実に設定
+echo "Setting database directory permissions..."
+chown -R www-data:www-data /var/www/storage/database
+chmod -R 775 /var/www/storage/database
+
+# データベースファイルが存在する場合、権限を修正
+if [ -f "/var/www/storage/database/weather_app.db" ]; then
+    echo "Setting database file permissions..."
+    chown www-data:www-data /var/www/storage/database/weather_app.db
+    chmod 664 /var/www/storage/database/weather_app.db
 fi
 
 #データベースの設定確認

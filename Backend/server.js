@@ -88,6 +88,36 @@ app.get('/', (req, res) => {
   });
 });
 
+// API情報を提供するエンドポイント
+app.get('/api', (req, res) => {
+  console.log('🔍 API情報エンドポイント (/api) に到達しました');
+  res.json({
+    service: 'Weather Mascot API',
+    version: '1.0.0',
+    status: 'active',
+    database: 'SQLite (永続化対応)',
+    availableEndpoints: {
+      weather: {
+        'GET /api/weather/:lat/:lon': '緯度経度で天気情報を取得',
+        'GET /api/weather/city/:city': '都市名で天気情報を取得'
+      },
+      mascot: {
+        'POST /api/mascot/update': 'マスコット状態を更新',
+        'GET /api/mascot/:id': 'マスコット情報を取得',
+        'POST /api/mascot/chat': 'マスコットとの会話（AI機能・履歴保存）'
+      },
+      user: {
+        'POST /api/user/profile': 'ユーザープロフィール設定（DB保存）',
+        'GET /api/user/profile/:userId': 'ユーザープロフィール取得（DB）'
+      },
+      chat: {
+        'GET /api/chat/history/:userId': '会話履歴取得（DB）'
+      }
+    },
+    supportedCities: ['tokyo', 'osaka', 'kyoto', 'yokohama', 'nagoya', 'fukuoka', 'sendai', 'hiroshima', 'sapporo', 'naha']
+  });
+});
+
 // 都市名での天気取得（緯度経度変換付き）- 1kmメッシュ対応
 // 注意：より具体的なルートを先に定義する必要があります
 app.get('/api/weather/city/:city', async (req, res) => {
@@ -1558,13 +1588,6 @@ app.get('/api/user/profile/:userId', async (req, res) => {
       details: error.message
     });
   }
-});
-
-// 404エラーハンドリング
-app.use((req, res) => {
-  res.status(404).json({ 
-    error: 'エンドポイントが見つかりません' 
-  });
 });
 
 // 診断用シンプルエンドポイント
