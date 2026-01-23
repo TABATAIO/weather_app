@@ -15,13 +15,13 @@
 - **会話履歴**: SQLiteによる永続的な会話記録
 - **ローカルフォールバック**: AI接続時の自然言語処理
 
-### � インタラクティブデモ
+###  インタラクティブデモ
 - **統合デモページ**: 天気情報とAIチャットの完全統合UI
 - **リアルタイム都市選択**: 東京、大阪、名古屋、札幌、福岡の即座切り替え
 - **レスポンシブデザイン**: モバイル・デスクトップ最適化
 - **ライブマスコット**: 天気に応じた動的キャラクター表示
 
-### �🏗️ モジュラーアーキテクチャ
+### 🏗️ モジュラーアーキテクチャ
 - **完全モジュール化**: 5つの専門モジュールによる保守性向上
 - **コード最適化**: server.js 2042行 → 1672行 (370行削減)
 - **エラーハンドリング**: 堅牢なフォールバックシステム
@@ -31,6 +31,8 @@ weather_app/
 ├── Backend/                    # バックエンドシステム
 │   ├── server.js              # メインAPIサーバー (1,672行)
 │   ├── demo.html              # 🌟 統合デモページ (666行)
+│   ├── Dockerfile             # 🐳 Node.js環境構築
+│   ├── docker-entrypoint.sh   # 🗄️ DB初期化スクリプト
 │   ├── modules/               # 専門モジュール (1,886行)
 │   │   ├── chatService.js     # AIチャット & 会話履歴管理
 │   │   ├── mascotService.js   # マスコット状態 & リアクション
@@ -38,12 +40,41 @@ weather_app/
 │   │   ├── nlpService.js      # 自然言語解析
 │   │   └── responseGenerator.js # 高度応答生成
 │   ├── Laravel/               # 管理システム
+│   │   └── weather-admin/     # Laravel管理パネル
+│   │       ├── Dockerfile     # 🐳 PHP+Laravel環境
+│   │       └── docker/        # 設定ファイル群
 │   └── weather_app.db         # SQLite データベース
-├── Front/                     # フロントエンド (開発中)
+├── Frontend/                   # フロントエンド
+│   ├── Dockerfile             # 🐳 Nginx静的配信
+│   └── docker-nginx.conf      # Nginx設定
+├── docker-compose.yml         # 🐳 マルチサービス定義
+├── start.sh                   # 🚀 ワンクリック起動
 └── Prototype/                 # プロトタイプ・実験
 ```
 
 ## 🔄 更新履歴
+
+### 🐳 v2.2 - Docker化対応 (2026年1月23日)
+#### 🌟 主要な新機能
+- **🐳 完全Docker化**: 1コマンドで全環境構築
+- **🔄 自動データベース初期化**: SQLite自動セットアップ
+- **📦 マルチサービス対応**: Backend + Frontend + Admin の統合
+- **💾 データ永続化**: Dockerボリュームによるデータ保持
+- **🛠️ 開発・本番両対応**: 環境切り替え可能
+
+#### 📁 追加ファイル
+- `docker-compose.yml` - マルチサービス構成定義
+- `start.sh` - ワンクリック起動スクリプト
+- `Backend/Dockerfile` - Node.js環境構築
+- `Backend/docker-entrypoint.sh` - DB初期化スクリプト
+- `Frontend/Dockerfile` - Nginx静的配信
+- `Backend/Laravel/weather-admin/Dockerfile` - PHP+Laravel環境
+
+#### ✨ 審査官・評価者向け改善
+- 環境構築不要（Docker Desktopのみ）
+- 全機能の一括テスト可能
+- データベース自動初期化
+- ログ・デバッグ機能強化
 
 ### ✨ v2.1 - インタラクティブデモページ実装 (2026年1月22日)
 #### 🌟 主要な新機能
@@ -101,11 +132,13 @@ weather_app/
 - **Node.js + Express.js**: 高性能RESTful API
 - **SQLite**: 軽量データベース (会話履歴・ユーザープロファイル)
 - **モジュラー設計**: 保守性・拡張性重視
+- **🐳 Docker対応**: コンテナ化による環境統一
 
 ### 🎨 管理システム
 - **Laravel 12.x**: 現代的な管理ダッシュボード
 - **Tailwind CSS**: レスポンシブUI
 - **Chart.js**: データ可視化
+- **🐳 Docker統合**: PHP-FPM + Nginx
 
 ### 🌐 外部API
 - **Weathernews API**: 1km精度のリアルタイム天気データ
@@ -113,7 +146,57 @@ weather_app/
 
 ## 🚀 クイックスタート
 
-### 🌟 デモページ体験 (最速)
+### 🐳 Docker環境での起動 (推奨・審査官向け)
+
+Docker環境なら**環境構築不要**で1コマンドで全サービスが起動します：
+
+```bash
+# 1. 実行権限の設定
+chmod +x start.sh
+
+# 2. 全サービス起動（自動でビルド＆起動）
+./start.sh
+
+# 3. アクセス先
+# 📱 メインデモ:    http://localhost:3000/demo.html
+# 🌐 フロントエンド: http://localhost:8080
+# 🔧 管理画面:      http://localhost:8000
+# 📊 API:          http://localhost:3000/api
+```
+
+#### 🐳 Docker環境の特徴
+- ✅ **環境依存なし**: Node.js、PHP、データベース等の個別インストール不要
+- ✅ **自動データベース初期化**: SQLiteデータベースの自動作成・テーブル構築
+- ✅ **永続化対応**: ユーザーデータ・チャット履歴が保持される
+- ✅ **ワンクリック削除**: `docker-compose down -v` で完全クリーンアップ
+
+#### 🛠️ Docker管理コマンド
+```bash
+# サービス状態確認
+docker-compose ps
+
+# ログ確認
+docker-compose logs -f
+
+# サービス停止
+docker-compose down
+
+# データ含めて完全削除
+docker-compose down -v --rmi all --remove-orphans
+
+# 再起動（修正後など）
+docker-compose restart
+```
+
+#### 📋 必要な環境
+- **Docker Desktop** (Windows/Mac) または **Docker Engine** (Linux)
+- **Docker Compose** v2.0+
+
+---
+
+### 🛠️ 従来環境での起動（開発者向け）
+
+#### 🌟 デモページ体験 (最速)
 ```bash
 cd Backend
 npm install
@@ -122,7 +205,7 @@ npm run dev
 # → 統合デモページを即座に体験！
 ```
 
-### 1. 環境変数設定
+#### 1. 環境変数設定
 
 ```bash
 cd Backend
@@ -131,7 +214,7 @@ cp .env.example .env
 # WEATHERNEWS_API_KEY=your_api_key_here を設定
 ```
 
-### 2. バックエンドAPI起動
+#### 2. バックエンドAPI起動
 
 ```bash
 cd Backend
@@ -140,7 +223,7 @@ npm run dev  # または node server.js
 # → http://localhost:3001
 ```
 
-### 3. 管理システム起動 (オプション)
+#### 3. 管理システム起動 (オプション)
 
 ```bash
 cd Backend/Laravel/weather-admin
@@ -272,20 +355,68 @@ curl "http://localhost:3001/api/weather/city/東京"
 
 ## 🛠️ 開発環境
 
-### 必要な環境
+### 🐳 Docker環境（推奨）
+- **Docker Desktop** v4.0+ (Windows/Mac) または **Docker Engine** (Linux)
+- **Docker Compose** v2.0+
+- **Git** - ソースコード取得
+
+#### Docker環境の利点
+- ✅ **統一環境**: 開発・本番・審査環境の完全一致
+- ✅ **依存関係解決**: Node.js、PHP、データベース等の自動インストール
+- ✅ **即座起動**: `./start.sh` 一発で全サービス起動
+- ✅ **クリーンアップ**: 環境汚染なし、簡単削除
+
+### 🛠️ 従来環境（開発者向け）
+#### 必要な環境
 - **Node.js**: v18.0.0+
 - **npm**: v8.0.0+
 - **PHP**: v8.1+ (Laravel管理システム用)
 - **Composer**: v2.0+ (Laravel依存関係)
 
-### 推奨開発ツール
+#### 推奨開発ツール
 - **VSCode**: エディタ
 - **Postman**: API testing
 - **SQLite Browser**: データベース管理
 
 ## 🔧 トラブルシューティング
 
-### よくある問題
+### Docker環境での問題
+
+**Q: Dockerコンテナが起動しない**
+```bash
+# Docker Desktop起動確認
+docker --version
+docker-compose --version
+
+# ポート競合確認（3000, 8000, 8080）
+lsof -i :3000
+lsof -i :8000
+lsof -i :8080
+
+# 既存コンテナ停止
+docker-compose down -v
+./start.sh  # 再起動
+```
+
+**Q: データベースエラー**
+```bash
+# ログ確認
+docker-compose logs weather-backend
+
+# データボリューム削除して再初期化
+docker-compose down -v
+docker-compose up --build
+```
+
+**Q: 権限エラー（start.sh実行時）**
+```bash
+# 実行権限付与
+chmod +x start.sh
+chmod +x Backend/docker-entrypoint.sh
+chmod +x Backend/Laravel/weather-admin/docker/laravel-entrypoint.sh
+```
+
+### 従来環境での問題
 
 **Q: Gemini APIエラーが発生する**
 ```bash
@@ -347,4 +478,4 @@ chmod 664 Backend/weather_app.db
 
 ---
 
-*最終更新: 2026年1月22日 - v2.1 インタラクティブデモページ実装*
+*最終更新: 2026年1月23日 - v2.2 Docker化対応*

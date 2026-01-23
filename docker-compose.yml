@@ -1,0 +1,61 @@
+version: '3.8'
+
+services:
+  weather-backend:
+    build:
+      context: ./Backend
+      dockerfile: Dockerfile
+    container_name: weather-backend
+    ports:
+      - "3001:3001"
+    volumes:
+      - weather_db_data:/app/data
+      - ./Backend/.env:/app/.env:ro
+    environment:
+      - NODE_ENV=production
+      - DB_PATH=/app/data/weather_app.db
+      - PORT=3000
+    networks:
+      - weather-network
+    restart: unless-stopped
+
+  weather-admin:
+    build:
+      context: ./Backend/Laravel/weather-admin
+      dockerfile: Dockerfile
+    container_name: weather-admin
+    ports:
+      - "8000:8000"
+    volumes:
+      - weather_db_data:/var/www/storage/database
+      - ./Backend/Laravel/weather-admin/.env:/var/www/.env:ro
+    environment:
+      - DB_CONNECTION=sqlite
+      - DB_DATABASE=/var/www/storage/database/weather_app.db
+      - APP_ENV=production
+    depends_on:
+      - weather-backend
+    networks:
+      - weather-network
+    restart: unless-stopped
+
+  weather-frontend:
+    build:
+      context: ./Frontend
+      dockerfile: Dockerfile
+    container_name: weather-frontend
+    ports:
+      - "8080:80"
+    depends_on:
+      - weather-backend
+    networks:
+      - weather-network
+    restart: unless-stopped
+
+volumes:
+  weather_db_data:
+    driver: local
+
+networks:
+  weather-network:
+    driver: bridge
