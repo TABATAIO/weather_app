@@ -5,7 +5,7 @@ use App\Http\Controllers\UserManagementController;
 use Illuminate\Support\Facades\Route;
 
 // ダッシュボードをホームページに設定
-Route::get('/', [AdminController::class, 'dashboard'])->name('admin.dashboard');
+Route::get('/', [AdminController::class, 'dashboard'])->name('home');
 
 // 管理者ルート
 Route::prefix('admin')->group(function () {

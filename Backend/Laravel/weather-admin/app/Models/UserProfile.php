@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class UserProfile extends Model
 {
-    protected $table = 'user_profiles';
+    protected $table = 'weather_users';
     protected $primaryKey = 'user_id';
     protected $keyType = 'string';
     public $incrementing = false;
