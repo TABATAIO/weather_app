@@ -2,8 +2,9 @@
  * API通信用ユーティリティクラス
  */
 class ApiClient {
-    constructor(baseUrl = 'http://localhost:3001') {
-        this.baseUrl = baseUrl;
+    constructor(baseUrl = '/api') {
+        this.baseUrl = baseUrl.replace('/api', ''); // プロキシ経由の場合は相対パスを使用
+        this.isDocker = window.location.hostname !== 'localhost';
     }
 
     /**
@@ -13,7 +14,8 @@ class ApiClient {
      */
     async sendMascotChat(chatData) {
         try {
-            const response = await fetch(`${this.baseUrl}/api/mascot/chat`, {
+            const url = this.isDocker ? '/api/mascot/chat' : `${this.baseUrl || 'http://localhost:3001'}/api/mascot/chat`;
+            const response = await fetch(url, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -39,7 +41,8 @@ class ApiClient {
      */
     async getWeatherData(cityName = 'tokyo') {
         try {
-            const response = await fetch(`${this.baseUrl}/api/weather/city/${cityName}`);
+            const url = this.isDocker ? `/api/weather/city/${cityName}` : `${this.baseUrl || 'http://localhost:3001'}/api/weather/city/${cityName}`;
+            const response = await fetch(url);
             
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);

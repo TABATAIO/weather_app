@@ -46,9 +46,10 @@ RUN chown -R www-data:www-data /var/www \
     && chmod -R 755 /var/www/storage \
     && chmod -R 755 /var/www/bootstrap/cache
 
-# データベースディレクトリの作成
+# データベースディレクトリの作成と権限設定
 RUN mkdir -p /var/www/storage/database && \
-    chown -R www-data:www-data /var/www/storage/database
+    chown -R www-data:www-data /var/www/storage/database && \
+    chmod -R 775 /var/www/storage/database
 
 # Nginx設定
 COPY docker/nginx.conf /etc/nginx/nginx.conf
