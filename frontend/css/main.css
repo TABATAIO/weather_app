@@ -2,18 +2,18 @@ body {
   width: 100%;
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
-  background: #eaf3ff;
+  background: transparent;
 }
 
 .app {
   width: 100%;
   margin: 0;
-  background: #ffffff;
   border-radius: 24px;
   box-shadow: 0 10px 30px rgba(0,0,0,0.15);
   display: flex;
   flex-direction: column;
   overflow-y: auto;
+  backdrop-filter: blur(5px);
 }
 
 /* ===== ヘッダー ===== */
@@ -43,6 +43,34 @@ body {
   font-size: 24px;
   padding: 8px 12px;
   cursor: pointer;
+}
+
+/* ===== 天気アイコン更新 ===== */
+.weather-illustration {
+  font-size: 56px;
+  margin-right: 16px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 80px;
+}
+
+/* 絵文字アイコン（フォールバック用） */
+.weather-illustration .icon {
+  display: none;
+}
+
+/* WeatherNewsアイコン画像 */
+.weather-illustration .weather-icon-img {
+  width: 80px;
+  height: 80px;
+  object-fit: contain;
+  display: block;
+}
+
+/* API取得時はすべてのアイコンを非表示 */
+.weather-illustration.api-loaded .icon {
+  display: none !important;
 }
 
 /* ===== メイン ===== */
@@ -91,10 +119,28 @@ body {
 .weather-illustration {
   font-size: 56px;
   margin-right: 16px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 80px;
 }
 
+/* 絵文字アイコン（フォールバック用） */
 .weather-illustration .icon {
   display: none;
+}
+
+/* WeatherNewsアイコン画像 */
+.weather-illustration .weather-icon-img {
+  width: 80px;
+  height: 80px;
+  object-fit: contain;
+  display: block;
+}
+
+/* API取得時はすべてのアイコンを非表示 */
+.weather-illustration.api-loaded .icon {
+  display: none !important;
 }
 
 /* 気温 */
@@ -200,4 +246,108 @@ body {
 
 #rainy:checked ~ .weather-hero .temp-set.rainy {
   display: inline;
+}
+
+/* 天気別切り替えの調整 */
+#sunny:checked ~ .weather-hero .icon.sunny,
+#cloudy:checked ~ .weather-hero .icon.cloudy,
+#rainy:checked ~ .weather-hero .icon.rainy {
+  display: inline;
+}
+
+/* APIデータ読み込み後はラジオボタン切り替えを無効化 */
+.weather-illustration.api-loaded ~ #sunny:checked .icon.sunny,
+.weather-illustration.api-loaded ~ #cloudy:checked .icon.cloudy,
+.weather-illustration.api-loaded ~ #rainy:checked .icon.rainy {
+  display: none !important;
+}
+
+/* 詳細天気情報セクション */
+.weather-details {
+    display: flex;
+    justify-content: space-around;
+    padding: 20px;
+    margin: 16px;
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 16px;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+.detail-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
+.detail-label {
+    font-size: 12px;
+    color: #666;
+    margin-bottom: 8px;
+    font-weight: 500;
+}
+
+.humidity-value,
+.wind-value,
+.pressure-value {
+    font-size: 16px;
+    font-weight: bold;
+    color: #333;
+}
+
+/* 現在気温のスタイル調整 */
+.current-temp {
+    font-size: 48px;
+    font-weight: bold;
+    color: #333;
+    text-align: center;
+    margin: 16px 0;
+}
+
+/* 天気名のスタイル */
+.weather-name {
+    font-size: 18px;
+    color: #666;
+    text-align: center;
+    margin: 8px 0;
+}
+
+/* 気温範囲のスタイル */
+.temp-range {
+    font-size: 16px;
+    color: #888;
+    text-align: center;
+}
+
+.max-temp {
+    color: #ff6b6b;
+    font-weight: bold;
+}
+
+.min-temp {
+    color: #4dabf7;
+    font-weight: bold;
+}
+
+/* レスポンシブ対応 */
+@media (max-width: 768px) {
+    .weather-details {
+        margin: 12px;
+        padding: 16px;
+    }
+    
+    .detail-label {
+        font-size: 11px;
+    }
+    
+    .humidity-value,
+    .wind-value,
+    .pressure-value {
+        font-size: 14px;
+    }
+    
+    .current-temp {
+        font-size: 40px;
+    }
 }
