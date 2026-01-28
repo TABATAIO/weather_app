@@ -82,7 +82,8 @@ app.get('/', (req, res) => {
       'POST /api/mascot/chat - マスコットとの会話（AI機能・履歴保存）',
       'POST /api/user/profile - ユーザープロフィール設定（DB保存）',
       'GET /api/user/profile/:userId - ユーザープロフィール取得（DB）',
-      'GET /api/chat/history/:userId - 会話履歴取得（DB）'
+      'GET /api/chat/history/:userId - 会話履歴取得（DB）',
+      'GET /api/images/:imageName - 画像ファイル配信'
     ],
     supportedCities: ['tokyo', 'osaka', 'kyoto', 'yokohama', 'nagoya', 'fukuoka', 'sendai', 'hiroshima']
   });
@@ -112,10 +113,78 @@ app.get('/api', (req, res) => {
       },
       chat: {
         'GET /api/chat/history/:userId': '会話履歴取得（DB）'
+      },
+      images: {
+        'GET /api/images/:imageName': '画像ファイル配信'
       }
     },
     supportedCities: ['tokyo', 'osaka', 'kyoto', 'yokohama', 'nagoya', 'fukuoka', 'sendai', 'hiroshima', 'sapporo', 'naha']
   });
+});
+
+// 画像配信エンドポイント
+const path = require('path');
+const fs = require('fs');
+
+app.get('/api/images/:imageName', (req, res) => {
+  try {
+    const imageName = req.params.imageName;
+    console.log(`🖼️ 画像リクエスト: ${imageName}`);
+    console.log(`🔍 __dirname: ${__dirname}`);
+    
+    // 複数のパスを試行
+    const possiblePaths = [
+      path.join(__dirname, '../Laravel/weather-admin/public/images', imageName),
+      path.join('/var/www/public/images', imageName),
+      path.join('/app/Laravel/weather-admin/public/images', imageName),
+      path.join(__dirname, 'Laravel/weather-admin/public/images', imageName),
+      path.join(__dirname, 'public/images', imageName)
+    ];
+    
+    let imagePath = null;
+    
+    // 各パスを確認
+    for (const testPath of possiblePaths) {
+      console.log(`🔍 テストパス: ${testPath}`);
+      if (fs.existsSync(testPath)) {
+        imagePath = testPath;
+        console.log(`✅ 画像発見: ${testPath}`);
+        break;
+      } else {
+        console.log(`❌ 存在しない: ${testPath}`);
+      }
+    }
+    
+    // ファイルの存在確認
+    if (!imagePath) {
+      console.warn(`⚠️ 画像が見つかりません: ${imageName}`);
+      console.log(`🔍 試行したパス:`, possiblePaths);
+      return res.status(404).json({
+        success: false,
+        error: `画像 '${imageName}' が見つかりません`,
+        searchedPaths: possiblePaths
+      });
+    }
+    
+    // 画像ファイルを送信
+    res.sendFile(imagePath, (err) => {
+      if (err) {
+        console.error(`❌ 画像送信エラー:`, err);
+        res.status(500).json({
+          success: false,
+          error: '画像の送信に失敗しました'
+        });
+      } else {
+        console.log(`✅ 画像送信成功: ${imageName}`);
+      }
+    });
+  } catch (error) {
+    console.error('❌ 画像配信エラー:', error);
+    res.status(500).json({
+      success: false,
+      error: '画像の配信でエラーが発生しました'
+    });
+  }
 });
 
 // 都市名での天気取得（緯度経度変換付き）- 1kmメッシュ対応
