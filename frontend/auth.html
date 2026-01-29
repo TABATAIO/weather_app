@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>サインイン / サインアップ - Weather App</title>
+    <link rel="stylesheet" href="css/destyle.css">
+    <link rel="stylesheet" href="css/main.css">
+    <style>
+        .auth-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+        }
+
+        .auth-card {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 400px;
+            width: 100%;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        .auth-title {
+            font-size: 28px;
+            color: #333;
+            margin-bottom: 30px;
+            font-weight: bold;
+        }
+
+        .auth-tabs {
+            display: flex;
+            margin-bottom: 30px;
+            border-radius: 10px;
+            background: #f8f9fa;
+            padding: 5px;
+        }
+
+        .auth-tab {
+            flex: 1;
+            padding: 12px 20px;
+            border: none;
+            background: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+
+        .auth-tab.active {
+            background: #667eea;
+            color: white;
+        }
+
+        .auth-form {
+            display: none;
+        }
+
+        .auth-form.active {
+            display: block;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 500;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 15px 20px;
+            border: 2px solid #e1e8ed;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+            box-sizing: border-box;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .auth-button {
+            width: 100%;
+            padding: 15px 20px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.3s ease;
+            margin-bottom: 20px;
+        }
+
+        .auth-button:hover {
+            background: #556cd6;
+        }
+
+        .auth-button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .error-message {
+            background: #fee;
+            color: #c53030;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .success-message {
+            background: #f0fff4;
+            color: #38a169;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .back-link {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .back-link:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="auth-container">
+        <div class="auth-card">
+            <h1 class="auth-title">Weather App</h1>
+            
+            <div class="auth-tabs">
+                <button class="auth-tab active" data-tab="signin" onclick="switchTab('signin')">サインイン</button>
+                <button class="auth-tab" data-tab="signup" onclick="switchTab('signup')">サインアップ</button>
+            </div>
+
+            <div id="error-message" class="error-message"></div>
+            <div id="success-message" class="success-message"></div>
+
+            <!-- サインインフォーム -->
+            <form id="signin-form" class="auth-form active">
+                <div class="form-group">
+                    <label class="form-label">メールアドレス</label>
+                    <input type="email" id="signin-email" class="form-input" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">パスワード</label>
+                    <input type="password" id="signin-password" class="form-input" required>
+                </div>
+                <button type="submit" id="signin-button" class="auth-button">サインイン</button>
+            </form>
+
+            <!-- サインアップフォーム -->
+            <form id="signup-form" class="auth-form">
+                <div class="form-group">
+                    <label class="form-label">ユーザー名</label>
+                    <input type="text" id="signup-username" class="form-input" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">メールアドレス</label>
+                    <input type="email" id="signup-email" class="form-input" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">パスワード</label>
+                    <input type="password" id="signup-password" class="form-input" required minlength="6">
+                    <small style="color: #888;">6文字以上である必要があります</small>
+                </div>
+                <button type="submit" id="signup-button" class="auth-button">サインアップ</button>
+            </form>
+
+            <a href="index.html" class="back-link">← メインページに戻る</a>
+        </div>
+    </div>
+
+    <script src="js/utils/apiClient.js"></script>
+    <script>
+        // タブ切り替え
+        function switchTab(tab) {
+            // タブボタンの状態更新
+            document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
+            
+            // 対象のタブボタンをdata-tab属性で検索してアクティブにする
+            const targetTab = document.querySelector(`.auth-tab[data-tab="${tab}"]`);
+            if (targetTab) {
+                targetTab.classList.add('active');
+            }
+
+            // フォームの表示切り替え
+            document.querySelectorAll('.auth-form').forEach(f => f.classList.remove('active'));
+            const targetForm = document.getElementById(`${tab}-form`);
+            if (targetForm) {
+                targetForm.classList.add('active');
+            }
+
+            // メッセージをクリア
+            clearMessages();
+        }
+
+        // メッセージクリア
+        function clearMessages() {
+            document.getElementById('error-message').style.display = 'none';
+            document.getElementById('success-message').style.display = 'none';
+        }
+
+        // エラーメッセージ表示
+        function showError(message) {
+            clearMessages();
+            const errorDiv = document.getElementById('error-message');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+        }
+
+        // 成功メッセージ表示
+        function showSuccess(message) {
+            clearMessages();
+            const successDiv = document.getElementById('success-message');
+            successDiv.textContent = message;
+            successDiv.style.display = 'block';
+        }
+
+        // サインインフォーム送信
+        document.getElementById('signin-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const email = document.getElementById('signin-email').value;
+            const password = document.getElementById('signin-password').value;
+            const button = document.getElementById('signin-button');
+
+            button.disabled = true;
+            button.textContent = 'サインイン中...';
+
+            try {
+                const response = await fetch('/api/auth/signin', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ email, password })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    // トークンを保存
+                    localStorage.setItem('authToken', result.token);
+                    localStorage.setItem('user', JSON.stringify(result.user));
+                    
+                    showSuccess('ログインしました！メインページにリダイレクトします...');
+                    
+                    // 2秒後にメインページにリダイレクト
+                    setTimeout(() => {
+                        window.location.href = 'index.html';
+                    }, 2000);
+                } else {
+                    showError(result.error);
+                }
+            } catch (error) {
+                console.error('サインインエラー:', error);
+                showError('ネットワークエラーが発生しました');
+            } finally {
+                button.disabled = false;
+                button.textContent = 'サインイン';
+            }
+        });
+
+        // サインアップフォーム送信
+        document.getElementById('signup-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const username = document.getElementById('signup-username').value;
+            const email = document.getElementById('signup-email').value;
+            const password = document.getElementById('signup-password').value;
+            const button = document.getElementById('signup-button');
+
+            button.disabled = true;
+            button.textContent = 'サインアップ中...';
+
+            try {
+                const response = await fetch('/api/auth/signup', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ username, email, password })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    showSuccess('アカウントが作成されました！サインインタブからログインしてください。');
+                    
+                    // サインインタブに切り替え
+                    setTimeout(() => {
+                        switchTab('signin');
+                        document.getElementById('signin-email').value = email;
+                    }, 2000);
+                } else {
+                    showError(result.error);
+                }
+            } catch (error) {
+                console.error('サインアップエラー:', error);
+                showError('ネットワークエラーが発生しました');
+            } finally {
+                button.disabled = false;
+                button.textContent = 'サインアップ';
+            }
+        });
+
+        // ページロード時にログイン状態をチェック
+        window.addEventListener('DOMContentLoaded', () => {
+            const token = localStorage.getItem('authToken');
+            if (token) {
+                // 既にログインしている場合はメインページにリダイレクト
+                window.location.href = 'index.html';
+            }
+        });
+    </script>
+</body>
+</html>

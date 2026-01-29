@@ -20,7 +20,10 @@ const {
   getUserProfile, 
   saveChatHistory, 
   getChatHistory, 
-  saveWeatherLog 
+  saveWeatherLog,
+  createUser,
+  authenticateUser,
+  verifyToken
 } = require('./dbUtils');
 
 // 環境変数を読み込み
@@ -66,10 +69,158 @@ app.use((req, res, next) => {
   next();
 });
 
+// 認証ミドルウェア
+async function authenticateToken(req, res, next) {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+
+  if (token == null) {
+    return res.sendStatus(401);
+  }
+
+  try {
+    const result = await verifyToken(token);
+    if (result.success) {
+      req.user = result.user;
+      next();
+    } else {
+      res.sendStatus(403);
+    }
+  } catch (error) {
+    console.error('認証エラー:', error);
+    res.sendStatus(403);
+  }
+}
+
+// 認証API - サインアップ（Node.js実装）
+app.post('/api/auth/signup', async (req, res) => {
+  try {
+    console.log('� サインアップリクエスト受信:', req.body);
+    
+    const { email, username, password } = req.body;
+    
+    // バリデーション
+    if (!email || !username || !password) {
+      console.log('❌ 必須フィールドが不足:', { email, username, password: !!password });
+      return res.status(400).json({
+        success: false,
+        error: 'メールアドレス、ユーザー名、パスワードは必須です'
+      });
+    }
+    
+    // ユーザー作成
+    console.log('🔧 createUser呼び出し開始...');
+    const result = await createUser({ email, username, password });
+    console.log('✅ createUser完了:', result);
+    
+    res.json(result);
+  } catch (error) {
+    console.error('💥 サインアップエラー:', error);
+    res.status(500).json({
+      success: false,
+      error: 'サーバーエラーが発生しました'
+    });
+  }
+});
+
+// 認証API - サインイン（Node.js実装）
+app.post('/api/auth/signin', async (req, res) => {
+  try {
+    console.log('🔐 サインインリクエスト受信:', req.body);
+    
+    const { email, password } = req.body;
+    
+    // バリデーション
+    if (!email || !password) {
+      console.log('❌ 必須フィールドが不足:', { email, password: !!password });
+      return res.status(400).json({
+        success: false,
+        error: 'メールアドレスとパスワードは必須です'
+      });
+    }
+    
+    // ユーザー認証
+    console.log('🔧 authenticateUser呼び出し開始...');
+    const result = await authenticateUser({ email, password });
+    console.log('✅ authenticateUser完了:', result);
+    
+    res.json(result);
+  } catch (error) {
+    console.error('💥 サインインエラー:', error);
+    res.status(500).json({
+      success: false,
+      error: 'サーバーエラーが発生しました'
+    });
+  }
+});
+
+// デバッグ用エンドポイント - DBユーザー確認
+app.get('/api/debug/users', async (req, res) => {
+  try {
+    const database = await require('./database').setupDatabase();
+    
+    database.all('SELECT id, email, name, created_at FROM users', (err, users) => {
+      if (err) {
+        console.error('ユーザー取得エラー:', err);
+        res.status(500).json({ success: false, error: err.message });
+      } else {
+        res.json({
+          success: true,
+          users: users,
+          count: users.length
+        });
+      }
+    });
+  } catch (error) {
+    console.error('デバッグエラー:', error);
+    res.status(500).json({ success: false, error: 'データベース接続エラー' });
+  }
+});
+
+// 認証API - トークン検証（Node.js実装）
+app.get('/api/auth/verify', async (req, res) => {
+  try {
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1];
+
+    if (!token) {
+      return res.status(401).json({
+        success: false,
+        error: 'トークンが提供されていません'
+      });
+    }
+
+    // Node.jsのトークン検証機能を使用
+    const result = await verifyToken(token);
+    
+    if (result.success) {
+      res.json({
+        success: true,
+        user: {
+          id: result.user.id,
+          username: result.user.username,
+          email: result.user.email
+        }
+      });
+    } else {
+      res.status(401).json({
+        success: false,
+        error: result.error || 'トークンが無効です'
+      });
+    }
+  } catch (error) {
+    console.error('トークン検証エラー:', error);
+    res.status(500).json({
+      success: false,
+      error: '内部サーバーエラーが発生しました'
+    });
+  }
+});
+
 // ルート設定
 app.get('/', (req, res) => {
   console.log('🔍 ルートエンドポイント (/) に到達しました');
-  res.json({ 
+  res.json({
     message: 'Weather Mascot App Backend',
     version: '1.0.0',
     weatherAPI: 'Weathernews Point Weather API',

@@ -6,10 +6,10 @@ use Illuminate\Database\Eloquent\Model;
 
 class UserProfile extends Model
 {
-    protected $table = 'weather_users';
-    protected $primaryKey = 'user_id';
-    protected $keyType = 'string';
-    public $incrementing = false;
+    protected $table = 'user_profiles';
+    protected $primaryKey = 'id';
+    protected $keyType = 'integer';
+    public $incrementing = true;
 
     protected $fillable = [
         'user_id',

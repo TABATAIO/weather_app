@@ -1,129 +1,160 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ja">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Weather App</title>
-    <link rel="stylesheet" href="css/destyle.css">
-    <link rel="stylesheet" href="css/main.css">
-    <link rel="stylesheet" href="css/weather-background.css">
+    <link rel="stylesheet" href="css/destyle.css" />
+    <link rel="stylesheet" href="css/main.css" />
+    <link rel="stylesheet" href="css/weather-background.css" />
     <!-- APIクライアントと背景モジュールを先に読み込み -->
     <script defer src="js/utils/apiClient.js"></script>
     <script defer src="js/modules/weatherBackground.js"></script>
+    <script defer src="js/modules/authManager.js"></script>
     <!-- メインアプリケーション -->
     <script defer src="js/script.js"></script>
-    
+
     <!-- 緊急テスト用スクリプト -->
     <script>
-    console.log('🔥 インラインJavaScriptテスト');
-    window.addEventListener('DOMContentLoaded', function() {
-        console.log('🔥 DOM読み込み完了');
-    });
+      console.log("🔥 インラインJavaScriptテスト");
+      window.addEventListener("DOMContentLoaded", function () {
+        console.log("🔥 DOM読み込み完了");
+      });
     </script>
-</head>
+  </head>
 
-<body>
-<div class="weather-background" id="weatherBackground"></div>
-<div class="app">
-<!-- header -->
-<div id="header">
-    <header class="header">
-    <div class="app-logo"><img src="img/logo.jpg" alt="logo">
-    </div>
-    <div class="header-buttons">
-    <button class="app-btn" title="都市を検索"><img src="img/location.png" alt="search"></button>
-    <button class="app-btn" title="現在地の天気"><img src="img/location.png" alt="location"></button>
-    </div>
-    </header>
-</div>
+  <body>
+    <div class="weather-background"></div>
+    <div class="app">
+      <!-- header -->
+      <div id="header">
+        <header class="header">
+          <div class="app-logo"><img src="img/logo.jpg" alt="logo" /></div>
+          <div class="header-buttons">
+            <button class="app-btn" title="都市を検索" style="font-size: 14px">
+              現在位置を検索
+            </button>
+            <button class="app-btn" title="現在地の天気">
+              <img src="img/location.png" alt="current location" />
+            </button>
+            <!-- 認証関連ボタン -->
+            <div id="auth-buttons" class="auth-buttons">
+              <!-- ログイン前に表示 -->
+              <button
+                id="login-btn"
+                class="app-btn auth-btn"
+                title="ログイン"
+                style="display: none"
+              >
+                <span>ログイン</span>
+              </button>
+              <!-- ログイン後に表示 -->
+              <div id="user-menu" class="user-menu" style="display: none">
+                <span id="username-display" class="username-display"></span>
+                <button
+                  id="logout-btn"
+                  class="app-btn auth-btn"
+                  title="ログアウト"
+                >
+                  <span>ログアウト</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </header>
+      </div>
 
-<!-- main -->
-    <main>
-    <section class="weather-hero">
-        <div class="character-area">
-        <div class="character-img">
-            <img src="img/character01.png" alt="キャラクター画像" title="マスコットページへ">
-        </div>
-        </div>
+      <!-- main -->
+      <main>
+        <section class="weather-hero">
+          <div class="character-area">
+            <div class="character-img">
+              <img
+                src="img/character01.png"
+                alt="キャラクター画像"
+                title="マスコットページへ"
+              />
+            </div>
+          </div>
 
-        <div class="today-area">
-        <div class="today-main">
-            <div class="weather-illustration">
+          <div class="today-area">
+            <div class="today-main">
+              <div class="weather-illustration">
                 <!-- WeatherNewsのアイコン画像がここに動的に挿入されます -->
+              </div>
+              <div class="current-temp">--°</div>
             </div>
-            <div class="current-temp">--°</div>
-        </div>
 
-        <div class="today-sub">
-            <p class="weather-name">読み込み中...</p>
-            <div class="temp-range">
-                <span class="max-temp">--°</span> / <span class="min-temp">--°</span>
+            <div class="today-sub">
+              <p class="weather-name">読み込み中...</p>
+              <div class="temp-range">
+                <span class="max-temp">--°</span> /
+                <span class="min-temp">--°</span>
+              </div>
             </div>
-        </div>
-        </div>
-    </section>
+          </div>
+        </section>
 
-    <!-- 詳細天気情報セクション -->
-    <section class="weather-details">
-        <div class="detail-item">
+        <!-- 詳細天気情報セクション -->
+        <section class="weather-details">
+          <div class="detail-item">
             <span class="detail-label">湿度</span>
             <span class="humidity-value">--</span>
-        </div>
-        <div class="detail-item">
+          </div>
+          <div class="detail-item">
             <span class="detail-label">風速</span>
             <span class="wind-value">--</span>
-        </div>
-        <div class="detail-item">
+          </div>
+          <div class="detail-item">
             <span class="detail-label">気圧</span>
             <span class="pressure-value">--</span>
-        </div>
-    </section>
+          </div>
+        </section>
 
-    <!-- 週間天気予報セクション -->
-    <section class="weekly">
-        <div class="weekly-row">
+        <!-- 週間天気予報セクション -->
+        <section class="weekly">
+          <div class="weekly-row">
             <span class="city-name">週間予報</span>
-            <span>今日</span>
-            <span>明日</span>
-            <span>火</span>
-            <span>水</span>
-            <span>木</span>
-            <span>金</span>
-            <span>土</span>
-        </div>
-        <div class="weekly-row">
+            <span>--/--</span>
+            <span>--/--</span>
+            <span>--/--</span>
+            <span>--/--</span>
+            <span>--/--</span>
+            <span>--/--</span>
+            <span>--/--</span>
+          </div>
+          <div class="weekly-row">
             <span class="city-name">天気</span>
-            <span>☀️</span>
-            <span>☁️</span>
-            <span>🌧️</span>
-            <span>☁️</span>
-            <span>☀️</span>
-            <span>☀️</span>
-            <span>⛅</span>
-        </div>
-        <div class="weekly-row">
+            <span>--</span>
+            <span>--</span>
+            <span>--</span>
+            <span>--</span>
+            <span>--</span>
+            <span>--</span>
+            <span>--</span>
+          </div>
+          <div class="weekly-row">
             <span class="city-name">最高</span>
-            <span class="max">25°</span>
-            <span class="max">23°</span>
-            <span class="max">20°</span>
-            <span class="max">22°</span>
-            <span class="max">26°</span>
-            <span class="max">28°</span>
-            <span class="max">24°</span>
-        </div>
-        <div class="weekly-row">
+            <span class="max">--°</span>
+            <span class="max">--°</span>
+            <span class="max">--°</span>
+            <span class="max">--°</span>
+            <span class="max">--°</span>
+            <span class="max">--°</span>
+            <span class="max">--°</span>
+          </div>
+          <div class="weekly-row">
             <span class="city-name">最低</span>
-            <span class="min">18°</span>
-            <span class="min">16°</span>
-            <span class="min">15°</span>
-            <span class="min">17°</span>
-            <span class="min">19°</span>
-            <span class="min">21°</span>
-            <span class="min">18°</span>
-        </div>
-    </section>
-
-</main>
-</div>
-</body>
+            <span class="min">--°</span>
+            <span class="min">--°</span>
+            <span class="min">--°</span>
+            <span class="min">--°</span>
+            <span class="min">--°</span>
+            <span class="min">--°</span>
+            <span class="min">--°</span>
+          </div>
+        </section>
+      </main>
+    </div>
+  </body>
 </html>

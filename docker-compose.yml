@@ -7,11 +7,11 @@ services:
     ports:
       - "3001:3001"
     volumes:
-      - weather_db_data:/app/data
+      - weather_db_data:/var/www/storage/database
       - ./Backend/.env:/app/.env:ro
     environment:
       - NODE_ENV=production
-      - DB_PATH=/app/data/weather_app.db
+      - DB_PATH=/var/www/storage/database/weather_app.db
       - PORT=3001
     networks:
       - weather-network

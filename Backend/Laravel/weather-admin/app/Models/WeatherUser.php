@@ -10,14 +10,20 @@ class WeatherUser extends Authenticatable
 {
     use HasFactory, Notifiable;
 
-    protected $table = 'weather_users';
+    protected $table = 'user_profiles';
     
     protected $fillable = [
-        'name',
+        'user_name',
         'email',
         'password',
         'role',
         'is_active',
+        'user_id',
+        'temperature_preference',
+        'activity_preference',
+        'style_preference',
+        'weather_sensitivity',
+        'favorite_activities',
     ];
 
     protected $hidden = [
@@ -28,7 +34,19 @@ class WeatherUser extends Authenticatable
     protected $casts = [
         'email_verified_at' => 'datetime',
         'is_active' => 'boolean',
+        'favorite_activities' => 'json',
     ];
+
+    // user_nameフィールドをnameとしてアクセスできるようにする
+    public function getNameAttribute()
+    {
+        return $this->user_name;
+    }
+
+    public function setNameAttribute($value)
+    {
+        $this->user_name = $value;
+    }
 
     // 権限管理
     public function isAdmin()
