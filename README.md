@@ -183,6 +183,38 @@ chmod +x start.sh
 # 📊 API:          http://localhost:3000/api
 ```
 
+### 💻 VS Code Dev Containers での開発 (NEW!)
+
+**統合開発環境**でコンテナ内開発ができます：
+
+```bash
+# 1. VS Codeでプロジェクトを開く
+code .
+
+# 2. コマンドパレット: Cmd+Shift+P (Mac) / Ctrl+Shift+P (Windows)
+# 「Dev Containers: Reopen in Container」を実行
+
+# 3. 自動で以下が実行されます:
+# ✅ 全サービスのコンテナ起動
+# ✅ 開発ツールの自動インストール (git, curl, nano, vim, tree, htop)
+# ✅ VS Code拡張機能の自動インストール
+# ✅ npm/composer install の実行
+# ✅ ポートフォワーディング (3001, 8000, 8080)
+```
+
+#### 🛠️ Dev Containers の特徴
+- **🔧 統合開発**: Frontend/Backend/Laravel を一つのコンテナで編集
+- **📦 自動セットアップ**: 必要な依存関係とツールを自動インストール
+- **🌐 ポートフォワーディング**: すべてのサービスに直接アクセス
+- **⚡ ホットリロード**: ファイル変更の即座反映
+- **🔍 統合デバッグ**: VS Code内でのデバッグ・ログ表示
+
+#### 📋 必要なもの
+- **VS Code** + **Dev Containers拡張機能**
+- **Docker Desktop** (Windows/Mac) または **Docker Engine** (Linux)
+
+---
+
 #### 🐳 Docker環境の特徴
 - ✅ **環境依存なし**: Node.js、PHP、データベース等の個別インストール不要
 - ✅ **自動データベース初期化**: SQLiteデータベースの自動作成・テーブル構築
