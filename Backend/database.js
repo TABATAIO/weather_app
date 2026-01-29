@@ -1,8 +1,8 @@
 const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
 
-// データベースファイルのパス
-const dbPath = path.join(__dirname, 'weather_app.db');
+// データベースファイルのパス（環境変数から取得、デフォルトは既存パス）
+const dbPath = process.env.DB_PATH || path.join(__dirname, 'weather_app.db');
 
 /**
  * データベース接続を初期化する
@@ -29,16 +29,13 @@ function initializeDatabase() {
  */
 function createTables(db) {
   return new Promise((resolve, reject) => {
-    // ユーザープロフィールテーブル
-    const userProfilesTable = `
-      CREATE TABLE IF NOT EXISTS user_profiles (
-        user_id TEXT PRIMARY KEY,
-        user_name TEXT NOT NULL,
-        temperature_preference TEXT DEFAULT 'moderate',
-        activity_preference TEXT DEFAULT 'both',
-        style_preference TEXT DEFAULT 'casual',
-        weather_sensitivity TEXT DEFAULT 'normal',
-        favorite_activities TEXT,
+    // usersテーブル（Laravel互換）
+    const usersTable = `
+      CREATE TABLE IF NOT EXISTS users (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name VARCHAR(255) NOT NULL,
+        email VARCHAR(255) NOT NULL UNIQUE,
+        password VARCHAR(255) NOT NULL,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
       )
@@ -48,14 +45,14 @@ function createTables(db) {
     const chatHistoryTable = `
       CREATE TABLE IF NOT EXISTS chat_history (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        user_id TEXT NOT NULL,
+        user_id INTEGER NOT NULL,
         user_message TEXT NOT NULL,
         bot_response TEXT NOT NULL,
         intent TEXT,
         sentiment TEXT,
         weather_data TEXT,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (user_id) REFERENCES user_profiles (user_id)
+        FOREIGN KEY (user_id) REFERENCES users (id)
       )
     `;
 
@@ -63,7 +60,7 @@ function createTables(db) {
     const weatherLogsTable = `
       CREATE TABLE IF NOT EXISTS weather_logs (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        user_id TEXT,
+        user_id INTEGER,
         latitude REAL,
         longitude REAL,
         weather_data TEXT,
@@ -71,34 +68,47 @@ function createTables(db) {
       )
     `;
 
-    db.serialize(() => {
-      db.run(userProfilesTable, (err) => {
-        if (err) {
-          console.error('user_profilesテーブル作成エラー:', err.message);
-          reject(err);
-        } else {
-          console.log('✅ user_profilesテーブルを作成しました');
-        }
-      });
+    let tablesCreated = 0;
+    const totalTables = 3;
 
-      db.run(chatHistoryTable, (err) => {
-        if (err) {
-          console.error('chat_historyテーブル作成エラー:', err.message);
-          reject(err);
-        } else {
-          console.log('✅ chat_historyテーブルを作成しました');
-        }
-      });
+    function checkComplete() {
+      tablesCreated++;
+      if (tablesCreated === totalTables) {
+        resolve();
+      }
+    }
 
-      db.run(weatherLogsTable, (err) => {
-        if (err) {
-          console.error('weather_logsテーブル作成エラー:', err.message);
-          reject(err);
-        } else {
-          console.log('✅ weather_logsテーブルを作成しました');
-          resolve();
-        }
-      });
+    // usersテーブルを最初に作成
+    db.run(usersTable, (err) => {
+      if (err) {
+        console.error('usersテーブル作成エラー:', err.message);
+        reject(err);
+      } else {
+        console.log('✅ usersテーブルを作成しました');
+        checkComplete();
+      }
+    });
+
+    // chat_historyテーブル作成
+    db.run(chatHistoryTable, (err) => {
+      if (err) {
+        console.error('chat_historyテーブル作成エラー:', err.message);
+        reject(err);
+      } else {
+        console.log('✅ chat_historyテーブルを作成しました');
+        checkComplete();
+      }
+    });
+
+    // weather_logsテーブル作成
+    db.run(weatherLogsTable, (err) => {
+      if (err) {
+        console.error('weather_logsテーブル作成エラー:', err.message);
+        reject(err);
+      } else {
+        console.log('✅ weather_logsテーブルを作成しました');
+        checkComplete();
+      }
     });
   });
 }

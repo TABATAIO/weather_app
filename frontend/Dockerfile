@@ -1,5 +1,8 @@
 FROM nginx:alpine
 
+# 必要なパッケージのインストール（Git含む）
+RUN apk update && apk add --no-cache git
+
 # 静的ファイルをnginxのwebrootにコピー
 COPY . /usr/share/nginx/html/
 

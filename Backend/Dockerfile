@@ -1,5 +1,8 @@
 FROM node:18-alpine
 
+# 必要なパッケージのインストール（Git含む）
+RUN apk update && apk add --no-cache git su-exec
+
 # 作業ディレクトリの設定
 WORKDIR /app
 
@@ -20,11 +23,10 @@ RUN addgroup -g 1001 -S nodejs && \
 
 # エントリーポイントスクリプトのコピー
 COPY docker-entrypoint.sh /docker-entrypoint.sh
-USER root
 RUN chmod +x /docker-entrypoint.sh
 
-# 最終的にnextjsユーザーで実行
-USER nextjs
+# エントリーポイントはrootで実行（内部でnextjsユーザーに切り替え）
+USER root
 
 # ポート公開
 EXPOSE 3000

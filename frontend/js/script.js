@@ -9,6 +9,7 @@ class WeatherApp {
         this.currentCity = 'tokyo';
         this.weatherData = null;
         this.isLoading = false;
+        this.authManager = null;
         this.init();
     }
 
@@ -32,17 +33,75 @@ class WeatherApp {
         console.log('- body要素:', document.body);
         
         try {
+            // 認証マネージャーの初期化
+            this.authManager = window.authManager;
+            this.initializeAuth();
+            
             // API接続テスト
             await this.testApiConnection();
             
             // イベントリスナー設定
             this.setupEventListeners();
             this.setupLocationButton();
+            this.setupAuthEventListeners();
             
             // 初期天気データ読み込み
             await this.loadInitialWeatherData();
         } catch (error) {
             console.error('❌ initializeApp エラー:', error);
+        }
+    }
+
+    /**
+     * 認証機能の初期化
+     */
+    initializeAuth() {
+        console.log('🔐 認証機能初期化');
+        this.updateAuthUI();
+    }
+
+    /**
+     * 認証UIの更新
+     */
+    updateAuthUI() {
+        const loginBtn = document.getElementById('login-btn');
+        const userMenu = document.getElementById('user-menu');
+        const usernameDisplay = document.getElementById('username-display');
+
+        if (this.authManager.isAuthenticated()) {
+            // ログイン状態
+            const user = this.authManager.getUser();
+            if (user) {
+                loginBtn.style.display = 'none';
+                userMenu.style.display = 'flex';
+                usernameDisplay.textContent = user.username;
+            }
+        } else {
+            // ログアウト状態
+            loginBtn.style.display = 'block';
+            userMenu.style.display = 'none';
+        }
+    }
+
+    /**
+     * 認証関連のイベントリスナー設定
+     */
+    setupAuthEventListeners() {
+        const loginBtn = document.getElementById('login-btn');
+        const logoutBtn = document.getElementById('logout-btn');
+
+        if (loginBtn) {
+            loginBtn.addEventListener('click', () => {
+                window.location.href = 'auth.html';
+            });
+        }
+
+        if (logoutBtn) {
+            logoutBtn.addEventListener('click', () => {
+                if (confirm('ログアウトしますか？')) {
+                    this.authManager.logout();
+                }
+            });
         }
     }
 
@@ -169,11 +228,122 @@ class WeatherApp {
             
             // WeatherNewsアイコン
             this.updateWeatherIcon(current);
+
+            if (data.forecast && data.forecast.mediumTerm) {
+                this.updateWeeklyForecast(data.forecast.mediumTerm);
+            }
             
             console.log('🎉 天気表示更新完了');
         } catch (error) {
             console.error('💥 天気表示更新エラー:', error);
         }
+    }
+
+    updateWeeklyForecast(mediumTermData) {
+        console.log('📅 週間天気予報更新開始:', mediumTermData);
+
+        this.updateWeeklyDatas(mediumTermData);
+        this.updateWeeklyWeather(mediumTermData);
+        this.updateWeeklyMaxTemp(mediumTermData);
+        this.updateWeeklyMinTemp(mediumTermData);
+
+        console.log('✅ 週間天気予報更新完了');
+    }
+
+    updateWeeklyDatas(mediumTermData) {
+        console.log('📅 週間日付更新開始:', mediumTermData);
+        
+        const dateSpans = document.querySelectorAll('.weekly-row:first-child span:not(.city-name)');
+        console.log('🔍 日付span要素数:', dateSpans.length);
+        
+        for (let i = 0; i < Math.min(dateSpans.length, mediumTermData.length); i++) {
+            const forecastData = mediumTermData[i];
+            if (forecastData && forecastData.date) {
+                // 日付をMM/DD形式に変換
+                const date = new Date(forecastData.date);
+                const formattedDate = `${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getDate().toString().padStart(2, '0')}`;
+                
+                dateSpans[i].textContent = formattedDate;
+                console.log(`✅ 日付更新 [${i}]:`, formattedDate);
+            }
+        }
+        
+        console.log('✅ 週間日付更新完了');
+    }
+
+    updateWeeklyWeather(mediumTermData) {
+        console.log('🌤️ 週間天気アイコン更新開始:', mediumTermData);
+        
+        const weatherSpans = document.querySelectorAll('.weekly-row:nth-child(2) span:not(.city-name)');
+        console.log('🔍 天気span要素数:', weatherSpans.length);
+        
+        for (let i = 0; i < Math.min(weatherSpans.length, mediumTermData.length); i++) {
+            const forecastData = mediumTermData[i];
+            if (forecastData && forecastData.wx) {
+                // WeatherNewsアイコンURLを直接構築（APIと同じパターン）
+                const iconUrl = `https://tpf.weathernews.jp/wxicon/152/${forecastData.wx}.png`;
+                
+                // img要素を作成
+                const iconImg = document.createElement('img');
+                iconImg.src = iconUrl;
+                iconImg.alt = `天気コード${forecastData.wx}`;
+                iconImg.style.width = '24px';
+                iconImg.style.height = '24px';
+                iconImg.style.objectFit = 'contain';
+                
+                // エラー時は代替テキスト表示
+                iconImg.onerror = () => {
+                    console.log(`⚠️ WeatherNewsアイコン読み込み失敗 [${i}]:`, forecastData.wx);
+                    weatherSpans[i].innerHTML = `<span style="font-size: 20px;">❓</span>`;
+                };
+                
+                iconImg.onload = () => {
+                    console.log(`✅ WeatherNewsアイコン読み込み成功 [${i}]:`, forecastData.wx);
+                };
+                
+                // span要素をクリアしてアイコンを挿入
+                weatherSpans[i].innerHTML = '';
+                weatherSpans[i].appendChild(iconImg);
+                
+                console.log(`✅ 天気アイコン更新 [${i}]:`, forecastData.wx);
+            }
+        }
+        
+        console.log('✅ 週間天気アイコン更新完了');
+    }
+
+    updateWeeklyMaxTemp(mediumTermData) {
+        console.log('🌡️ 週間最高気温更新開始:', mediumTermData);
+        
+        const maxTempSpans = document.querySelectorAll('.weekly-row:nth-child(3) span:not(.city-name)');
+        console.log('🔍 最高気温span要素数:', maxTempSpans.length);
+        
+        for (let i = 0; i < Math.min(maxTempSpans.length, mediumTermData.length); i++) {
+            const forecastData = mediumTermData[i];
+            if (forecastData && forecastData.maxtemp !== undefined) {
+                maxTempSpans[i].textContent = `${Math.round(forecastData.maxtemp)}°`;
+                console.log(`✅ 最高気温更新 [${i}]:`, forecastData.maxtemp);
+            }
+        }
+        
+        console.log('✅ 週間最高気温更新完了');
+    }
+
+    updateWeeklyMinTemp(mediumTermData) {
+        console.log('🌡️ 週間最低気温更新開始:', mediumTermData);
+        
+        const minTempSpans = document.querySelectorAll('.weekly-row:nth-child(4) span:not(.city-name)');
+        console.log('🔍 最低気温span要素数:', minTempSpans.length);
+        
+        for (let i = 0; i < Math.min(minTempSpans.length, mediumTermData.length); i++) {
+            const forecastData = mediumTermData[i];
+            if (forecastData && forecastData.mintemp !== undefined) {
+                minTempSpans[i].textContent = `${Math.round(forecastData.mintemp)}°`;
+                console.log(`✅ 最低気温更新 [${i}]:`, forecastData.mintemp);
+            }
+        }
+        
+        console.log('✅ 週間最低気温更新完了');
     }
 
     updateCurrentTemperature(temperature) {
@@ -278,6 +448,8 @@ class WeatherApp {
         
         return '<span style="font-size: 60px; display: block; text-align: center;">☀️</span>';
     }
+
+
 
     showDemoWeatherData() {
         console.log('🎭 === デモデータ表示開始 ===');
@@ -543,7 +715,6 @@ class WeatherApp {
         characterArea.style.backgroundSize = 'cover';
         characterArea.style.backgroundPosition = 'center';
         characterArea.style.backgroundRepeat = 'no-repeat';
-        characterArea.style.borderRadius = '20px';
         characterArea.style.overflow = 'hidden';
         
         console.log('✅ キャラクターエリア背景設定完了');
@@ -574,3 +745,5 @@ window.addEventListener('load', () => {
         console.log('🔍 body内容の最初の500文字:', document.body.innerHTML.substring(0, 500));
     }
 });
+
+// 既存のspan要素取得コードは削除（メソッド内で直接取得するため）
