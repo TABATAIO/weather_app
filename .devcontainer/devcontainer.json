@@ -1,0 +1,64 @@
+{
+  "name": "Weather App Full Stack Development",
+  "dockerComposeFile": "../docker-compose.yml",
+  "service": "weather-backend",
+  "workspaceFolder": "/workspace",
+  
+  // 開発に必要な拡張機能
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-vscode.vscode-json",
+        "bradlc.vscode-tailwindcss", 
+        "esbenp.prettier-vscode",
+        "ms-vscode.vscode-typescript-next",
+        "formulahendry.auto-rename-tag",
+        "ms-vscode.vscode-eslint",
+        "shufo.vscode-blade-formatter",
+        "onecentlin.laravel-blade",
+        "ms-vscode.live-server"
+      ],
+      "settings": {
+        "terminal.integrated.defaultProfile.linux": "bash",
+        "editor.formatOnSave": true,
+        "editor.tabSize": 2,
+        "files.insertFinalNewline": true,
+        "files.trimTrailingWhitespace": true,
+        "javascript.preferences.includePackageJsonAutoImports": "auto",
+        "typescript.preferences.includePackageJsonAutoImports": "auto"
+      }
+    }
+  },
+
+  // ポートフォワーディング
+  "forwardPorts": [3001, 8000, 8080],
+  "portsAttributes": {
+    "3001": {
+      "label": "Backend API",
+      "onAutoForward": "notify"
+    },
+    "8000": {
+      "label": "Laravel Admin",
+      "onAutoForward": "notify"
+    },
+    "8080": {
+      "label": "Frontend",
+      "onAutoForward": "notify"
+    }
+  },
+
+  // コンテナ作成後に実行するコマンド
+  "postCreateCommand": "bash -c 'cd /workspace/Backend && npm install && cd /workspace/Frontend && npm install || echo \"Frontend npm install skipped\" && cd /workspace/Backend/Laravel/weather-admin && composer install --no-dev --optimize-autoloader || echo \"Composer install completed\"'",
+  
+  // 開発用の追加ツールをインストール
+  "postStartCommand": "bash -c 'apt-get update && apt-get install -y git curl wget nano vim tree htop && echo \"Development tools installed\"'",
+
+
+  // コンテナユーザー
+  "remoteUser": "root",
+
+  // マウント設定
+  "mounts": [
+    "source=${localWorkspaceFolder},target=/workspace,type=bind,consistency=cached"
+  ]
+}
