@@ -117,7 +117,7 @@ class UserManagementController extends Controller
     {
         $users = UserProfile::with('chatHistory')->get();
 
-        $filename = 'user_profiles_' . date('Y-m-d_H-i-s') . '.csv';
+        $filename = 'users_' . date('Y-m-d_H-i-s') . '.csv';
         
         return response()->streamDownload(function() use ($users) {
             $output = fopen('php://output', 'w');

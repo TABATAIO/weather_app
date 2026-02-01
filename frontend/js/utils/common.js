@@ -56,44 +56,50 @@ function debounce(func, wait) {
  */
 const Animation = {
     fadeIn(element, duration = 300) {
-        element.style.opacity = '0';
-        element.style.display = 'block';
-        
-        const start = performance.now();
-        
-        function animate(currentTime) {
-            const elapsed = currentTime - start;
-            const progress = Math.min(elapsed / duration, 1);
+        return new Promise(resolve => {
+            element.style.opacity = '0';
+            element.style.display = 'block';
             
-            element.style.opacity = progress;
+            const start = performance.now();
             
-            if (progress < 1) {
-                requestAnimationFrame(animate);
+            function animate(currentTime) {
+                const elapsed = currentTime - start;
+                const progress = Math.min(elapsed / duration, 1);
+                
+                element.style.opacity = progress;
+                
+                if (progress < 1) {
+                    requestAnimationFrame(animate);
+                } else {
+                    resolve();
+                }
             }
-        }
-        
-        requestAnimationFrame(animate);
+            
+            requestAnimationFrame(animate);
+        });
     },
 
-    fadeOut(element, duration = 300, callback = null) {
-        const start = performance.now();
-        const initialOpacity = parseFloat(getComputedStyle(element).opacity);
-        
-        function animate(currentTime) {
-            const elapsed = currentTime - start;
-            const progress = Math.min(elapsed / duration, 1);
+    fadeOut(element, duration = 300) {
+        return new Promise(resolve => {
+            const start = performance.now();
+            const initialOpacity = parseFloat(getComputedStyle(element).opacity) || 1;
             
-            element.style.opacity = initialOpacity * (1 - progress);
-            
-            if (progress >= 1) {
-                element.style.display = 'none';
-                if (callback) callback();
-            } else {
-                requestAnimationFrame(animate);
+            function animate(currentTime) {
+                const elapsed = currentTime - start;
+                const progress = Math.min(elapsed / duration, 1);
+                
+                element.style.opacity = initialOpacity * (1 - progress);
+                
+                if (progress >= 1) {
+                    element.style.display = 'none';
+                    resolve();
+                } else {
+                    requestAnimationFrame(animate);
+                }
             }
-        }
-        
-        requestAnimationFrame(animate);
+            
+            requestAnimationFrame(animate);
+        });
     }
 };
 

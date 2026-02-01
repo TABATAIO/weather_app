@@ -10,7 +10,7 @@ class WeatherUser extends Authenticatable
 {
     use HasFactory, Notifiable;
 
-    protected $table = 'user_profiles';
+    protected $table = 'users';
     
     protected $fillable = [
         'user_name',

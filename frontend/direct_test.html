@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>🔧 Direct Laravel API Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 600px; margin: 50px auto; padding: 20px; }
+        button { padding: 10px 20px; margin: 10px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; }
+        .result { background: #f8f9fa; border: 1px solid #ddd; padding: 15px; margin: 20px 0; border-radius: 5px; white-space: pre-wrap; font-family: monospace; }
+        .error { background: #ffebee; border-color: #f44336; color: #d32f2f; }
+        .success { background: #e8f5e8; border-color: #4caf50; color: #2e7d32; }
+    </style>
+</head>
+<body>
+    <h1>🔧 Direct Laravel API Test</h1>
+    
+    <button onclick="directTest()">📡 直接Laravel APIテスト</button>
+    <button onclick="relativeTest()">📡 相対パステスト</button>
+    <button onclick="clearLog()">🗑️ ログクリア</button>
+    
+    <div id="log"></div>
+
+    <script>
+        function addLog(message, type = 'info') {
+            const log = document.getElementById('log');
+            const div = document.createElement('div');
+            div.className = `result ${type}`;
+            div.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            log.appendChild(div);
+            console.log(message);
+        }
+
+        async function directTest() {
+            const testUrls = [
+                'http://localhost:8000/api/mascot/name',
+                `http://${window.location.hostname}:8000/api/mascot/name`,
+                '/api/mascot/name'
+            ];
+
+            for (const url of testUrls) {
+                addLog(`🔍 テスト中: ${url}`, 'info');
+                
+                try {
+                    const response = await fetch(url, {
+                        method: 'GET',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json',
+                        },
+                        mode: 'cors'  // CORSを明示的に設定
+                    });
+                    
+                    addLog(`📡 レスポンス: ${response.status} ${response.statusText}`, response.ok ? 'success' : 'error');
+                    
+                    if (response.ok) {
+                        const data = await response.json();
+                        addLog(`✅ 成功: ${JSON.stringify(data, null, 2)}`, 'success');
+                        return; // 成功したら終了
+                    }
+                    
+                } catch (error) {
+                    addLog(`❌ エラー: ${error.message}`, 'error');
+                }
+            }
+            
+            addLog('❌ すべてのURLが失敗しました', 'error');
+        }
+
+        async function relativeTest() {
+            addLog('🔍 相対パス /api/mascot/name をテスト', 'info');
+            
+            try {
+                const response = await fetch('/api/mascot/name');
+                addLog(`📡 相対パス レスポンス: ${response.status}`, response.ok ? 'success' : 'error');
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    addLog(`✅ 相対パス成功: ${JSON.stringify(data, null, 2)}`, 'success');
+                } else {
+                    const text = await response.text();
+                    addLog(`❌ 相対パス失敗: ${text}`, 'error');
+                }
+            } catch (error) {
+                addLog(`❌ 相対パス エラー: ${error.message}`, 'error');
+            }
+        }
+
+        function clearLog() {
+            document.getElementById('log').innerHTML = '';
+        }
+
+        // ページ読み込み時の環境情報
+        addLog(`📍 ホスト名: ${window.location.hostname}`, 'info');
+        addLog(`📍 ポート: ${window.location.port}`, 'info');
+        addLog(`📍 プロトコル: ${window.location.protocol}`, 'info');
+    </script>
+</body>
+</html>
