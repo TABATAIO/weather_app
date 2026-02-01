@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class UserProfile extends Model
 {
-    protected $table = 'user_profiles';
+    protected $table = 'users';
     protected $primaryKey = 'id';
     protected $keyType = 'integer';
     public $incrementing = true;

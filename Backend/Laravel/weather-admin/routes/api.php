@@ -3,6 +3,8 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\SimpleMascotController;
+use App\Http\Controllers\MissionController;
 
 /*
 |--------------------------------------------------------------------------
@@ -18,6 +20,23 @@ use App\Http\Controllers\AuthController;
 // テスト用ルート
 Route::get('/test', function () {
     return response()->json(['message' => 'API is working!']);
+});
+
+// シンプルなマスコット関連API（既存データベース使用）
+Route::prefix('mascot')->group(function () {
+    Route::get('/name', [SimpleMascotController::class, 'getMascotName']);
+    Route::get('/basic', [SimpleMascotController::class, 'getBasicInfo']);
+    Route::get('/status', [SimpleMascotController::class, 'getMascotStatus']);
+    Route::post('/feed', [SimpleMascotController::class, 'feedMascot']);
+    Route::post('/play', [SimpleMascotController::class, 'playWithMascot']);
+    Route::post('/pet', [SimpleMascotController::class, 'petMascot']);
+    Route::post('/update-name', [SimpleMascotController::class, 'updateMascotName']);
+});
+
+// ミッション関連API
+Route::prefix('missions')->group(function () {
+    Route::get('/today', [MissionController::class, 'getTodayMissions']);
+    Route::post('/progress', [MissionController::class, 'updateMissionProgress']);
 });
 
 // 認証関連API

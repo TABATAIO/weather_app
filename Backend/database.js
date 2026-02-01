@@ -1,5 +1,6 @@
 const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
+const fs = require('fs');
 
 // データベースファイルのパス（環境変数から取得、デフォルトは既存パス）
 const dbPath = process.env.DB_PATH || path.join(__dirname, 'weather_app.db');
@@ -10,12 +11,21 @@ const dbPath = process.env.DB_PATH || path.join(__dirname, 'weather_app.db');
  */
 function initializeDatabase() {
   return new Promise((resolve, reject) => {
+    // ディレクトリが存在しない場合は作成
+    const dbDir = path.dirname(dbPath);
+    if (!fs.existsSync(dbDir)) {
+      fs.mkdirSync(dbDir, { recursive: true });
+      console.log(`📁 データベースディレクトリを作成しました: ${dbDir}`);
+    }
+    
     const db = new sqlite3.Database(dbPath, (err) => {
       if (err) {
         console.error('データベース接続エラー:', err.message);
+        console.error('データベースパス:', dbPath);
         reject(err);
       } else {
         console.log('✅ SQLiteデータベースに接続しました');
+        console.log('📍 データベースパス:', dbPath);
         resolve(db);
       }
     });
@@ -68,8 +78,24 @@ function createTables(db) {
       )
     `;
 
+    // ユーザープロファイルテーブル
+    const userProfilesTable = `
+      CREATE TABLE IF NOT EXISTS user_profiles (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL,
+        user_name VARCHAR(255),
+        temperature_preference VARCHAR(50),
+        activity_preference VARCHAR(50),
+        style_preference VARCHAR(50),
+        weather_sensitivity VARCHAR(50),
+        favorite_activities TEXT,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES users (id)
+      )
+    `;
+
     let tablesCreated = 0;
-    const totalTables = 3;
+    const totalTables = 4;
 
     function checkComplete() {
       tablesCreated++;
@@ -107,6 +133,17 @@ function createTables(db) {
         reject(err);
       } else {
         console.log('✅ weather_logsテーブルを作成しました');
+        checkComplete();
+      }
+    });
+
+    // user_profilesテーブル作成
+    db.run(userProfilesTable, (err) => {
+      if (err) {
+        console.error('user_profilesテーブル作成エラー:', err.message);
+        reject(err);
+      } else {
+        console.log('✅ user_profilesテーブルを作成しました');
         checkComplete();
       }
     });

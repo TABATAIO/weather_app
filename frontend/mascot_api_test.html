@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>🧪 マスコットAPI テスト</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 20px auto; padding: 20px; background: #f5f5f5; }
+        .test-section { margin: 20px 0; padding: 15px; background: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        button { padding: 10px 15px; margin: 5px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        .result { margin-top: 10px; padding: 10px; background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 4px; white-space: pre-wrap; }
+        .success { border-color: #28a745; background-color: #d4edda; color: #155724; }
+        .error { border-color: #dc3545; background-color: #f8d7da; color: #721c24; }
+    </style>
+</head>
+<body>
+    <h1>🧪 マスコットAPI テスト</h1>
+    
+    <div class="test-section">
+        <h3>📊 マスコットステータス取得</h3>
+        <button onclick="testGetStatus()">ステータス取得</button>
+        <div id="status-result" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>🍙 マスコット給餌</h3>
+        <button onclick="testFeed()">給餌する</button>
+        <div id="feed-result" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>🎾 マスコットと遊ぶ</h3>
+        <button onclick="testPlay()">遊ぶ</button>
+        <div id="play-result" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>✋ マスコットをなでる</h3>
+        <button onclick="testPet()">なでる</button>
+        <div id="pet-result" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>🔄 全ステータス連続テスト</h3>
+        <button onclick="testAll()">全機能テスト</button>
+        <div id="all-result" class="result"></div>
+    </div>
+
+    <script>
+        // APIクライアント（シンプル版）
+        class SimpleMascotAPI {
+            constructor() {
+                this.baseUrl = 'http://localhost:8000/api/mascot';
+            }
+
+            async request(endpoint, method = 'GET', data = null) {
+                try {
+                    const options = {
+                        method,
+                        headers: {
+                            'Accept': 'application/json',
+                            'Content-Type': 'application/json'
+                        }
+                    };
+
+                    if (data && method !== 'GET') {
+                        options.body = JSON.stringify(data);
+                    }
+
+                    const response = await fetch(`${this.baseUrl}${endpoint}`, options);
+                    const result = await response.json();
+                    
+                    return {
+                        ok: response.ok,
+                        status: response.status,
+                        data: result
+                    };
+                } catch (error) {
+                    return {
+                        ok: false,
+                        error: error.message
+                    };
+                }
+            }
+
+            async getStatus() {
+                return await this.request('/status');
+            }
+
+            async feed() {
+                return await this.request('/feed', 'POST', {});
+            }
+
+            async play() {
+                return await this.request('/play', 'POST', {});
+            }
+
+            async pet() {
+                return await this.request('/pet', 'POST', {});
+            }
+        }
+
+        const api = new SimpleMascotAPI();
+
+        function displayResult(elementId, result, success = true) {
+            const element = document.getElementById(elementId);
+            element.textContent = JSON.stringify(result, null, 2);
+            element.className = `result ${success ? 'success' : 'error'}`;
+        }
+
+        async function testGetStatus() {
+            const result = await api.getStatus();
+            displayResult('status-result', result, result.ok);
+        }
+
+        async function testFeed() {
+            const result = await api.feed();
+            displayResult('feed-result', result, result.ok);
+        }
+
+        async function testPlay() {
+            const result = await api.play();
+            displayResult('play-result', result, result.ok);
+        }
+
+        async function testPet() {
+            const result = await api.pet();
+            displayResult('pet-result', result, result.ok);
+        }
+
+        async function testAll() {
+            const allElement = document.getElementById('all-result');
+            allElement.textContent = 'テスト実行中...';
+            allElement.className = 'result';
+
+            const results = {};
+
+            // 初期ステータス
+            results.initialStatus = await api.getStatus();
+            await new Promise(resolve => setTimeout(resolve, 500));
+
+            // 給餌
+            results.feed = await api.feed();
+            await new Promise(resolve => setTimeout(resolve, 500));
+
+            // 遊ぶ
+            results.play = await api.play();
+            await new Promise(resolve => setTimeout(resolve, 500));
+
+            // なでる
+            results.pet = await api.pet();
+            await new Promise(resolve => setTimeout(resolve, 500));
+
+            // 最終ステータス
+            results.finalStatus = await api.getStatus();
+
+            // 結果表示
+            displayResult('all-result', results, true);
+        }
+
+        // ページ読み込み時に初期ステータスを取得
+        window.addEventListener('load', () => {
+            testGetStatus();
+        });
+    </script>
+</body>
+</html>
