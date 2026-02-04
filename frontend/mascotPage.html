@@ -1,0 +1,939 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      http-equiv="Cache-Control"
+      content="no-cache, no-store, must-revalidate"
+    />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
+    <title>マスコットページ - 天気予報アプリ (Updated: 2026-02-01 17:25)</title>
+    <link rel="stylesheet" href="css/destyle.css" />
+    <link rel="stylesheet" href="css/mascotPage.css" />
+  </head>
+  <body>
+    <!-- 天気背景コンテナ（JavaScriptで動的に追加） -->
+
+    <!-- ヘッダー -->
+    <header class="header">
+      <button class="back-button" id="backButton">
+        <span class="back-arrow">←</span>
+      </button>
+      <div class="weather-info" id="weatherInfo">
+        <span class="current-time" id="currentTime">9:41</span>
+      </div>
+    </header>
+
+    <!-- メインコンテンツ -->
+    <main class="main-content">
+      <!-- AIコメント表示 -->
+      <div class="ai-comment-container">
+        <div class="ai-comment" id="aiComment">
+          <span id="mascot-name-comment">からめる</span>の晴れしのおしゃべ
+        </div>
+      </div>
+
+      <!-- マスコット表示エリア -->
+      <div class="mascot-container">
+        <a href="chatPage.html" class="mascot-link">
+          <div class="mascot" id="mascot">
+            <div class="mascot-body" id="mascot-animation"></div>
+            <!-- ハートエフェクトコンテナ -->
+            <div class="heart-effects" id="heartEffects"></div>
+          </div>
+        </a>
+
+        <!-- タッチガイド -->
+        <div class="touch-guide" id="touchGuide">タッチでチャット開始！！</div>
+
+        <!-- マスコットインタラクションボタン（マスコット直下） -->
+        <div class="mascot-interaction-buttons">
+          <!-- 餌やりボタンとプルダウン -->
+          <div class="feed-button-container">
+            <button class="interaction-btn feed-btn" id="feedButton">
+              <span class="btn-icon">🍙</span>
+              <span class="btn-text">餌をあげる</span>
+            </button>
+
+            <!-- 餌選択プルダウン -->
+            <div class="feed-dropdown" id="feedDropdown">
+              <div class="dropdown-header">餌を選択</div>
+              <div
+                class="feed-option"
+                data-food="riceball"
+                data-effect="❤️"
+                data-fullness="20"
+              >
+                <span class="food-icon">🍙</span>
+                <span class="food-name">おにぎり</span>
+                <span class="food-effect">満腹+2</span>
+              </div>
+              <div
+                class="feed-option"
+                data-food="bread"
+                data-effect="💝"
+                data-fullness="15"
+              >
+                <span class="food-icon">🍞</span>
+                <span class="food-name">パン</span>
+                <span class="food-effect">満腹+1.5</span>
+              </div>
+              <div
+                class="feed-option"
+                data-food="apple"
+                data-effect="💚"
+                data-fullness="10"
+              >
+                <span class="food-icon">🍎</span>
+                <span class="food-name">りんご</span>
+                <span class="food-effect">満腹+1</span>
+              </div>
+              <div
+                class="feed-option"
+                data-food="candy"
+                data-effect="✨"
+                data-fullness="5"
+              >
+                <span class="food-icon">🍭</span>
+                <span class="food-name">キャンディ</span>
+                <span class="food-effect">気分UP</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 撫でるボタン -->
+          <button class="interaction-btn pet-btn" id="petButton">
+            <span class="btn-icon">✋</span>
+            <span class="btn-text">撫でる</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- マスコット状態表示 -->
+      <div class="mascot-status">
+        <div class="status-card">
+          <h3>
+            <span id="mascot-name-title">からめる</span>
+            <button class="edit-name-btn">✏️</button>
+          </h3>
+
+          <!-- レベル表示 -->
+          <div class="status-item level-item">
+            <span class="status-icon">☁️</span>
+            <span class="status-label" id="mascot-level">Lv.1</span>
+            <div class="progress-container">
+              <div class="progress-bar" id="level-bar">
+                <div
+                  class="progress-fill"
+                  id="level-fill"
+                  style="width: 60%"
+                ></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 体力表示 -->
+          <div class="status-item health-item">
+            <span class="status-icon">❤️</span>
+            <span class="status-label">体力</span>
+            <div class="progress-container">
+              <div class="progress-bar" id="health-bar">
+                <div
+                  class="progress-fill health-fill high"
+                  id="health-fill"
+                  style="width: 100%"
+                ></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- エネルギー（満腹度）表示 -->
+          <div class="status-item energy-item">
+            <span class="status-icon">🍴</span>
+            <span class="status-label">お腹すいた</span>
+            <div class="fullness-stars">
+              <span class="fullness-star filled">⭐</span>
+              <span class="fullness-star">☆</span>
+              <span class="fullness-star">☆</span>
+              <span class="fullness-star">☆</span>
+            </div>
+          </div>
+
+          <!-- 気分表示 -->
+          <div class="status-item mood-item">
+            <span class="status-icon">😊</span>
+            <span class="status-label" id="mascot-mood">遊びたい気分！</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ミッション表示 -->
+      <div class="mission-section">
+        <div class="mission-card">
+          <h3>
+            今日のミッション
+            <span id="mission-loading" style="display: none">🔄</span>
+          </h3>
+          <div class="mission-list" id="mission-list">
+            <div class="loading-message">
+              Laravelからミッション情報を取得中...
+            </div>
+            <!-- ミッションはLaravelから動的に追加 -->
+          </div>
+        </div>
+      </div>
+
+      <script>
+        // インタラクションボタンのイベントハンドラー
+        document.addEventListener("DOMContentLoaded", function () {
+          setupInteractionButtons();
+        });
+
+        function setupInteractionButtons() {
+          console.log("🔧 setupInteractionButtons 開始");
+
+          // APIクライアント状態確認
+          console.log("🔍 初期化時 APIクライアント状態:");
+          console.log("- window.apiClient存在:", !!window.apiClient);
+          console.log("- window.apiClient型:", typeof window.apiClient);
+
+          const feedButton = document.getElementById("feedButton");
+          const petButton = document.getElementById("petButton");
+          const feedDropdown = document.getElementById("feedDropdown");
+
+          // 餌ボタンクリックでプルダウン表示/非表示
+          if (feedButton) {
+            feedButton.addEventListener("click", function (e) {
+              e.preventDefault();
+              toggleFeedDropdown();
+            });
+          }
+
+          // 撫でるボタンクリック
+          if (petButton) {
+            petButton.addEventListener("click", function (e) {
+              e.preventDefault();
+              handlePetClick();
+            });
+          }
+
+          // 餌選択オプションのクリック
+          const feedOptions = document.querySelectorAll(".feed-option");
+          feedOptions.forEach((option) => {
+            option.addEventListener("click", function (e) {
+              e.preventDefault();
+              const foodType = this.dataset.food;
+              const effectHeart = this.dataset.effect;
+              const fullnessValue = parseInt(this.dataset.fullness) || 20;
+              handleFeedClick(foodType, effectHeart, fullnessValue);
+              hideFeedDropdown();
+            });
+          });
+
+          // 外側クリックでプルダウンを閉じる
+          document.addEventListener("click", function (e) {
+            const feedContainer = document.querySelector(
+              ".feed-button-container",
+            );
+            if (feedContainer && !feedContainer.contains(e.target)) {
+              hideFeedDropdown();
+            }
+          });
+
+          // 名前編集ボタンクリック
+          const editNameButton = document.querySelector(".edit-name-btn");
+          if (editNameButton) {
+            editNameButton.addEventListener("click", function (e) {
+              e.preventDefault();
+              handleEditNameClick();
+            });
+          }
+        }
+
+        // 餌プルダウン表示切り替え
+        function toggleFeedDropdown() {
+          const dropdown = document.getElementById("feedDropdown");
+          if (dropdown) {
+            dropdown.classList.toggle("show");
+          }
+        }
+
+        // 餌プルダウン非表示
+        function hideFeedDropdown() {
+          const dropdown = document.getElementById("feedDropdown");
+          if (dropdown) {
+            dropdown.classList.remove("show");
+          }
+        }
+
+        // 餌やりクリックハンドラー
+        async function handleFeedClick(foodType, effectHeart, fullnessValue) {
+          console.log("🍙 餌やり:", foodType, effectHeart, fullnessValue);
+
+          if (
+            window.mascotDisplay &&
+            typeof window.mascotDisplay.handleFeedAction === "function"
+          ) {
+            await window.mascotDisplay.handleFeedAction(
+              foodType,
+              effectHeart,
+              fullnessValue,
+            );
+          } else {
+            console.warn("⚠️ MascotDisplay.handleFeedAction が見つかりません");
+          }
+        }
+
+        // 撫でるクリックハンドラー
+        async function handlePetClick() {
+          console.log("✋ 撫でる実行");
+
+          if (
+            window.mascotDisplay &&
+            typeof window.mascotDisplay.handlePetAction === "function"
+          ) {
+            await window.mascotDisplay.handlePetAction();
+          } else {
+            console.warn("⚠️ MascotDisplay.handlePetAction が見つかりません");
+          }
+        }
+
+        // 名前編集クリックハンドラー
+        async function handleEditNameClick() {
+          console.log("✏️ 名前編集開始");
+
+          try {
+            // 現在の名前を取得
+            const currentNameElement =
+              document.getElementById("mascot-name-title");
+            const currentName = currentNameElement
+              ? currentNameElement.textContent.trim()
+              : "からめる";
+
+            // プロンプトで新しい名前を入力
+            const newName = prompt(
+              "マスコットの新しい名前を入力してください:",
+              currentName,
+            );
+
+            if (newName === null) {
+              console.log("名前変更がキャンセルされました");
+              return;
+            }
+
+            if (newName.trim() === "") {
+              alert("名前を入力してください");
+              return;
+            }
+
+            if (newName.trim().length > 20) {
+              alert("名前は20文字以内で入力してください");
+              return;
+            }
+
+            if (newName.trim() === currentName) {
+              console.log("名前に変更がありません");
+              return;
+            }
+
+            console.log(
+              "🔄 名前更新中...",
+              `"${currentName}" → "${newName.trim()}"`,
+            );
+
+            // まずAPI接続テストを実行
+            console.log("🧪 API接続テスト実行中...");
+            const connectionTest = await testApiConnection();
+            console.log("🔍 API接続テスト結果:", connectionTest);
+
+            // 直接fetch APIでサーバー通信を試行
+            try {
+              console.log("🌐 直接API呼び出し開始...");
+
+              const response = await fetch(
+                "http://localhost:8000/api/mascot/update-name",
+                {
+                  method: "POST",
+                  headers: {
+                    Accept: "application/json",
+                    "Content-Type": "application/json",
+                  },
+                  body: JSON.stringify({
+                    name: newName.trim(),
+                  }),
+                },
+              );
+
+              console.log("📡 直接API レスポンス:", {
+                status: response.status,
+                statusText: response.statusText,
+                ok: response.ok,
+                url: response.url,
+                headers: Object.fromEntries(response.headers.entries()),
+              });
+
+              if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                console.error("❌ サーバーエラー詳細:", errorData);
+                throw new Error(
+                  errorData.message ||
+                    `サーバーエラー: ${response.status} ${response.statusText}`,
+                );
+              }
+
+              const data = await response.json();
+              console.log("📥 サーバーレスポンス:", data);
+
+              if (data.success) {
+                console.log("✅ 名前更新成功:", data.data);
+                // ローカルストレージも同期
+                localStorage.setItem("mascotName", newName.trim());
+                // ローカルストレージ（Storage.js版）も同期
+                if (typeof Storage !== "undefined" && Storage.set) {
+                  Storage.set("mascot-name", newName.trim());
+                }
+                updateMascotNameInUI(newName.trim());
+                alert(
+                  `名前を「${newName.trim()}」に変更しました！\n✅ サーバーに正常に保存されました。`,
+                );
+              } else {
+                throw new Error(data.message || "名前更新に失敗しました");
+              }
+            } catch (serverError) {
+              console.error("❌ サーバー通信エラー:", {
+                message: serverError.message,
+                stack: serverError.stack,
+                type: serverError.constructor.name,
+                connectionTest: connectionTest,
+              });
+
+              // エラーの種類を判定
+              let errorMessage = "";
+              if (
+                serverError.message.includes("Failed to fetch") ||
+                serverError.message.includes("NetworkError")
+              ) {
+                errorMessage = `ネットワーク接続エラー: サーバーに接続できませんでした\n🔍 Docker が起動しているか確認してください\n🔍 http://localhost:8000 にアクセスできるか確認してください`;
+              } else if (serverError.message.includes("404")) {
+                errorMessage = `API エンドポイントエラー: /api/mascot/update-name が見つかりません\n🔍 Laravel API が正しく起動しているか確認してください`;
+              } else if (serverError.message.includes("500")) {
+                errorMessage = `サーバー内部エラー: ${serverError.message}\n🔍 Laravel のログを確認してください`;
+              } else {
+                errorMessage = `API通信エラー: ${serverError.message}`;
+              }
+
+              console.warn(
+                "⚠️ サーバー更新失敗、ローカル更新のみ実行:",
+                errorMessage,
+              );
+
+              // サーバー通信が失敗した場合はローカルUIのみ更新
+              updateMascotNameInUI(newName.trim());
+              alert(
+                `名前を「${newName.trim()}」に変更しました！\n\n⚠️ 注意: ${errorMessage}\n\nページを再読み込みすると元に戻ります。`,
+              );
+            }
+          } catch (error) {
+            console.error("❌ 名前編集エラー:", error);
+            alert("名前の変更に失敗しました: " + error.message);
+          }
+        }
+
+        // 旧APIクライアント待機関数（未使用）
+        /*
+            async function waitForApiClient(maxWaitTime = 3000) {
+                console.log('⏳ APIクライアント初期化を待機中...');
+                const startTime = Date.now();
+                let attempt = 0;
+
+                while (Date.now() - startTime < maxWaitTime) {
+                    attempt++;
+
+                    const clientExists = !!window.apiClient;
+                    const methodExists = window.apiClient && typeof window.apiClient.updateMascotName === 'function';
+
+                    console.log(`🔄 APIクライアント待機中 [${attempt}]:`, {
+                        apiClientExists: clientExists,
+                        updateMascotNameExists: methodExists,
+                        apiClientType: typeof window.apiClient,
+                        elapsed: Date.now() - startTime,
+                        availableMethods: clientExists ? Object.getOwnPropertyNames(window.apiClient).filter(name => typeof window.apiClient[name] === 'function') : []
+                    });
+
+                    if (clientExists && methodExists) {
+                        console.log('✅ APIクライアント準備完了');
+                        return;
+                    }
+
+                    await new Promise(resolve => setTimeout(resolve, 200));
+                }
+
+                console.error('❌ APIクライアント初期化タイムアウト:', {
+                    maxWaitTime,
+                    finalState: {
+                        apiClient: !!window.apiClient,
+                        apiClientType: typeof window.apiClient,
+                        updateMascotName: window.apiClient ? typeof window.apiClient.updateMascotName : 'N/A',
+                        allGlobalVars: Object.keys(window).filter(key => key.toLowerCase().includes('api'))
+                    }
+                });
+
+                throw new Error(`APIクライアントが${maxWaitTime}ms以内に初期化されませんでした`);
+            }
+            */
+
+        // UI上のマスコット名前を更新
+        function updateMascotNameInUI(newName) {
+          const titleElement = document.getElementById("mascot-name-title");
+          const commentElement = document.getElementById("mascot-name-comment");
+
+          if (titleElement) {
+            titleElement.textContent = newName;
+            console.log("✅ タイトル部分の名前を更新:", newName);
+          }
+
+          if (commentElement) {
+            commentElement.textContent = newName;
+            console.log("✅ コメント部分の名前を更新:", newName);
+          }
+
+          // MascotDisplayインスタンスにも反映
+          if (
+            window.mascotDisplay &&
+            typeof window.mascotDisplay.updateMascotName === "function"
+          ) {
+            window.mascotDisplay.updateMascotName(newName);
+          }
+        }
+
+        // API接続テスト関数
+        async function testApiConnection() {
+          try {
+            console.log("🔍 Laravel APIサーバー接続確認...");
+            const healthResponse = await fetch(
+              "http://localhost:8000/api/test",
+              {
+                method: "GET",
+                headers: {
+                  Accept: "application/json",
+                },
+              },
+            );
+
+            const healthStatus = {
+              status: healthResponse.status,
+              ok: healthResponse.ok,
+              statusText: healthResponse.statusText,
+            };
+
+            // 基本API接続確認
+            console.log("🏥 ヘルスチェック結果:", healthStatus);
+
+            // マスコット関連API確認
+            console.log("🤖 マスコットAPI確認...");
+            const mascotResponse = await fetch(
+              "http://localhost:8000/api/mascot/basic",
+              {
+                method: "GET",
+                headers: {
+                  Accept: "application/json",
+                },
+              },
+            );
+
+            const mascotStatus = {
+              status: mascotResponse.status,
+              ok: mascotResponse.ok,
+              statusText: mascotResponse.statusText,
+            };
+
+            console.log("🤖 マスコットAPI結果:", mascotStatus);
+
+            return {
+              server_reachable: healthResponse.status !== 0,
+              health_endpoint: healthStatus,
+              mascot_endpoint: mascotStatus,
+              overall_status:
+                healthResponse.status !== 0 ? "connected" : "disconnected",
+            };
+          } catch (connectionError) {
+            console.error("🚫 接続テストエラー:", connectionError);
+            return {
+              server_reachable: false,
+              error: connectionError.message,
+              overall_status: "failed",
+            };
+          }
+        }
+
+        // デバッグ用: APIクライアント状態確認
+        function debugApiClientState() {
+          console.log("🔍 === APIクライアント状態確認 ===");
+          console.log("window.apiClient:", window.apiClient);
+          console.log("typeof window.apiClient:", typeof window.apiClient);
+
+          if (window.apiClient) {
+            console.log(
+              "APIクライアント利用可能メソッド:",
+              Object.getOwnPropertyNames(window.apiClient),
+            );
+            console.log("updateMascotName:", window.apiClient.updateMascotName);
+            console.log(
+              "typeof updateMascotName:",
+              typeof window.apiClient.updateMascotName,
+            );
+          } else {
+            console.log("❌ window.apiClientが存在しません");
+
+            // スクリプトタグの確認
+            const apiScript = document.querySelector(
+              'script[src*="apiClient.js"]',
+            );
+            console.log("apiClient.jsスクリプトタグ:", apiScript);
+
+            // 全てのグローバル変数を確認
+            const globals = Object.keys(window).filter((key) =>
+              key.includes("api"),
+            );
+            console.log("API関連グローバル変数:", globals);
+          }
+          console.log("===============================");
+        }
+
+        // ページ読み込み後にAPIクライアント状態を確認
+        document.addEventListener("DOMContentLoaded", function () {
+          setTimeout(() => {
+            debugApiClientState();
+          }, 2000); // 2秒後にチェック
+        });
+
+        // 安全なmascotPage関数呼び出し
+        function safeCallMascot(methodName, ...args) {
+          console.log(`🔍 ${methodName}を呼び出し中...`);
+
+          // MascotDisplayクラスのメソッド呼び出しを優先
+          if (
+            window.mascotDisplay &&
+            typeof window.mascotDisplay[methodName] === "function"
+          ) {
+            try {
+              return window.mascotDisplay[methodName](...args);
+            } catch (error) {
+              console.error(`❌ MascotDisplay.${methodName}エラー:`, error);
+              alert(`${methodName}でエラーが発生しました: ${error.message}`);
+            }
+          } else if (methodName === "feedMascot" && window.mascotDisplay) {
+            // 給餌ボタン用
+            return window.mascotDisplay.handleFeedAction();
+          } else if (methodName === "playWithMascot" && window.mascotDisplay) {
+            // 遊ぶボタン用
+            return window.mascotDisplay.handlePlayAction();
+          } else if (methodName === "petMascot" && window.mascotDisplay) {
+            // なでるボタン用
+            return window.mascotDisplay.handlePetAction();
+          } else if (
+            window.mascotPage &&
+            typeof window.mascotPage[methodName] === "function"
+          ) {
+            // 従来のmascotPageメソッド
+            try {
+              return window.mascotPage[methodName](...args);
+            } catch (error) {
+              console.error(`❌ ${methodName}エラー:`, error);
+              alert(`${methodName}でエラーが発生しました: ${error.message}`);
+            }
+          } else {
+            console.error(`❌ メソッド${methodName}が利用できません`);
+            console.log("利用可能なオブジェクト:", {
+              mascotDisplay: !!window.mascotDisplay,
+              mascotPage: !!window.mascotPage,
+            });
+            alert(
+              "マスコット機能が初期化されていません。ページを再読み込みしてください。",
+            );
+          }
+        }
+      </script>
+    </main>
+
+    <!-- 通知コンテナ -->
+    <div class="notification-container" id="notificationContainer"></div>
+
+    <!-- JavaScript -->
+    <script src="js/utils/common.js?v=20260201-1720"></script>
+    <script src="js/utils/apiClient.js?v=20260201-1720"></script>
+    <script src="js/modules/weatherBackground.js?v=20260201-1720"></script>
+    <script src="js/modules/mascotDisplay.js?v=20260201-1725"></script>
+    <script src="js/modules/chatInterface.js?v=20260201-1720"></script>
+    <script src="js/modules/missionManager.js?v=20260201-1720"></script>
+    <script src="js/pages/mascotPage.js?v=20260201-1720"></script>
+
+    <!-- 初期化確認スクリプト -->
+    <script>
+      // 詳細な初期化デバッグ
+      let debugInfo = {
+        startTime: new Date(),
+        checks: [],
+        dependencies: {},
+        errors: [],
+      };
+
+      function logCheck(message) {
+        const timestamp = new Date() - debugInfo.startTime;
+        console.log(`[${timestamp}ms] ${message}`);
+        debugInfo.checks.push({ timestamp, message });
+      }
+
+      function checkDependencies() {
+        logCheck("🎯 ミッション関連チェック開始");
+
+        // ミッション関連の詳細チェック
+        logCheck("🔍 MissionManagerクラス存在確認...");
+        const missionManagerExists = typeof MissionManager !== "undefined";
+        logCheck(
+          `${missionManagerExists ? "✅" : "❌"} MissionManager: ${typeof MissionManager}`,
+        );
+
+        if (missionManagerExists) {
+          logCheck("🔍 MissionManagerプロトタイプメソッド確認...");
+          const methods = Object.getOwnPropertyNames(MissionManager.prototype);
+          logCheck(`📋 利用可能メソッド: ${methods.join(", ")}`);
+        }
+
+        // ミッション表示要素の確認
+        logCheck("🔍 ミッション表示DOM要素確認...");
+        const missionList = document.getElementById("mission-list");
+        const missionContainer = document.getElementById("mission-container");
+        logCheck(
+          `${missionList ? "✅" : "❌"} mission-list要素: ${!!missionList}`,
+        );
+        logCheck(
+          `${missionContainer ? "✅" : "❌"} mission-container要素: ${!!missionContainer}`,
+        );
+
+        if (missionList) {
+          logCheck(
+            `📏 mission-list内容: "${missionList.innerHTML.substring(0, 100)}..."`,
+          );
+        }
+
+        // APIクライアント関連の確認
+        logCheck("🔍 APIクライアント確認...");
+        const apiClientExists = typeof apiClient !== "undefined";
+        logCheck(
+          `${apiClientExists ? "✅" : "❌"} apiClient: ${typeof apiClient}`,
+        );
+
+        if (apiClientExists && apiClient.getTodayMissions) {
+          logCheck("✅ getTodayMissionsメソッド利用可能");
+        } else {
+          logCheck("❌ getTodayMissionsメソッド未確認");
+        }
+
+        logCheck("🔍 依存関係チェック開始");
+
+        // 必要なスクリプトとオブジェクトの存在確認
+        const dependencies = {
+          window: typeof window !== "undefined",
+          document: typeof document !== "undefined",
+          MascotPage: typeof MascotPage !== "undefined",
+          MissionManager: typeof MissionManager !== "undefined",
+          apiClient:
+            typeof apiClient !== "undefined" ||
+            typeof window.apiClient !== "undefined",
+          Storage: typeof Storage !== "undefined",
+          formatTime: typeof formatTime !== "undefined",
+        };
+
+        debugInfo.dependencies = dependencies;
+
+        for (const [name, exists] of Object.entries(dependencies)) {
+          logCheck(`${exists ? "✅" : "❌"} ${name}: ${exists}`);
+          if (!exists) {
+            debugInfo.errors.push(`Missing dependency: ${name}`);
+          }
+        }
+
+        return Object.values(dependencies).every(Boolean);
+      }
+
+      function attemptMascotPageCreation() {
+        logCheck("🚀 MascotPage作成試行開始");
+
+        try {
+          if (typeof MascotPage === "undefined") {
+            throw new Error("MascotPageクラスが定義されていません");
+          }
+
+          logCheck("📝 MascotPageクラス発見");
+
+          const mascotPage = new MascotPage();
+          logCheck("🏗️ MascotPageインスタンス作成成功");
+
+          window.mascotPage = mascotPage;
+          logCheck("🌐 グローバル変数設定完了");
+
+          // ミッションマネージャー初期化状況確認
+          setTimeout(() => {
+            logCheck("🎯 ミッションマネージャー初期化状況確認...");
+
+            if (window.missionManager) {
+              logCheck("✅ window.missionManager存在確認");
+              logCheck(
+                `📋 ミッション数: ${window.missionManager.missions ? window.missionManager.missions.length : 0}`,
+              );
+
+              // ミッション表示状況確認
+              const missionListElement =
+                document.getElementById("mission-list");
+              if (missionListElement) {
+                const content = missionListElement.innerHTML;
+                if (content.includes("Laravelからミッション情報を取得中")) {
+                  logCheck("🔄 まだローディング中表示");
+                } else if (content.includes("mission-item")) {
+                  logCheck("✅ ミッション項目表示済み");
+                } else {
+                  logCheck("❓ 不明なミッション表示状態");
+                  logCheck(`📝 現在の内容: "${content.substring(0, 200)}..."`);
+                }
+              }
+            } else {
+              logCheck("❌ window.missionManager未初期化");
+            }
+          }, 1000); // 1秒後にチェック
+
+          return true;
+        } catch (error) {
+          logCheck(`❌ MascotPage作成エラー: ${error.message}`);
+          debugInfo.errors.push(`Creation error: ${error.message}`);
+          console.error("MascotPage作成詳細エラー:", error);
+          return false;
+        }
+      }
+
+      // 初期化の状態を定期的にチェック
+      let initCheckCount = 0;
+      const maxInitChecks = 15; // 7.5秒待機
+
+      function checkMascotPageInitialization() {
+        initCheckCount++;
+        logCheck(`🔄 初期化チェック ${initCheckCount}/${maxInitChecks}`);
+
+        if (window.mascotPage) {
+          logCheck("✅ mascotPage初期化完了！");
+          showSuccessStatus();
+          return;
+        }
+
+        // 3回目と6回目で依存関係チェック
+        if (initCheckCount === 3 || initCheckCount === 6) {
+          if (!checkDependencies()) {
+            logCheck("⚠️ 依存関係不足のため作成試行スキップ");
+          } else {
+            attemptMascotPageCreation();
+          }
+        }
+
+        if (initCheckCount < maxInitChecks) {
+          setTimeout(checkMascotPageInitialization, 500);
+        } else {
+          logCheck("❌ 初期化タイムアウト");
+          showErrorStatus();
+          console.error("🔍 デバッグ情報:", debugInfo);
+
+          // 詳細なエラー情報を表示
+          const errorSummary = `
+初期化失敗の詳細:
+- 総試行時間: ${(new Date() - debugInfo.startTime) / 1000}秒
+- エラー数: ${debugInfo.errors.length}
+- 主なエラー: ${debugInfo.errors.join(", ")}
+- 依存関係状態: ${JSON.stringify(debugInfo.dependencies, null, 2)}
+                `;
+          console.error(errorSummary);
+        }
+      }
+
+      function showSuccessStatus() {
+        const statusDiv = document.createElement("div");
+        statusDiv.id = "init-status";
+        statusDiv.style.cssText =
+          "position:fixed;top:10px;right:10px;background:green;color:white;padding:5px;border-radius:5px;z-index:9999;font-size:12px;";
+        statusDiv.textContent = "✅ 初期化完了";
+        document.body.appendChild(statusDiv);
+
+        document.title = document.title + " ✅";
+
+        setTimeout(() => {
+          if (statusDiv.parentNode) {
+            statusDiv.parentNode.removeChild(statusDiv);
+          }
+        }, 5000);
+      }
+
+      function showErrorStatus() {
+        const errorDiv = document.createElement("div");
+        errorDiv.style.cssText =
+          "position:fixed;top:10px;right:10px;background:red;color:white;padding:5px;border-radius:5px;z-index:9999;font-size:12px;cursor:pointer;";
+        errorDiv.textContent = "❌ 初期化失敗 (クリックで詳細)";
+        errorDiv.onclick = () => {
+          alert(`初期化失敗の詳細:\n${debugInfo.errors.join("\n")}`);
+        };
+        document.body.appendChild(errorDiv);
+
+        document.title = document.title + " ❌";
+      }
+
+      // ページ読み込み完了後にチェック開始
+      if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", () => {
+          logCheck("📄 DOM読み込み完了");
+          // サーバーとローカルストレージの名前を同期
+          syncMascotNameWithServer();
+          setTimeout(() => {
+            logCheck("⏰ 初期化チェック開始");
+            checkMascotPageInitialization();
+          }, 100);
+        });
+      } else {
+        logCheck("📄 DOM既に読み込み済み");
+        // サーバーとローカルストレージの名前を同期
+        syncMascotNameWithServer();
+        setTimeout(() => {
+          logCheck("⏰ 初期化チェック開始");
+          checkMascotPageInitialization();
+        }, 100);
+      }
+
+      // サーバーとローカルストレージの名前を同期する関数
+      async function syncMascotNameWithServer() {
+        try {
+          console.log("🔄 サーバーとローカルストレージの名前同期開始...");
+          const response = await fetch(
+            "http://localhost:8000/api/mascot/basic",
+          );
+          if (response.ok) {
+            const data = await response.json();
+            if (data.success && data.data && data.data.name) {
+              const serverName = data.data.name;
+              console.log("🌐 サーバーの名前:", serverName);
+
+              // ローカルストレージを更新
+              localStorage.setItem("mascotName", serverName);
+              if (typeof Storage !== "undefined" && Storage.set) {
+                Storage.set("mascot-name", serverName);
+              }
+              console.log(
+                "✅ ローカルストレージをサーバーと同期完了:",
+                serverName,
+              );
+            }
+          }
+        } catch (error) {
+          console.warn("⚠️ 名前同期エラー:", error.message);
+        }
+      }
+    </script>
+  </body>
+</html>

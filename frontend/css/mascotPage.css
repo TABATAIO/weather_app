@@ -193,6 +193,7 @@ html, body {
     padding: 0 20px;
     display: flex;
     justify-content: center;
+    margin: 10px 0;
 }
 
 .ai-comment {
@@ -238,7 +239,7 @@ html, body {
     align-items: center;
     padding: 20px;
     position: relative; /* ボタンの絶対配置のため */
-    margin-bottom: 60px; /* ボタン分のスペースを確保 */
+    gap: 5vh;
 }
 
 .mascot {
@@ -1182,9 +1183,6 @@ html, body {
 
 /* レスポンシブ対応 */
 @media (max-width: 768px) {
-    .mascot-container {
-        margin-bottom: 80px; /* モバイルではより多くのスペース確保 */
-    }
     
     .mascot-interaction-buttons {
         bottom: 15vh;
@@ -1219,14 +1217,6 @@ html, body {
 }
 
 @media (max-width: 480px) {
-    .mascot-container {
-        margin-bottom: 100px; /* さらに多くのスペース確保 */
-    }
-    
-    .mascot-interaction-buttons {
-        bottom: -25px; /* より下に配置 */
-        gap: 6px;
-    }
     
     .interaction-btn {
         padding: 5px 8px; /* さらに小さく */
@@ -1234,6 +1224,11 @@ html, body {
         min-height: 40px;
         font-size: 14px;
         border-radius: 14px;
+    }
+
+    .mascot-interaction-buttons {
+        bottom: 13vh; /* より下に配置 */
+        gap: 6px;
     }
     
     .interaction-btn .btn-text {

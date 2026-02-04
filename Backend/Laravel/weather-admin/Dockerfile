@@ -15,6 +15,12 @@ RUN apk add --no-cache \
 # Composerのインストール
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
+# PHPアップロード設定（実質無制限）
+RUN echo "upload_max_filesize = 1G" >> /usr/local/etc/php/conf.d/uploads.ini \
+    && echo "post_max_size = 1G" >> /usr/local/etc/php/conf.d/uploads.ini \
+    && echo "max_execution_time = 600" >> /usr/local/etc/php/conf.d/uploads.ini \
+    && echo "memory_limit = 512M" >> /usr/local/etc/php/conf.d/uploads.ini
+
 # Node.js & npmのインストール
 RUN apk add --no-cache nodejs npm
 

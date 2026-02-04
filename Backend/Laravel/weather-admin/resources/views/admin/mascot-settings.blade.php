@@ -335,6 +335,242 @@
             </div>
         </div>
 
+        <!-- 第四形態設定 -->
+        <div class="bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg shadow-sm border border-purple-200 p-6">
+            <h2 class="text-xl font-semibold text-gray-900 mb-4 flex items-center">
+                <i class="fas fa-crown text-purple-600 mr-2"></i>
+                第四形態設定（最終進化）
+            </h2>
+            <p class="text-sm text-gray-600 mb-6">
+                最終進化形態の設定です。究極型と伝説型の2つの分岐を設定できます。
+            </p>
+
+            <div class="space-y-6">
+                <!-- 第四形態基本設定 -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- 究極型名前 -->
+                    <div>
+                        <label for="fourth_form_ultimate_name" class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-star text-yellow-500 mr-1"></i>
+                            究極型形態名
+                        </label>
+                        <input type="text" 
+                               id="fourth_form_ultimate_name" 
+                               name="fourth_form_ultimate_name" 
+                               value="{{ old('fourth_form_ultimate_name', $mascot->fourth_form_ultimate_name ?? '') }}"
+                               class="w-full px-3 py-2 border border-purple-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                               placeholder="例: アルティメットウェザーマスター">
+                        @error('fourth_form_ultimate_name')
+                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                    <!-- 伝説型名前 -->
+                    <div>
+                        <label for="fourth_form_legendary_name" class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-gem text-purple-500 mr-1"></i>
+                            伝説型形態名
+                        </label>
+                        <input type="text" 
+                               id="fourth_form_legendary_name" 
+                               name="fourth_form_legendary_name" 
+                               value="{{ old('fourth_form_legendary_name', $mascot->fourth_form_legendary_name ?? '') }}"
+                               class="w-full px-3 py-2 border border-purple-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                               placeholder="例: レジェンダリーウェザーゴッド">
+                        @error('fourth_form_legendary_name')
+                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                        @enderror
+                    </div>
+                </div>
+
+                <!-- 進化条件設定 -->
+                <div class="bg-white rounded-lg border border-purple-200 p-4">
+                    <h3 class="font-semibold text-gray-900 mb-4">
+                        <i class="fas fa-chart-line text-purple-600 mr-2"></i>
+                        第四形態進化条件
+                    </h3>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <!-- 第四形態へのレベル -->
+                        <div>
+                            <label for="evolution_level_3_to_4" class="block text-sm font-medium text-gray-700 mb-2">
+                                進化必要レベル
+                            </label>
+                            <input type="number" 
+                                   id="evolution_level_3_to_4" 
+                                   name="evolution_level_3_to_4" 
+                                   value="{{ old('evolution_level_3_to_4', $mascot->evolution_level_3_to_4 ?? 50) }}"
+                                   min="30" 
+                                   max="80"
+                                   class="w-full px-3 py-2 border border-purple-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                            @error('evolution_level_3_to_4')
+                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            @enderror
+                        </div>
+
+                        <!-- 第四形態最大レベル -->
+                        <div>
+                            <label for="max_level_fourth_form" class="block text-sm font-medium text-gray-700 mb-2">
+                                最大レベル
+                            </label>
+                            <input type="number" 
+                                   id="max_level_fourth_form" 
+                                   name="max_level_fourth_form" 
+                                   value="{{ old('max_level_fourth_form', $mascot->max_level_fourth_form ?? 100) }}"
+                                   min="60" 
+                                   max="200"
+                                   class="w-full px-3 py-2 border border-purple-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                            @error('max_level_fourth_form')
+                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            @enderror
+                        </div>
+
+                        <!-- 究極進化しきい値 -->
+                        <div>
+                            <label for="ultimate_evolution_threshold" class="block text-sm font-medium text-gray-700 mb-2">
+                                究極進化しきい値
+                            </label>
+                            <input type="number" 
+                                   id="ultimate_evolution_threshold" 
+                                   name="ultimate_evolution_threshold" 
+                                   value="{{ old('ultimate_evolution_threshold', $mascot->ultimate_evolution_threshold ?? 80) }}"
+                                   min="70" 
+                                   max="95"
+                                   class="w-full px-3 py-2 border border-purple-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                            <p class="text-xs text-gray-500 mt-1">80以上で究極型、未満で伝説型</p>
+                            @error('ultimate_evolution_threshold')
+                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            @enderror
+                        </div>
+                    </div>
+
+                    <!-- 特別アイテム設定 -->
+                    <div class="mt-4 p-4 bg-purple-50 rounded-lg">
+                        <div class="flex items-center mb-2">
+                            <input type="checkbox" 
+                                   id="requires_special_item" 
+                                   name="requires_special_item" 
+                                   value="1"
+                                   {{ old('requires_special_item', $mascot->requires_special_item ?? false) ? 'checked' : '' }}
+                                   class="mr-2 text-purple-600">
+                            <label for="requires_special_item" class="text-sm font-medium text-gray-700">
+                                特別アイテム必須
+                            </label>
+                        </div>
+                        
+                        <div id="special_item_container" class="mt-2" style="display: {{ old('requires_special_item', $mascot->requires_special_item ?? false) ? 'block' : 'none' }};">
+                            <input type="text" 
+                                   id="special_item_name" 
+                                   name="special_item_name" 
+                                   value="{{ old('special_item_name', $mascot->special_item_name ?? '') }}"
+                                   placeholder="例: ミスティックエナジー、クリスタルコア"
+                                   class="w-full px-3 py-2 border border-purple-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 第四形態画像アップロード -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- 究極型画像 -->
+                    <div class="bg-white rounded-lg border border-yellow-200 p-4">
+                        <h4 class="font-medium text-gray-900 mb-3 flex items-center">
+                            <i class="fas fa-star text-yellow-500 mr-2"></i>
+                            究極型形態画像
+                        </h4>
+                        
+                        @if(!empty($mascot->ultimate_form_image))
+                            <div class="mb-3">
+                                <img src="{{ asset('storage/' . $mascot->ultimate_form_image) }}" 
+                                     alt="現在の究極型画像"
+                                     class="w-20 h-20 object-cover rounded-lg border">
+                                <p class="text-xs text-gray-500 mt-1">現在の画像</p>
+                            </div>
+                        @endif
+                        
+                        <input type="file" 
+                               id="ultimate_form_image" 
+                               name="ultimate_form_image" 
+                               accept="image/*"
+                               class="w-full px-3 py-2 border border-yellow-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent">
+                        <p class="text-xs text-gray-500 mt-1">推奨: PNG, JPG (500x500px以下)</p>
+                        @error('ultimate_form_image')
+                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                    <!-- 伝説型画像 -->
+                    <div class="bg-white rounded-lg border border-purple-200 p-4">
+                        <h4 class="font-medium text-gray-900 mb-3 flex items-center">
+                            <i class="fas fa-gem text-purple-500 mr-2"></i>
+                            伝説型形態画像
+                        </h4>
+                        
+                        @if(!empty($mascot->legendary_form_image))
+                            <div class="mb-3">
+                                <img src="{{ asset('storage/' . $mascot->legendary_form_image) }}" 
+                                     alt="現在の伝説型画像"
+                                     class="w-20 h-20 object-cover rounded-lg border">
+                                <p class="text-xs text-gray-500 mt-1">現在の画像</p>
+                            </div>
+                        @endif
+                        
+                        <input type="file" 
+                               id="legendary_form_image" 
+                               name="legendary_form_image" 
+                               accept="image/*"
+                               class="w-full px-3 py-2 border border-purple-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                        <p class="text-xs text-gray-500 mt-1">推奨: PNG, JPG (500x500px以下)</p>
+                        @error('legendary_form_image')
+                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                        @enderror
+                    </div>
+                </div>
+
+                <!-- 第四形態特別能力 -->
+                <div class="bg-white rounded-lg border border-purple-200 p-4">
+                    <h4 class="font-medium text-gray-900 mb-3 flex items-center">
+                        <i class="fas fa-magic text-purple-600 mr-2"></i>
+                        特別能力設定
+                    </h4>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <!-- 特別能力説明 -->
+                        <div>
+                            <label for="fourth_form_special_abilities" class="block text-sm font-medium text-gray-700 mb-2">
+                                特別能力説明
+                            </label>
+                            <textarea id="fourth_form_special_abilities" 
+                                      name="fourth_form_special_abilities" 
+                                      rows="3"
+                                      class="w-full px-3 py-2 border border-purple-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                      placeholder="第四形態の特別な能力や特徴を説明してください...">{{ old('fourth_form_special_abilities', $mascot->fourth_form_special_abilities ?? '') }}</textarea>
+                            @error('fourth_form_special_abilities')
+                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            @enderror
+                        </div>
+
+                        <!-- 天気制御力 -->
+                        <div>
+                            <label for="weather_control_power" class="block text-sm font-medium text-gray-700 mb-2">
+                                天気制御力 (0-100)
+                            </label>
+                            <input type="number" 
+                                   id="weather_control_power" 
+                                   name="weather_control_power" 
+                                   value="{{ old('weather_control_power', $mascot->weather_control_power ?? 0) }}"
+                                   min="0" 
+                                   max="100"
+                                   class="w-full px-3 py-2 border border-purple-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                            <p class="text-xs text-gray-500 mt-1">0: 通常, 50: 強力, 100: 全天候制御</p>
+                            @error('weather_control_power')
+                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            @enderror
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- 外見・表示設定 -->
         <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
             <h2 class="text-xl font-semibold text-gray-900 mb-4 flex items-center">
@@ -420,9 +656,9 @@
                     <input type="file" 
                            id="first_form_image" 
                            name="first_form_image" 
-                           accept="image/jpeg,image/png,image/jpg,image/gif"
+                           accept="image/jpeg,image/png,image/jpg,image/gif,image/webp"
                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                    <p class="text-xs text-gray-500 mt-1">形式: JPEG, PNG, GIF / 最大: 2MB</p>
+                    <p class="text-xs text-gray-500 mt-1">形式: JPEG, PNG, GIF, WebP / 最大: 5MB</p>
                     @error('first_form_image')
                         <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                     @enderror
@@ -438,7 +674,7 @@
                            name="second_form_image" 
                            accept="image/jpeg,image/png,image/jpg,image/gif"
                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent">
-                    <p class="text-xs text-gray-500 mt-1">形式: JPEG, PNG, GIF / 最大: 2MB</p>
+                    <p class="text-xs text-gray-500 mt-1">形式: JPEG, PNG, GIF</p>
                     @error('second_form_image')
                         <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                     @enderror
@@ -454,7 +690,7 @@
                            name="third_form_active_image" 
                            accept="image/jpeg,image/png,image/jpg,image/gif"
                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent">
-                    <p class="text-xs text-gray-500 mt-1">形式: JPEG, PNG, GIF / 最大: 2MB</p>
+                    <p class="text-xs text-gray-500 mt-1">形式: JPEG, PNG, GIF</p>
                     @error('third_form_active_image')
                         <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                     @enderror
@@ -468,10 +704,42 @@
                     <input type="file" 
                            id="third_form_calm_image" 
                            name="third_form_calm_image" 
-                           accept="image/jpeg,image/png,image/jpg,image/gif"
+                           accept="image/jpeg,image/png,image/jpg,image/gif,image/webp"
                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                    <p class="text-xs text-gray-500 mt-1">形式: JPEG, PNG, GIF / 最大: 2MB</p>
+                    <p class="text-xs text-gray-500 mt-1">形式: JPEG, PNG, GIF, WebP / 最大: 5MB</p>
                     @error('third_form_calm_image')
+                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                    @enderror
+                </div>
+
+                <!-- 第四形態（究極）画像 -->
+                <div>
+                    <label for="ultimate_form_image" class="block text-sm font-medium text-gray-700 mb-2">
+                        🦄 第四形態（究極）画像
+                    </label>
+                    <input type="file" 
+                           id="ultimate_form_image" 
+                           name="ultimate_form_image" 
+                           accept="image/jpeg,image/png,image/jpg,image/gif"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                    <p class="text-xs text-gray-500 mt-1">形式: JPEG, PNG, GIF</p>
+                    @error('ultimate_form_image')
+                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                    @enderror
+                </div>
+
+                <!-- 第四形態（伝説）画像 -->
+                <div>
+                    <label for="legendary_form_image" class="block text-sm font-medium text-gray-700 mb-2">
+                        🌟 第四形態（伝説）画像
+                    </label>
+                    <input type="file" 
+                           id="legendary_form_image" 
+                           name="legendary_form_image" 
+                           accept="image/jpeg,image/png,image/jpg,image/gif"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent">
+                    <p class="text-xs text-gray-500 mt-1">形式: JPEG, PNG, GIF</p>
+                    @error('legendary_form_image')
                         <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                     @enderror
                 </div>
@@ -560,6 +828,66 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- 第四形態（究極）プレビュー -->
+                <div class="bg-gradient-to-br from-yellow-50 to-orange-50 rounded-lg p-6 shadow-sm border-2 border-yellow-200">
+                    <div class="text-center mb-4">
+                        <div class="mb-3">
+                            @if($mascot && $mascot->ultimate_form_image)
+                                <img src="{{ asset('storage/' . $mascot->ultimate_form_image) }}" 
+                                     alt="第四形態（究極）プレビュー" 
+                                     class="w-24 h-24 object-contain mx-auto rounded-lg bg-gradient-to-br from-yellow-100 to-orange-100 p-2 shadow-sm transition-transform hover:scale-105"
+                                     id="preview-image4-ultimate">
+                            @else
+                                <div class="w-24 h-24 mx-auto rounded-lg bg-gradient-to-br from-yellow-100 to-orange-100 p-2 shadow-sm border-2 border-dashed border-yellow-300 flex items-center justify-center">
+                                    <div class="text-center">
+                                        <i class="fas fa-image text-yellow-400 text-2xl mb-1"></i>
+                                        <p class="text-xs text-yellow-600 font-medium">画像なし</p>
+                                    </div>
+                                </div>
+                            @endif
+                        </div>
+                        <h4 class="font-medium text-gray-900 text-lg" id="preview-name4-ultimate">
+                            {{ $mascot && $mascot->ultimate_form_name ? $mascot->ultimate_form_name : '未設定' }}
+                        </h4>
+                        <p class="text-sm text-gray-600">第四形態（究極系）</p>
+                        <div class="mt-2">
+                            <span class="px-3 py-1 bg-gradient-to-r from-yellow-400 to-orange-400 text-white rounded-full text-xs font-medium shadow-sm">
+                                <i class="fas fa-star mr-1"></i>究極型
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 第四形態（伝説）プレビュー -->
+                <div class="bg-gradient-to-br from-purple-50 to-pink-50 rounded-lg p-6 shadow-sm border-2 border-purple-200">
+                    <div class="text-center mb-4">
+                        <div class="mb-3">
+                            @if($mascot && $mascot->legendary_form_image)
+                                <img src="{{ asset('storage/' . $mascot->legendary_form_image) }}" 
+                                     alt="第四形態（伝説）プレビュー" 
+                                     class="w-24 h-24 object-contain mx-auto rounded-lg bg-gradient-to-br from-purple-100 to-pink-100 p-2 shadow-sm transition-transform hover:scale-105"
+                                     id="preview-image4-legendary">
+                            @else
+                                <div class="w-24 h-24 mx-auto rounded-lg bg-gradient-to-br from-purple-100 to-pink-100 p-2 shadow-sm border-2 border-dashed border-purple-300 flex items-center justify-center">
+                                    <div class="text-center">
+                                        <i class="fas fa-image text-purple-400 text-2xl mb-1"></i>
+                                        <p class="text-xs text-purple-600 font-medium">画像なし</p>
+                                    </div>
+                                </div>
+                            @endif
+                        </div>
+                        <h4 class="font-medium text-gray-900 text-lg" id="preview-name4-legendary">
+                            {{ $mascot && $mascot->legendary_form_name ? $mascot->legendary_form_name : '未設定' }}
+                        </h4>
+                        <p class="text-sm text-gray-600">第四形態（伝説系）</p>
+                        <div class="mt-2">
+                            <span class="px-3 py-1 bg-gradient-to-r from-purple-400 to-pink-400 text-white rounded-full text-xs font-medium shadow-sm">
+                                <i class="fas fa-gem mr-1"></i>伝説型
+                            </span>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -606,6 +934,18 @@
         const thirdCalmName = document.getElementById('third_form_calm_name').value || '未設定';
         document.getElementById('preview-name3-calm').textContent = thirdCalmName;
 
+        // 第四形態（究極）
+        const fourthUltimateName = document.getElementById('fourth_form_ultimate_name').value || '未設定';
+        if (document.getElementById('preview-name4-ultimate')) {
+            document.getElementById('preview-name4-ultimate').textContent = fourthUltimateName;
+        }
+
+        // 第四形態（伝説）
+        const fourthLegendaryName = document.getElementById('fourth_form_legendary_name').value || '未設定';
+        if (document.getElementById('preview-name4-legendary')) {
+            document.getElementById('preview-name4-legendary').textContent = fourthLegendaryName;
+        }
+
         // 画像サイズ設定の反映
         const imageSize = document.getElementById('image_size').value;
         const sizeClasses = {
@@ -614,7 +954,7 @@
             'large': 'w-32 h-32'
         };
         
-        document.querySelectorAll('#preview-image1, #preview-image2, #preview-image3-active, #preview-image3-calm').forEach(img => {
+        document.querySelectorAll('#preview-image1, #preview-image2, #preview-image3-active, #preview-image3-calm, #preview-image4-ultimate, #preview-image4-legendary').forEach(img => {
             img.className = img.className.replace(/w-\d+\s+h-\d+/, sizeClasses[imageSize]);
         });
 
@@ -628,7 +968,7 @@
             'grayscale': 'grayscale'
         };
 
-        document.querySelectorAll('#preview-image1, #preview-image2, #preview-image3-active, #preview-image3-calm').forEach(img => {
+        document.querySelectorAll('#preview-image1, #preview-image2, #preview-image3-active, #preview-image3-calm, #preview-image4-ultimate, #preview-image4-legendary').forEach(img => {
             // 既存のフィルタークラスを削除
             img.className = img.className.replace(/sepia-\[[\d.]+\]|hue-rotate-\[[\d]+deg\]|grayscale/g, '');
             if (filterClasses[colorFilter]) {
@@ -640,7 +980,7 @@
         const enableAnimation = document.querySelector('input[name="enable_animation"]:checked');
         const enableBounce = document.querySelector('input[name="enable_bounce"]:checked');
         
-        document.querySelectorAll('#preview-image1, #preview-image2, #preview-image3-active, #preview-image3-calm').forEach(img => {
+        document.querySelectorAll('#preview-image1, #preview-image2, #preview-image3-active, #preview-image3-calm, #preview-image4-ultimate, #preview-image4-legendary').forEach(img => {
             if (enableAnimation) {
                 img.classList.add('transition-transform', 'hover:scale-105');
             } else {
@@ -660,7 +1000,8 @@
         const inputs = [
             'initial_name', 'second_form_name', 
             'third_form_active_name', 'third_form_calm_name',
-            'evolution_level_1_to_2', 'evolution_level_2_to_3',
+            'fourth_form_ultimate_name', 'fourth_form_legendary_name',
+            'evolution_level_1_to_2', 'evolution_level_2_to_3', 'evolution_level_3_to_4',
             'image_size'
         ];
         
@@ -675,6 +1016,16 @@
         document.querySelectorAll('input[type="radio"], input[type="checkbox"]').forEach(input => {
             input.addEventListener('change', updatePreview);
         });
+        
+        // 特別アイテム必須の切り替え
+        const requiresSpecialItem = document.getElementById('requires_special_item');
+        const specialItemContainer = document.getElementById('special_item_container');
+        
+        if (requiresSpecialItem && specialItemContainer) {
+            requiresSpecialItem.addEventListener('change', function() {
+                specialItemContainer.style.display = this.checked ? 'block' : 'none';
+            });
+        }
         
         updatePreview(); // 初期表示
     });

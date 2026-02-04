@@ -2,28 +2,28 @@
 
 echo "Starting Laravel backend service..."
 
-#環境ファイルの確認とコピー
+# Environment file verification and copy
 if [ ! -f "/var/www/.env" ]; then
   echo ".env file not found. Copying .env.example to .env..."
   cp /var/www/.env.example /var/www/.env
 fi
 
-#アプリケーションキーの生成
+# Application key generation
 echo "Generating application key..."
 php artisan key:generate --force
 
-#データベースのディレクトリ確認
+# Database directory verification
 if [ ! -d "/var/www/storage/database" ]; then
     echo "Creating database directory..."
     mkdir -p /var/www/storage/database
 fi
 
-# データベースディレクトリの権限を確実に設定
+# Set database directory permissions securely
 echo "Setting database directory permissions..."
 chown -R www-data:www-data /var/www/storage/database
 chmod -R 775 /var/www/storage/database
 
-# データベースファイルが存在する場合、権限を修正
+# If database file exists, correct permissions
 if [ -f "/var/www/storage/database/weather_app.db" ]; then
     echo "Setting database file permissions..."
     chown www-data:www-data /var/www/storage/database/weather_app.db
