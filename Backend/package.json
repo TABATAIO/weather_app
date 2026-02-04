@@ -1,8 +1,9 @@
 {
   "name": "weather-mascot-backend",
-  "version": "1.0.0",
-  "description": "天気によって変化するマスコットキャラクター育成型天気アプリのバックエンド",
+  "version": "2.2.0",
+  "description": "Weather Mascot App - AI-powered interactive weather system with Gemini AI integration",
   "main": "server.js",
+  "type": "commonjs",
   "scripts": {
     "start": "node server.js",
     "dev": "nodemon server.js",
@@ -11,12 +12,13 @@
   "keywords": [
     "weather",
     "mascot",
+    "ai",
+    "gemini",
     "express",
     "api"
   ],
-  "author": "",
-  "license": "ISC",
-  "type": "commonjs",
+  "author": "Weather Mascot Team",
+  "license": "MIT",
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
     "axios": "^1.13.2",

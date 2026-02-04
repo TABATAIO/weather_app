@@ -1,31 +1,31 @@
 #!/bin/sh
 
 echo "Starting backend service..."
-echo "現在のユーザー: $(whoami)"
+echo "Current user: $(whoami)"
 
-#環境変数設定
-echo "設定前のDB_PATH: $DB_PATH"
+# Environment variables setup
+echo "DB_PATH before setup: $DB_PATH"
 export DB_PATH=${DB_PATH:-/var/www/storage/database/weather_app.db}
-echo "設定後のDB_PATH: $DB_PATH"
+echo "DB_PATH after setup: $DB_PATH"
 
-#データベースディレクトリの確認
-echo "データベースディレクトリ確認中..."
+# Database directory verification
+echo "Checking database directory..."
 if [ ! -d "/var/www/storage/database" ]; then
   echo "Creating data directory..."
   mkdir -p /var/www/storage/database
 else
-  echo "データベースディレクトリ存在します: /var/www/storage/database"
+  echo "Database directory exists: /var/www/storage/database"
 fi
 
-echo "ディレクトリ内容確認:"
-ls -la /var/www/storage/database/ || echo "ディレクトリが見つかりません"
+echo "Directory contents:"
+ls -la /var/www/storage/database/ || echo "Directory not found"
 
-# ROOT権限でファイル権限を修正
-echo "データベースファイルの権限を修正中（root権限）..."
+# File permission correction with ROOT privileges
+echo "Correcting database file permissions (root privileges)..."
 if [ -f "/var/www/storage/database/weather_app.db" ]; then
   chown nextjs:nodejs /var/www/storage/database/weather_app.db
   chmod 664 /var/www/storage/database/weather_app.db
-  echo "weather_app.dbの所有者をnextjs:nodejsに変更しました"
+  echo "Changed weather_app.db ownership to nextjs:nodejs"
 fi
 
 if [ -d "/var/www/storage/database" ]; then
@@ -49,7 +49,7 @@ if [ ! -f "$DB_PATH" ]; then
       process.exit(1);
     });
   " || exit 1
-fi 
+fi
 
 echo "Database is ready at $DB_PATH"
 

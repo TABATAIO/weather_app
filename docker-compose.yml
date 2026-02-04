@@ -7,6 +7,7 @@ services:
     ports:
       - "3001:3001"
     volumes:
+      - .:/workspace:cached 
       - weather_db_data:/var/www/storage/database
       - ./Backend/.env:/app/.env:ro
     environment:
@@ -25,6 +26,7 @@ services:
     ports:
       - "8000:8000"
     volumes:
+      - ./Backend/Laravel/weather-admin:/var/www:rw
       - weather_db_data:/var/www/storage/database
       - ./Backend/Laravel/weather-admin/.env:/var/www/.env:rw
     environment:

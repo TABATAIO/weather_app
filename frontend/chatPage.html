@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>チャットページ - 天気予報アプリ</title>
+    <link rel="stylesheet" href="css/destyle.css" />
+    <link rel="stylesheet" href="css/chatPage.css" />
+  </head>
+  <body>
+    <!-- 天気背景コンテナ（JavaScriptで動的に追加） -->
+
+    <!-- ヘッダー -->
+    <header class="header">
+      <button
+        class="back-button"
+        id="backButton"
+        onclick="window.location.href = 'mascotPage.html'"
+      >
+        <span class="back-arrow">←</span>
+      </button>
+      <div class="room-name">
+        <span class="room-title" id="roomTitle">からめる晴れの部屋</span>
+      </div>
+      <div class="weather-info" id="weatherInfo">
+        <span class="current-time" id="currentTime">9:41</span>
+      </div>
+    </header>
+
+    <!-- メインコンテンツ -->
+    <main class="main-content">
+      <!-- AIコメント表示 -->
+      <div class="ai-comment-container">
+        <div class="ai-comment" id="aiComment">
+          <!-- 初期メッセージは空、JavaScriptで動的に設定 -->
+        </div>
+      </div>
+
+      <!-- マスコット表示エリア -->
+      <div class="mascot-container">
+        <div class="mascot" id="mascot">
+          <div class="mascot-body" id="mascot-animation"></div>
+        </div>
+      </div>
+
+      <!-- 会話履歴表示エリア -->
+      <div class="chat-history-section" id="chatHistorySection">
+        <div class="chat-history-container" id="chatHistoryContainer">
+          <!-- チャット履歴はJavaScriptで動的に追加 -->
+        </div>
+      </div>
+
+      <!-- チャット入力エリア -->
+      <div class="chat-input-section" id="chatInputSection">
+        <div class="input-container">
+          <input
+            type="text"
+            id="chat-input"
+            placeholder="マスコットに話しかけよう..."
+          />
+          <button id="send-button" class="send-button">送信</button>
+        </div>
+      </div>
+    </main>
+
+    <!-- チャットモーダル（必要に応じて） -->
+    <div class="chat-modal" id="chatModal" style="display: none">
+      <div class="chat-modal-content">
+        <div class="chat-header">
+          <h3>マスコットとチャット</h3>
+          <button class="close-chat" id="closeChatModal">×</button>
+        </div>
+        <div class="chat-container" id="chat-container">
+          <!-- チャット履歴はJavaScriptで動的に追加 -->
+        </div>
+      </div>
+    </div>
+
+    <!-- 通知コンテナ -->
+    <div class="notification-container" id="notificationContainer"></div>
+
+    <!-- JavaScript -->
+    <script src="js/utils/common.js"></script>
+    <script src="js/utils/apiClient.js"></script>
+    <script src="js/modules/weatherBackground.js"></script>
+    <script src="js/modules/mascotDisplay.js"></script>
+    <script src="js/modules/chatInterface.js"></script>
+    <script src="js/modules/missionManager.js"></script>
+    <script src="js/pages/chatPage.js"></script>
+  </body>
+</html>

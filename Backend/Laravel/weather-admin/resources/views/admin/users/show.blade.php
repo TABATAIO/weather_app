@@ -7,10 +7,10 @@
     <div class="flex justify-between items-center mb-6">
         <div>
             <h1 class="text-3xl font-bold text-gray-800">👤 ユーザー詳細</h1>
-            <p class="text-gray-600">{{ $user->user_name }} ({{ $user->user_id }})</p>
+            <p class="text-gray-600">{{ $user->name }} ({{ $user->id }})</p>
         </div>
         <div class="space-x-2">
-            <a href="{{ route('users.edit', $user->user_id) }}" 
+            <a href="{{ route('users.edit', $user->id) }}" 
                class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg">
                 ✏️ 編集
             </a>
@@ -100,41 +100,13 @@
             <div class="space-y-4">
                 <div>
                     <label class="block text-sm font-medium text-gray-700">ユーザー名</label>
-                    <p class="mt-1 text-sm text-gray-900">{{ $user->user_name }}</p>
+                    <p class="mt-1 text-sm text-gray-900">{{ $user->name }}</p>
                 </div>
                 
+                @if(isset($user->email))
                 <div>
-                    <label class="block text-sm font-medium text-gray-700">温度設定</label>
-                    <span class="mt-1 inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
-                        {{ $user->temperature_preference }}
-                    </span>
-                </div>
-
-                <div>
-                    <label class="block text-sm font-medium text-gray-700">活動設定</label>
-                    <span class="mt-1 inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
-                        {{ $user->activity_preference }}
-                    </span>
-                </div>
-
-                <div>
-                    <label class="block text-sm font-medium text-gray-700">スタイル設定</label>
-                    <span class="mt-1 inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800">
-                        {{ $user->style_preference }}
-                    </span>
-                </div>
-
-                <div>
-                    <label class="block text-sm font-medium text-gray-700">天気感度</label>
-                    <span class="mt-1 inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-purple-100 text-purple-800">
-                        {{ $user->weather_sensitivity }}
-                    </span>
-                </div>
-
-                @if($user->favorite_activities)
-                <div>
-                    <label class="block text-sm font-medium text-gray-700">好きな活動</label>
-                    <p class="mt-1 text-sm text-gray-900">{{ $user->favorite_activities }}</p>
+                    <label class="block text-sm font-medium text-gray-700">メールアドレス</label>
+                    <p class="mt-1 text-sm text-gray-900">{{ $user->email }}</p>
                 </div>
                 @endif
 
