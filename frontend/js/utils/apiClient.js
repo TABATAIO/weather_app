@@ -39,31 +39,136 @@ class ApiClient {
     }
 
     /**
-     * マスコットとチャットする
+     * マスコットとチャットする（拡張版）
      * @param {Object} chatData - チャットデータ
      * @returns {Promise<Object>} - チャットレスポンス
      */
     async sendMascotChat(chatData) {
         try {
             const url = `${this.baseUrl}/api/mascot/chat`;
-            console.log('チャットAPI URL:', url);
+            console.log('💬 チャットAPI呼び出し:', url, chatData);
+            
+            // デフォルトのユーザーIDを設定
+            const enhancedChatData = {
+                userId: 'user_001',
+                userName: 'ユーザー',
+                ...chatData,
+                timestamp: new Date().toISOString()
+            };
+
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(enhancedChatData)
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error('チャットAPIエラー:', response.status, errorText);
+                throw new Error(`HTTP error! status: ${response.status} - ${errorText}`);
+            }
+
+            const result = await response.json();
+            console.log('✅ チャットAPI成功:', result);
+            
+            // チャット履歴をローカルストレージに保存（API呼び出しを一時停止）
+            try {
+                const historyEntry = {
+                    user: enhancedChatData.message,
+                    ai: result.data?.response || result.response,
+                    timestamp: enhancedChatData.timestamp
+                };
+                
+                // ローカルストレージに保存
+                const existingHistory = Storage.get('chatHistory') || [];
+                existingHistory.push(historyEntry);
+                Storage.set('chatHistory', existingHistory);
+                console.log('💾 [CHAT-API] チャット履歴をローカルストレージに保存完了');
+                
+                // TODO: API修正後に有効化
+                // this.saveChatHistory(enhancedChatData.userId, historyEntry)
+            } catch (error) {
+                console.warn('⚠️ [CHAT-API] チャット履歴保存エラー（処理続行）:', error);
+            }
+
+            return result;
+        } catch (error) {
+            console.error('マスコットチャットエラー:', error);
+            
+            // フォールバック応答
+            return {
+                success: false,
+                error: error.message,
+                data: {
+                    response: 'ごめんなさい、今は調子が悪くて...後でまた話しかけてね。',
+                    mascotStatus: null
+                }
+            };
+        }
+    }
+
+    /**
+     * チャット履歴を保存
+     * @param {string} userId - ユーザーID
+     * @param {Object} chatEntry - チャットエントリ
+     * @returns {Promise<Object>} - 保存結果
+     */
+    async saveChatHistory(userId, chatEntry) {
+        try {
+            const url = `${this.baseUrl}/api/chat/history/${userId}`;
             
             const response = await fetch(url, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify(chatData)
+                body: JSON.stringify(chatEntry)
             });
 
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
+            if (response.ok) {
+                const result = await response.json();
+                console.log('✅ チャット履歴保存成功');
+                return result;
+            } else {
+                console.warn('⚠️ チャット履歴保存失敗:', response.status);
+                return null;
             }
-
-            return await response.json();
         } catch (error) {
-            console.error('マスコットチャットエラー:', error);
-            throw error;
+            console.warn('⚠️ チャット履歴保存エラー:', error);
+            return null;
+        }
+    }
+
+    /**
+     * チャット履歴を取得
+     * @param {string} userId - ユーザーID
+     * @param {number} limit - 取得件数制限
+     * @returns {Promise<Object>} - チャット履歴
+     */
+    async getChatHistory(userId, limit = 20) {
+        try {
+            const url = `${this.baseUrl}/api/chat/history/${userId}?limit=${limit}`;
+            
+            const response = await fetch(url, {
+                method: 'GET',
+                headers: {
+                    'Accept': 'application/json'
+                }
+            });
+
+            if (response.ok) {
+                const result = await response.json();
+                console.log('✅ チャット履歴取得成功:', result);
+                return result;
+            } else {
+                console.warn('⚠️ チャット履歴取得失敗:', response.status);
+                return { success: false, data: [] };
+            }
+        } catch (error) {
+            console.warn('⚠️ チャット履歴取得エラー:', error);
+            return { success: false, data: [] };
         }
     }
 

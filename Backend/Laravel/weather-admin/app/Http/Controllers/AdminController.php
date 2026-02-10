@@ -15,11 +15,13 @@ class AdminController extends Controller
     public function dashboard()
     {
         // ダッシュボード統計データを取得
+        $recentUsers = UserProfile::latest()->limit(5)->get();
+        
         $stats = [
             'total_users' => UserProfile::count(),
             'total_chats' => ChatHistory::count(),
             'active_users_today' => UserProfile::whereDate('updated_at', today())->count(),
-            'recent_users' => UserProfile::latest()->limit(5)->get(),
+            'recent_users' => $recentUsers,
             'recent_chats' => ChatHistory::with('userProfile')->latest()->limit(10)->get(),
         ];
 
@@ -100,40 +102,60 @@ class AdminController extends Controller
             'second_form_name' => 'nullable|string|max:50',
             'third_form_active_name' => 'nullable|string|max:50',
             'third_form_calm_name' => 'nullable|string|max:50',
+            // 第四形態のフィールド
+            'ultimate_form_name' => 'nullable|string|max:50',
+            'legendary_form_name' => 'nullable|string|max:50',
             'evolution_level_1_to_2' => 'required|integer|min:2|max:50',
             'evolution_level_2_to_3' => 'required|integer|min:15|max:100|gt:evolution_level_1_to_2',
+            'evolution_level_3_to_4' => 'required|integer|min:30|max:80|gt:evolution_level_2_to_3',
             'max_level_third_form' => 'required|integer|min:30|max:150',
+            'max_level_fourth_form' => 'required|integer|min:60|max:200|gt:max_level_third_form',
             'personality_threshold' => 'required|integer|min:50|max:90',
+            'ultimate_evolution_threshold' => 'required|integer|min:70|max:95',
+            'requires_special_item' => 'boolean',
+            'special_item_name' => 'nullable|string|max:100',
+            'special_abilities' => 'nullable|string|max:1000',
+            'weather_control_power' => 'required|integer|min:0|max:100',
+            // 画像フィールド（ファイルサイズ制限なし）
+            'first_form_image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp',
+            'second_form_image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp',
+            'third_form_active_image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp',
+            'third_form_calm_image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp',
+            'ultimate_form_image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp',
+            'legendary_form_image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp',
             'image_size' => 'required|in:small,medium,large',
             'enable_animation' => 'boolean',
             'enable_bounce' => 'boolean',
             'color_filter' => 'required|in:none,warm,cool,sepia,grayscale',
-            'first_form_image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-            'second_form_image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-            'third_form_active_image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-            'third_form_calm_image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
 
         $validated['enable_animation'] = $request->has('enable_animation');
         $validated['enable_bounce'] = $request->has('enable_bounce');
+        $validated['requires_special_item'] = $request->has('requires_special_item');
 
         try {
             $mascot = MascotSetting::getCurrentSetting();
+            
             //第1形態の画像処理
             if ($request->hasFile('first_form_image')) {
-                // 古い画像を削除
-                if ($mascot->first_form_image && Storage::disk('public')->exists($mascot->first_form_image)) {
-                    Storage::disk('public')->delete($mascot->first_form_image);
+                try {
+                    // 古い画像を削除
+                    if ($mascot->getAttribute('first_form_image') && Storage::disk('public')->exists($mascot->getAttribute('first_form_image'))) {
+                        Storage::disk('public')->delete($mascot->getAttribute('first_form_image'));
+                    }
+                    // 新しい画像を保存
+                    $firstImagePath = $request->file('first_form_image')->store('mascots', 'public');
+                    $validated['first_form_image'] = $firstImagePath;
+                } catch (\Exception $e) {
+                    \Log::error('第1形態画像のアップロードエラー: ' . $e->getMessage());
+                    throw new \Exception('第1形態画像のアップロードに失敗しました: ' . $e->getMessage());
                 }
-                // 新しい画像を保存
-                $firstImagePath = $request->file('first_form_image')->store('mascots', 'public');
-                $validated['first_form_image'] = $firstImagePath;
             }
             // 第二形態の画像処理
             if ($request->hasFile('second_form_image')) {
                 // 古い画像を削除
-                if ($mascot->second_form_image && Storage::disk('public')->exists($mascot->second_form_image)) {
-                    Storage::disk('public')->delete($mascot->second_form_image);
+                if ($mascot->getAttribute('second_form_image') && Storage::disk('public')->exists($mascot->getAttribute('second_form_image'))) {
+                    Storage::disk('public')->delete($mascot->getAttribute('second_form_image'));
                 }
                 // 新しい画像を保存
                 $secondImagePath = $request->file('second_form_image')->store('mascots', 'public');
@@ -142,8 +164,8 @@ class AdminController extends Controller
             // 第三形態（活発）の画像処理
             if ($request->hasFile('third_form_active_image')) {
                 // 古い画像を削除
-                if ($mascot->third_form_active_image && Storage::disk('public')->exists($mascot->third_form_active_image)) {
-                    Storage::disk('public')->delete($mascot->third_form_active_image);
+                if ($mascot->getAttribute('third_form_active_image') && Storage::disk('public')->exists($mascot->getAttribute('third_form_active_image'))) {
+                    Storage::disk('public')->delete($mascot->getAttribute('third_form_active_image'));
                 }
                 // 新しい画像を保存
                 $thirdActiveImagePath = $request->file('third_form_active_image')->store('mascots', 'public');
@@ -152,20 +174,45 @@ class AdminController extends Controller
             // 第三形態（穏やか）の画像処理
             if ($request->hasFile('third_form_calm_image')) {
                 // 古い画像を削除
-                if ($mascot->third_form_calm_image && Storage::disk('public')->exists($mascot->third_form_calm_image)) {
-                    Storage::disk('public')->delete($mascot->third_form_calm_image);
+                if ($mascot->getAttribute('third_form_calm_image') && Storage::disk('public')->exists($mascot->getAttribute('third_form_calm_image'))) {
+                    Storage::disk('public')->delete($mascot->getAttribute('third_form_calm_image'));
                 }
                 // 新しい画像を保存
                 $thirdCalmImagePath = $request->file('third_form_calm_image')->store('mascots', 'public');
                 $validated['third_form_calm_image'] = $thirdCalmImagePath;
+            }
+            // 第四形態（究極）の画像処理
+            if ($request->hasFile('ultimate_form_image')) {
+                // 古い画像を削除
+                if ($mascot->getAttribute('ultimate_form_image') && Storage::disk('public')->exists($mascot->getAttribute('ultimate_form_image'))) {
+                    Storage::disk('public')->delete($mascot->getAttribute('ultimate_form_image'));
+                }
+                // 新しい画像を保存
+                $ultimateImagePath = $request->file('ultimate_form_image')->store('mascots', 'public');
+                $validated['ultimate_form_image'] = $ultimateImagePath;
+            }
+            // 第四形態（伝説）の画像処理
+            if ($request->hasFile('legendary_form_image')) {
+                // 古い画像を削除
+                if ($mascot->getAttribute('legendary_form_image') && Storage::disk('public')->exists($mascot->getAttribute('legendary_form_image'))) {
+                    Storage::disk('public')->delete($mascot->getAttribute('legendary_form_image'));
+                }
+                // 新しい画像を保存
+                $legendaryImagePath = $request->file('legendary_form_image')->store('mascots', 'public');
+                $validated['legendary_form_image'] = $legendaryImagePath;
             }
 
             $mascot->update($validated);
 
             return redirect()->route('admin.mascot.settings')->with('success', 'マスコットの設定が正常に保存されました。');
         } catch (\Exception $e) {
-            \Log::error('マスコットの設定の保存中にエラーが発生しました。', ['exception' => $e]);
-            return redirect()->route('admin.mascot.settings')->with('error', 'マスコットの設定の保存中にエラーが発生しました。');
+            \Log::error('マスコットの設定の保存中にエラーが発生しました。', [
+                'exception' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine()
+            ]);
+            return redirect()->route('admin.mascot.settings')->with('error', 'マスコットの設定の保存中にエラーが発生しました: ' . $e->getMessage());
         }
     }
 }

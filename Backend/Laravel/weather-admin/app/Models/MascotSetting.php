@@ -17,11 +17,21 @@ class MascotSetting extends Model
         'second_form_name',
         'third_form_active_name',
         'third_form_calm_name',
+        // 第四形態のフィールド
+        'ultimate_form_name',
+        'legendary_form_name',
         'evolution_level_1_to_2',
         'evolution_level_2_to_3',
+        'evolution_level_3_to_4',
         'max_level_second_form',
         'max_level_third_form',
+        'max_level_fourth_form',
         'personality_threshold',
+        'ultimate_evolution_threshold',
+        'requires_special_item',
+        'special_item_name',
+        'special_abilities',
+        'weather_control_power',
         'image_size',
         'enable_animation',
         'enable_bounce',
@@ -30,16 +40,23 @@ class MascotSetting extends Model
         'second_form_image',
         'third_form_active_image',
         'third_form_calm_image',
+        'ultimate_form_image',
+        'legendary_form_image',
     ];
 
     protected $casts = [
         'enable_animation' => 'boolean',
         'enable_bounce' => 'boolean',
+        'requires_special_item' => 'boolean',
         'evolution_level_1_to_2' => 'integer',
         'evolution_level_2_to_3' => 'integer',
+        'evolution_level_3_to_4' => 'integer',
         'max_level_second_form' => 'integer',
         'max_level_third_form' => 'integer',
+        'max_level_fourth_form' => 'integer',
         'personality_threshold' => 'integer',
+        'ultimate_evolution_threshold' => 'integer',
+        'weather_control_power' => 'integer',
     ];
 
     // 現在のマスコットの状態を取得
@@ -96,8 +113,9 @@ class MascotSetting extends Model
     //第一形態の画像urlを取得
     public function getFirstFormImageUrlAttribute()
     {
-        if ($this->first_form_image && Storage::disk('public')->exists($this->first_form_image)) {
-            return Storage::disk('public')->url($this->first_form_image);
+        $imagePath = $this->getAttribute('first_form_image');
+        if ($imagePath && Storage::disk('public')->exists($imagePath)) {
+            return asset('storage/' . $imagePath);
         }
         return asset('images/character01.png');
     }
@@ -105,8 +123,9 @@ class MascotSetting extends Model
     //第二形態の画像urlを取得
     public function getSecondFormImageUrlAttribute()
     {
-        if ($this->second_form_image && Storage::disk('public')->exists($this->second_form_image)) {
-            return Storage::disk('public')->url($this->second_form_image);
+        $imagePath = $this->getAttribute('second_form_image');
+        if ($imagePath && Storage::disk('public')->exists($imagePath)) {
+            return asset('storage/' . $imagePath);
         }
         return asset('images/character02.png');
     }
@@ -114,8 +133,9 @@ class MascotSetting extends Model
     //第三形態（活発）の画像urlを取得
     public function getThirdFormActiveImageUrlAttribute()
     {
-        if ($this->third_form_active_image && Storage::disk('public')->exists($this->third_form_active_image)) {
-            return Storage::disk('public')->url($this->third_form_active_image);
+        $imagePath = $this->getAttribute('third_form_active_image');
+        if ($imagePath && Storage::disk('public')->exists($imagePath)) {
+            return asset('storage/' . $imagePath);
         }
         return asset('images/character03_active.jpg');
     }
@@ -123,8 +143,9 @@ class MascotSetting extends Model
     //第三形態（穏やか）の画像urlを取得
     public function getThirdFormCalmImageUrlAttribute()
     {
-        if ($this->third_form_calm_image && Storage::disk('public')->exists($this->third_form_calm_image)) {
-            return Storage::disk('public')->url($this->third_form_calm_image);
+        $imagePath = $this->getAttribute('third_form_calm_image');
+        if ($imagePath && Storage::disk('public')->exists($imagePath)) {
+            return asset('storage/' . $imagePath);
         }
         return asset('images/character03_calm.jpg');
     }

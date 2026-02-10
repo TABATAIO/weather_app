@@ -25,6 +25,17 @@ yarn-debug.log*
 yarn-error.log*
 lerna-debug.log*
 
+# Temporary files
+*.tmp
+*.temp
+*.pid
+supervisord.log
+supervisord.pid
+
+# Test files
+**/test-server.js
+**/simple-server.js
+
 # Build outputs
 build/
 dist/

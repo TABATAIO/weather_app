@@ -12,23 +12,20 @@ class UserProfile extends Model
     public $incrementing = true;
 
     protected $fillable = [
-        'user_id',
-        'user_name',
-        'temperature_preference',
-        'activity_preference', 
-        'style_preference',
-        'weather_sensitivity',
-        'favorite_activities',
+        'name',
+        'email',
+        'password',
     ];
 
     protected $casts = [
+        'email_verified_at' => 'datetime',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];
 
-    // チャット履歴との関係
+    // チャット履歴との関係（user_idではなくidを使用）
     public function chatHistory()
     {
-        return $this->hasMany(ChatHistory::class, 'user_id', 'user_id');
+        return $this->hasMany(ChatHistory::class, 'user_id', 'id');
     }
 }

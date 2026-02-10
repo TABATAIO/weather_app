@@ -19,13 +19,15 @@ class UserManagementController extends Controller
         // 検索機能
         if ($request->filled('search')) {
             $search = $request->search;
-            $query->where('user_name', 'like', "%{$search}%")->orWhere('user_id', 'like', "%{$search}%");
+            $query->where('name', 'like', "%{$search}%")->orWhere('id', 'like', "%{$search}%");
         }
 
-        // フィルター機能
+        // フィルター機能（一時的にコメントアウト）
+        /*
         if ($request->filled('preference_filter')) {
             $query->where('temperature_preference', $request->preference_filter);
         }
+        */
 
         // ソート機能
         $sortBy = $request->get('sort', 'updated_at');
@@ -81,12 +83,8 @@ class UserManagementController extends Controller
         $user = UserProfile::findOrFail($id);
 
         $validated = $request->validate([
-            'user_name' => 'required|string|max:255',
-            'temperature_preference' => 'in:cold,cool,moderate,warm,hot',
-            'activity_preference' => 'in:indoor,outdoor,both',
-            'style_preference' => 'in:casual,polite,friendly',
-            'weather_sensitivity' => 'in:low,normal,high',
-            'favorite_activities' => 'nullable|string',
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email,' . $id,
         ]);
 
         $user->update($validated);

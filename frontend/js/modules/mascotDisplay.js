@@ -71,10 +71,18 @@ class MascotDisplay {
      * マスコット名前を更新
      */
     updateMascotName(name) {
+        // チャット吹き出しの名前を更新
         const nameElement = document.getElementById('mascot-name-comment');
         if (nameElement) {
             nameElement.textContent = name;
-            console.log('✅ マスコット名前を更新:', name);
+            console.log('✅ チャット吹き出しの名前を更新:', name);
+        }
+        
+        // ステータスエリアの名前を更新
+        const titleElement = document.getElementById('mascot-name-title');
+        if (titleElement) {
+            titleElement.textContent = name;
+            console.log('✅ ステータスエリアの名前を更新:', name);
         }
     }
 
@@ -82,13 +90,8 @@ class MascotDisplay {
      * マスコットのクリックインタラクションを設定
      */
     setupMascotInteraction() {
-        if (!this.mascotElement) return;
-
-        this.mascotElement.addEventListener('click', () => {
-            this.playTapAnimation();
-            // タップでなでる機能を実行
-            this.handlePetAction();
-        });
+        // マスコットクリックからチャット遷移を削除
+        // 撫でるボタンでのミッション機能のみ使用
     }
 
     /**

@@ -1,10 +1,10 @@
 {
   "name": "Weather App Full Stack Development",
-  "dockerComposeFile": "../docker-compose.yml",
+  "dockerComposeFile": ["../docker-compose.yml"],
   "service": "weather-backend",
   "workspaceFolder": "/workspace",
+  "shutdownAction": "stopCompose",
   
-  // 開発に必要な拡張機能
   "customizations": {
     "vscode": {
       "extensions": [
@@ -16,7 +16,14 @@
         "ms-vscode.vscode-eslint",
         "shufo.vscode-blade-formatter",
         "onecentlin.laravel-blade",
-        "ms-vscode.live-server"
+        "ms-vscode.live-server",
+        "GitHub.copilot",
+        "GitHub.copilot-chat",
+        "bmewburn.vscode-intelephense-client",
+        "ms-vscode.php-debug",
+        "ryannaddy.laravel-artisan",
+        "codingyu.laravel-goto-view",
+        "amiralizadeh9480.laravel-extra-intellisense"
       ],
       "settings": {
         "terminal.integrated.defaultProfile.linux": "bash",
@@ -25,12 +32,39 @@
         "files.insertFinalNewline": true,
         "files.trimTrailingWhitespace": true,
         "javascript.preferences.includePackageJsonAutoImports": "auto",
-        "typescript.preferences.includePackageJsonAutoImports": "auto"
+        "typescript.preferences.includePackageJsonAutoImports": "auto",
+        "github.copilot.enable": {
+          "*": true,
+          "yaml": true,
+          "plaintext": true,
+          "markdown": true,
+          "javascript": true,
+          "typescript": true,
+          "php": true,
+          "json": true,
+          "css": true,
+          "html": true
+        },
+        "github.copilot.advanced": {
+          "debug.overrideEngine": "gpt-5.2-codex",
+          "enableForAllClients": true,
+          "length": 1000,
+          "temperature": 0.1
+        },
+        "php.suggest.basic": false,
+        "php.validate.enable": true,
+        "php.validate.run": "onSave",
+        "intelephense.files.maxSize": 5000000,
+        "files.associations": {
+          "*.blade.php": "blade"
+        },
+        "emmet.includeLanguages": {
+          "blade": "html"
+        }
       }
     }
   },
 
-  // ポートフォワーディング
   "forwardPorts": [3001, 8000, 8080],
   "portsAttributes": {
     "3001": {
@@ -47,18 +81,19 @@
     }
   },
 
-  // コンテナ作成後に実行するコマンド
-  "postCreateCommand": "bash -c 'cd /workspace/Backend && npm install && cd /workspace/Frontend && npm install || echo \"Frontend npm install skipped\" && cd /workspace/Backend/Laravel/weather-admin && composer install --no-dev --optimize-autoloader || echo \"Composer install completed\"'",
+  "postCreateCommand": "bash -c 'echo \"Setting up development environment...\" && php --version && composer --version && cd /workspace/Backend && npm install && echo \"Backend npm packages installed\" && cd /workspace/Frontend && npm install && echo \"Frontend npm packages installed\" && cd /workspace/Backend/Laravel/weather-admin && composer install --optimize-autoloader && php artisan key:generate --force && php artisan migrate --force && echo \"Laravel setup completed\" || echo \"Laravel setup completed with warnings\"'",
   
-  // 開発用の追加ツールをインストール
-  "postStartCommand": "bash -c 'apt-get update && apt-get install -y git curl wget nano vim tree htop && echo \"Development tools installed\"'",
-
-
-  // コンテナユーザー
   "remoteUser": "root",
 
-  // マウント設定
-  "mounts": [
-    "source=${localWorkspaceFolder},target=/workspace,type=bind,consistency=cached"
-  ]
+  "features": {
+    "ghcr.io/devcontainers/features/github-cli:1": {},
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {},
+    "ghcr.io/devcontainers/features/php:1": {
+      "version": "8.4",
+      "installComposer": true
+    },
+    "ghcr.io/devcontainers/features/node:1": {
+      "version": "20"
+    }
+  }
 }

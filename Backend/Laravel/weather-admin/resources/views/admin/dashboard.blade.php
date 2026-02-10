@@ -65,6 +65,56 @@
         </div>
     </div>
 
+    <!-- クイックアクション -->
+    <div class="bg-white rounded-lg shadow p-6 mb-8">
+        <h3 class="text-lg font-semibold text-gray-800 mb-4">⚡ クイックアクション</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <a href="{{ route('admin.mascot.settings') }}" 
+               class="flex items-center p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg hover:from-blue-100 hover:to-indigo-100 transition-all duration-200">
+                <div class="p-2 rounded-full bg-blue-100 mr-3">
+                    <i class="fas fa-robot text-blue-600 text-lg"></i>
+                </div>
+                <div>
+                    <h4 class="font-semibold text-gray-900">マスコット設定</h4>
+                    <p class="text-sm text-gray-600">キャラクター基本設定・画像管理</p>
+                </div>
+            </a>
+            
+            <a href="{{ route('admin.fourth-form-evolutions.index') }}" 
+               class="flex items-center p-4 bg-gradient-to-r from-orange-50 to-red-50 border border-orange-200 rounded-lg hover:from-orange-100 hover:to-red-100 transition-all duration-200">
+                <div class="p-2 rounded-full bg-orange-100 mr-3">
+                    <i class="fas fa-star text-orange-600 text-lg"></i>
+                </div>
+                <div>
+                    <h4 class="font-semibold text-gray-900">第四形態管理</h4>
+                    <p class="text-sm text-gray-600">進化先追加・編集管理</p>
+                </div>
+            </a>
+            
+            <a href="{{ route('users.index') }}" 
+               class="flex items-center p-4 bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-lg hover:from-green-100 hover:to-emerald-100 transition-all duration-200">
+                <div class="p-2 rounded-full bg-green-100 mr-3">
+                    <i class="fas fa-users text-green-600 text-lg"></i>
+                </div>
+                <div>
+                    <h4 class="font-semibold text-gray-900">ユーザー管理</h4>
+                    <p class="text-sm text-gray-600">ユーザー一覧・詳細管理</p>
+                </div>
+            </a>
+            
+            <a href="{{ route('admin.chat-analytics') }}" 
+               class="flex items-center p-4 bg-gradient-to-r from-purple-50 to-violet-50 border border-purple-200 rounded-lg hover:from-purple-100 hover:to-violet-100 transition-all duration-200">
+                <div class="p-2 rounded-full bg-purple-100 mr-3">
+                    <i class="fas fa-chart-line text-purple-600 text-lg"></i>
+                </div>
+                <div>
+                    <h4 class="font-semibold text-gray-900">チャット分析</h4>
+                    <p class="text-sm text-gray-600">会話データ・感情分析</p>
+                </div>
+            </a>
+        </div>
+    </div>
+
     <!-- チャートとテーブル -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
         <!-- チャット推移グラフ -->
@@ -101,22 +151,16 @@
                     @foreach($stats['recent_users'] as $user)
                         <div class="flex items-center justify-between p-3 bg-gray-50 rounded">
                             <div>
-                                <p class="font-medium">{{ $user->user_name }}</p>
-                                <p class="text-sm text-gray-500">ID: {{ $user->user_id }}</p>
+                                <p class="font-medium">{{ $user->name }}</p>
+                                <p class="text-sm text-gray-600">登録: {{ $user->created_at->format('Y-m-d') }}</p>
                             </div>
-                            <div class="text-right">
-                                <p class="text-sm text-gray-600">{{ $user->updated_at->format('m/d H:i') }}</p>
-                                <a href="{{ route('users.show', $user->user_id) }}" 
-                                   class="text-blue-600 hover:text-blue-800 text-sm">詳細</a>
-                            </div>
+                            <a href="{{ route('users.show', $user->id) }}" 
+                               class="text-blue-500 hover:text-blue-700 font-medium">詳細</a>
                         </div>
                     @endforeach
                 </div>
-                <div class="mt-4 text-center">
-                    <a href="{{ route('users.index') }}" class="text-blue-600 hover:text-blue-800">すべてのユーザーを見る →</a>
-                </div>
             @else
-                <p class="text-gray-500">ユーザーがいません。</p>
+                <p class="text-gray-500">最新ユーザーがありません。</p>
             @endif
         </div>
 
@@ -127,24 +171,18 @@
                 <div class="space-y-3">
                     @foreach($stats['recent_chats'] as $chat)
                         <div class="p-3 bg-gray-50 rounded">
-                            <div class="flex justify-between items-start mb-2">
-                                <span class="font-medium text-sm">{{ $chat->userProfile?->user_name ?? 'Unknown' }}</span>
-                                <span class="text-xs text-gray-500">{{ $chat->created_at->format('m/d H:i') }}</span>
-                            </div>
-                            <p class="text-sm text-gray-700 truncate">{{ Str::limit($chat->user_message, 50) }}</p>
-                            @if($chat->intent)
-                                <span class="inline-block px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded mt-1">
-                                    {{ $chat->intent }}
-                                </span>
-                            @endif
+                            <p class="text-sm text-gray-800">{{ Str::limit($chat->message, 50) }}</p>
+                            <p class="text-xs text-gray-500 mt-1">
+                                {{ $chat->created_at->format('Y-m-d H:i') }}
+                                @if($chat->weather_data)
+                                    | 天気情報あり
+                                @endif
+                            </p>
                         </div>
                     @endforeach
                 </div>
-                <div class="mt-4 text-center">
-                    <a href="{{ route('admin.chat-analytics') }}" class="text-blue-600 hover:text-blue-800">チャット分析を見る →</a>
-                </div>
             @else
-                <p class="text-gray-500">チャット履歴がありません。</p>
+                <p class="text-gray-500">最新チャットがありません。</p>
             @endif
         </div>
     </div>
