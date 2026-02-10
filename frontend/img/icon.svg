@@ -1,0 +1,56 @@
+<!-- Placeholder SVG for Weather Mascot Icon -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <!-- Background Circle -->
+  <circle cx="256" cy="256" r="240" fill="#4f46e5" stroke="#3730a3" stroke-width="4"/>
+  
+  <!-- Mascot Face -->
+  <circle cx="256" cy="220" r="120" fill="#fbbf24" stroke="#f59e0b" stroke-width="3"/>
+  
+  <!-- Eyes -->
+  <circle cx="220" cy="200" r="12" fill="#1f2937"/>
+  <circle cx="292" cy="200" r="12" fill="#1f2937"/>
+  <circle cx="224" cy="196" r="4" fill="#ffffff"/>
+  <circle cx="296" cy="196" r="4" fill="#ffffff"/>
+  
+  <!-- Nose -->
+  <path d="M 256 215 L 250 225 L 262 225 Z" fill="#f59e0b"/>
+  
+  <!-- Mouth -->
+  <path d="M 235 240 Q 256 255 277 240" stroke="#1f2937" stroke-width="3" fill="none" stroke-linecap="round"/>
+  
+  <!-- Ears -->
+  <ellipse cx="180" cy="160" rx="25" ry="35" fill="#fbbf24" stroke="#f59e0b" stroke-width="2"/>
+  <ellipse cx="332" cy="160" rx="25" ry="35" fill="#fbbf24" stroke="#f59e0b" stroke-width="2"/>
+  
+  <!-- Inner Ears -->
+  <ellipse cx="185" cy="165" rx="12" ry="18" fill="#f59e0b"/>
+  <ellipse cx="327" cy="165" rx="12" ry="18" fill="#f59e0b"/>
+  
+  <!-- Weather Elements -->
+  <!-- Sun -->
+  <circle cx="180" cy="350" r="15" fill="#fbbf24"/>
+  <g stroke="#fbbf24" stroke-width="2" stroke-linecap="round">
+    <line x1="165" y1="335" x2="170" y2="340"/>
+    <line x1="180" y1="325" x2="180" y2="330"/>
+    <line x1="195" y1="335" x2="190" y2="340"/>
+    <line x1="205" y1="350" x2="200" y2="350"/>
+    <line x1="195" y1="365" x2="190" y2="360"/>
+    <line x1="180" y1="375" x2="180" y2="370"/>
+    <line x1="165" y1="365" x2="170" y2="360"/>
+    <line x1="155" y1="350" x2="160" y2="350"/>
+  </g>
+  
+  <!-- Cloud -->
+  <path d="M 250 340 Q 240 330 230 340 Q 225 335 220 340 Q 215 330 205 340 Q 200 335 195 340 L 195 355 Q 195 365 205 365 L 275 365 Q 285 365 285 355 L 285 350 Q 285 340 275 340 Q 270 335 265 340 Q 260 330 250 340 Z" fill="#e5e7eb"/>
+  
+  <!-- Raindrops -->
+  <ellipse cx="215" cy="375" rx="2" ry="8" fill="#3b82f6"/>
+  <ellipse cx="235" cy="380" rx="2" ry="8" fill="#3b82f6"/>
+  <ellipse cx="255" cy="375" rx="2" ry="8" fill="#3b82f6"/>
+  
+  <!-- Whiskers -->
+  <line x1="150" y1="210" x2="180" y2="215" stroke="#1f2937" stroke-width="2" stroke-linecap="round"/>
+  <line x1="150" y1="230" x2="180" y2="225" stroke="#1f2937" stroke-width="2" stroke-linecap="round"/>
+  <line x1="362" y1="210" x2="332" y2="215" stroke="#1f2937" stroke-width="2" stroke-linecap="round"/>
+  <line x1="362" y1="230" x2="332" y2="225" stroke="#1f2937" stroke-width="2" stroke-linecap="round"/>
+</svg>

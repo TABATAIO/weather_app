@@ -1206,7 +1206,7 @@ html, body {
     .feed-dropdown {
         min-width: 140px;
         bottom: 100%; /* ボタンの上に表示 */
-        left: 50%;
+        left: -245%;
         transform: translateX(-50%);
         right: auto; /* rightプロパティをリセット */
     }

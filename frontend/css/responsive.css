@@ -1,0 +1,380 @@
+/* Responsive Design */
+
+/* Mobile First Approach */
+/* Base styles are for mobile (320px and up) */
+
+/* Small Mobile Phones */
+@media (max-width: 375px) {
+  .header-content {
+    padding: 0 var(--space-4);
+  }
+  
+  .app-title {
+    font-size: var(--font-size-xl);
+  }
+  
+  .main-content {
+    padding: var(--space-4);
+    gap: var(--space-6);
+  }
+  
+  .mascot-body {
+    font-size: 6rem;
+  }
+  
+  .weather-icon {
+    font-size: 3rem;
+  }
+  
+  .action-buttons {
+    flex-direction: column;
+    width: 100%;
+  }
+  
+  .btn {
+    width: 100%;
+  }
+}
+
+/* Standard Mobile */
+@media (min-width: 376px) and (max-width: 767px) {
+  .header-content {
+    padding: 0 var(--space-4);
+  }
+  
+  .main-content {
+    padding: var(--space-5);
+    gap: var(--space-6);
+  }
+  
+  .weather-panel {
+    padding: var(--space-5);
+  }
+  
+  .mascot-section {
+    padding: var(--space-6);
+  }
+  
+  .action-buttons {
+    gap: var(--space-3);
+  }
+  
+  .chat-container {
+    height: 250px;
+  }
+}
+
+/* Tablet Portrait */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .app {
+    max-width: 768px;
+  }
+  
+  .main-content {
+    padding: var(--space-8);
+    gap: var(--space-10);
+  }
+  
+  .weather-details {
+    gap: var(--space-6);
+  }
+  
+  .weather-icon {
+    font-size: 5rem;
+  }
+  
+  .temperature {
+    font-size: var(--font-size-4xl);
+  }
+  
+  .mascot-body {
+    font-size: 10rem;
+  }
+  
+  .mascot-section {
+    padding: var(--space-10);
+  }
+  
+  .action-buttons {
+    gap: var(--space-6);
+  }
+  
+  .chat-container {
+    height: 400px;
+  }
+  
+  /* Two-column layout for status */
+  .mascot-status {
+    flex-direction: row;
+    flex-wrap: wrap;
+    max-width: 600px;
+  }
+  
+  .status-bar {
+    flex: 1;
+    min-width: 250px;
+  }
+}
+
+/* Tablet Landscape and Small Desktop */
+@media (min-width: 1024px) and (max-width: 1279px) {
+  .app {
+    max-width: 1024px;
+  }
+  
+  .main-content {
+    padding: var(--space-10);
+    gap: var(--space-12);
+  }
+  
+  /* Side-by-side layout for weather and mascot */
+  .content-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-8);
+  }
+  
+  .weather-panel {
+    padding: var(--space-8);
+  }
+  
+  .mascot-section {
+    padding: var(--space-8);
+  }
+  
+  .mascot-body {
+    font-size: 12rem;
+  }
+  
+  .action-section {
+    grid-column: 1 / -1;
+  }
+  
+  .chat-section {
+    grid-column: 1 / -1;
+  }
+  
+  .chat-container {
+    height: 450px;
+  }
+}
+
+/* Large Desktop */
+@media (min-width: 1280px) {
+  .app {
+    max-width: var(--container-max-width);
+  }
+  
+  .main-content {
+    padding: var(--space-12);
+    gap: var(--space-16);
+  }
+  
+  /* Three-column layout */
+  .content-grid {
+    display: grid;
+    grid-template-columns: 1fr 2fr 1fr;
+    gap: var(--space-8);
+    align-items: start;
+  }
+  
+  .weather-panel {
+    padding: var(--space-8);
+  }
+  
+  .mascot-section {
+    padding: var(--space-10);
+  }
+  
+  .action-section {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+  }
+  
+  .action-buttons {
+    flex-direction: column;
+  }
+  
+  .chat-section {
+    grid-column: 1 / -1;
+    margin-top: var(--space-8);
+  }
+  
+  .chat-container {
+    height: 500px;
+  }
+}
+
+/* Ultra Wide Screens */
+@media (min-width: 1600px) {
+  .app {
+    max-width: 1400px;
+  }
+  
+  .main-content {
+    padding: var(--space-16);
+  }
+  
+  .mascot-body {
+    font-size: 14rem;
+  }
+}
+
+/* Orientation-based adjustments */
+@media (orientation: landscape) and (max-height: 600px) {
+  .main-content {
+    gap: var(--space-4);
+  }
+  
+  .mascot-body {
+    font-size: 6rem;
+  }
+  
+  .weather-icon {
+    font-size: 3rem;
+  }
+  
+  .chat-container {
+    height: 200px;
+  }
+  
+  .header {
+    padding: var(--space-2) var(--space-6);
+  }
+  
+  .footer {
+    padding: var(--space-2) var(--space-6);
+  }
+}
+
+/* High DPI Displays */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 2dppx) {
+  .weather-icon,
+  .mascot-body {
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: crisp-edges;
+  }
+}
+
+/* Accessibility - Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+  .weather-icon,
+  .mascot-body,
+  .status-fill::after {
+    animation: none !important;
+  }
+  
+  .weather-background::before,
+  .weather-background::after {
+    animation: none !important;
+  }
+  
+  .loading-spinner {
+    animation: none !important;
+    border-top: 4px solid var(--color-primary);
+  }
+}
+
+/* High Contrast Mode */
+@media (prefers-contrast: high) {
+  .weather-panel,
+  .mascot-section,
+  .chat-section {
+    background: var(--bg-primary);
+    border: 2px solid var(--text-primary);
+  }
+  
+  .btn {
+    border: 2px solid currentColor;
+  }
+  
+  .weather-background {
+    display: none;
+  }
+}
+
+/* Dark Mode Override for specific elements */
+@media (prefers-color-scheme: dark) {
+  .weather-panel,
+  .mascot-section,
+  .chat-section {
+    background: rgba(31, 41, 55, 0.95);
+    border-color: rgba(156, 163, 175, 0.2);
+  }
+  
+  .message-content {
+    background: var(--color-gray-700);
+    color: var(--color-gray-100);
+  }
+  
+  .chat-input {
+    background: var(--color-gray-800);
+    border-color: var(--color-gray-600);
+    color: var(--color-gray-100);
+  }
+  
+  .chat-input::placeholder {
+    color: var(--color-gray-400);
+  }
+}
+
+/* Print Styles */
+@media print {
+  .weather-background,
+  .header-actions,
+  .action-section,
+  .chat-section,
+  .footer {
+    display: none !important;
+  }
+  
+  .app {
+    box-shadow: none;
+    background: white;
+  }
+  
+  .weather-panel,
+  .mascot-section {
+    background: white;
+    border: 1px solid #ccc;
+    page-break-inside: avoid;
+  }
+  
+  * {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* Focus management for keyboard navigation */
+@media (any-hover: none) {
+  .btn:hover {
+    transform: none;
+  }
+  
+  .mascot:hover {
+    transform: none;
+  }
+}
+
+/* Touch device optimizations */
+@media (pointer: coarse) {
+  .btn {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  .btn-icon {
+    width: 44px;
+    height: 44px;
+  }
+  
+  .chat-input {
+    min-height: 44px;
+  }
+  
+  .mascot {
+    touch-action: manipulation;
+  }
+}
