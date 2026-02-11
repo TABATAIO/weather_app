@@ -323,9 +323,12 @@ class MissionManager {
      */
     getMissionIcon(mission) {
         const iconMap = {
+            'check_weather': '☀️',
             'view_today_weather': '☀️',
+            'start_chat': '💬',
             'chat_with_mascot': '💬',
             'touch_mascot': '✋',
+            'share_mood': '😊',
             'check_precipitation': '🌧️',
             'view_rain_radar': '📡',
             'view_weekly_weather': '📅',
@@ -361,9 +364,12 @@ class MissionManager {
      */
     getActionButtonText(mission) {
         const buttonTextMap = {
+            'check_weather': '天気を見る',
             'view_today_weather': '天気を見る',
+            'start_chat': 'チャットする',
             'chat_with_mascot': 'チャット',
             'touch_mascot': 'タッチする',
+            'share_mood': '気分を共有',
             'check_precipitation': '降水確認',
             'view_rain_radar': '雨雲レーダー',
             'view_weekly_weather': '週間予報',
@@ -380,6 +386,7 @@ class MissionManager {
      */
     isExternalAction(action) {
         const externalActions = [
+            'check_weather',
             'view_today_weather',
             'check_precipitation',
             'view_rain_radar',
@@ -435,6 +442,7 @@ class MissionManager {
      */
     openExternalLink(action) {
         const linkMap = {
+            'check_weather': 'https://weathernews.jp/onebox/',
             'view_today_weather': 'https://weathernews.jp/onebox/',
             'check_precipitation': 'https://weathernews.jp/radar/',
             'view_rain_radar': 'https://weathernews.jp/radar/',
@@ -455,13 +463,18 @@ class MissionManager {
      */
     executeInternalAction(action) {
         switch (action) {
+            case 'start_chat':
             case 'chat_with_mascot':
                 // チャットページに移動
-                window.location.href = 'chat_page.html';
+                window.location.href = 'chatPage.html';
                 break;
             case 'touch_mascot':
                 // マスコットタッチイベントを発火
                 this.triggerMascotTouch();
+                break;
+            case 'share_mood':
+                // 気分共有（チャットページで実施）
+                window.location.href = 'chatPage.html?action=share_mood';
                 break;
             case 'tap_mascot_speech':
                 // マスコットのセリフをタップ

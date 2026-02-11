@@ -178,10 +178,148 @@ class MascotPage {
             // 天気データ読み込み
             await this.loadWeatherData();
             
+            // マスコットステータス読み込み
+            await this.loadMascotStatus();
+            
+            // マスコット挨拶読み込み
+            await this.loadMascotGreeting();
+            
             console.log('✅ 初期データ読み込み完了');
         } catch (error) {
             console.error('❌ 初期データ読み込みエラー:', error);
         }
+    }
+
+    /**
+     * マスコットの挨拶を読み込む
+     */
+    async loadMascotGreeting() {
+        try {
+            console.log('👋 マスコット挨拶読み込み開始...');
+            
+            if (window.apiClient) {
+                const result = await apiClient.getMascotGreeting();
+                if (result.success && result.data) {
+                    this.updateGreetingUI(result.data);
+                    console.log('✅ マスコット挨拶更新完了:', result.data);
+                } else {
+                    console.error('❌ マスコット挨拶取得失敗:', result.error);
+                }
+            } else {
+                console.warn('⚠️ APIクライアントが利用できません');
+            }
+        } catch (error) {
+            console.error('❌ マスコット挨拶読み込みエラー:', error);
+        }
+    }
+
+    /**
+     * 挨拶UIを更新
+     */
+    updateGreetingUI(greetingData) {
+        const commentElement = document.getElementById('aiComment');
+        const nameElement = document.getElementById('mascot-name-comment');
+        
+        console.log('👋 挨拶データ詳細:', {
+            greeting: greetingData.greeting,
+            time_of_day: greetingData.time_of_day,
+            current_hour: greetingData.current_hour,
+            current_time: greetingData.current_time,
+            timezone: greetingData.timezone
+        });
+        
+        if (commentElement && greetingData.greeting) {
+            // 挨拶メッセージのみを表示
+            commentElement.textContent = greetingData.greeting;
+            
+            console.log('✅ 挨拶UI更新完了:', {
+                message: greetingData.greeting,
+                time: greetingData.current_time,
+                period: greetingData.time_of_day
+            });
+        }
+    }
+
+    /**
+     * マスコットステータスを読み込む
+     */
+    async loadMascotStatus() {
+        try {
+            console.log('📊 マスコットステータス読み込み開始...');
+            
+            if (window.apiClient) {
+                const result = await apiClient.getMascotStatus();
+                if (result.success && result.data) {
+                    this.updateMascotStatusUI(result.data);
+                    console.log('✅ マスコットステータス更新完了:', result.data);
+                } else {
+                    console.error('❌ マスコットステータス取得失敗:', result.error);
+                }
+            } else {
+                console.warn('⚠️ APIクライアントが利用できません');
+            }
+        } catch (error) {
+            console.error('❌ マスコットステータス読み込みエラー:', error);
+        }
+    }
+
+    /**
+     * マスコットステータスUIを更新
+     */
+    updateMascotStatusUI(statusData) {
+        console.log('🎨 マスコットステータスUI更新:', statusData);
+        
+        // レベル表示を更新
+        const levelElement = document.getElementById('mascot-level');
+        if (levelElement) {
+            levelElement.textContent = `Lv.${statusData.level}`;
+            console.log(`📊 レベル表示更新: Lv.${statusData.level}`);
+        }
+
+        // 経験値バーを更新
+        const levelFillElement = document.getElementById('level-fill');
+        if (levelFillElement) {
+            const progress = statusData.exp_progress_percentage || 0;
+            levelFillElement.style.width = `${progress}%`;
+            console.log(`📊 経験値バー更新: ${progress}% (${statusData.current_level_exp}/100)`);
+        }
+
+        // 体力バーを更新
+        const healthFillElement = document.getElementById('health-fill');
+        if (healthFillElement) {
+            healthFillElement.style.width = `${statusData.health}%`;
+            healthFillElement.className = `progress-fill health-fill ${this.getHealthClass(statusData.health)}`;
+        }
+
+        // エネルギー（満腹度）を更新
+        this.updateEnergyStars(statusData.energy);
+    }
+
+    /**
+     * 体力に応じたクラス名を取得
+     */
+    getHealthClass(health) {
+        if (health >= 70) return 'high';
+        if (health >= 40) return 'medium';
+        return 'low';
+    }
+
+    /**
+     * エネルギー星を更新
+     */
+    updateEnergyStars(energy) {
+        const stars = document.querySelectorAll('.fullness-star');
+        const filledCount = Math.ceil((energy / 100) * stars.length);
+        
+        stars.forEach((star, index) => {
+            if (index < filledCount) {
+                star.classList.add('filled');
+                star.textContent = '⭐';
+            } else {
+                star.classList.remove('filled');
+                star.textContent = '☆';
+            }
+        });
     }
 
     /**
@@ -277,25 +415,30 @@ class MascotPage {
                 // 撫でるアクション実行（API経由で経験値自動更新、フィードバック自動表示）
                 await mascotDisplay.handlePetAction();
                 console.log('✅ [DEBUG-PET-4] 撫でるアクション完了');
+                
+                // マスコットステータスを再読み込み
+                console.log('🔄 [DEBUG-PET-5] ステータス再読み込み...');
+                await this.loadMascotStatus();
+                console.log('✅ [DEBUG-PET-6] ステータス再読み込み完了');
             } else {
-                console.warn('⚠️ [DEBUG-PET-5] MascotDisplayが見つかりません');
+                console.warn('⚠️ [DEBUG-PET-7] MascotDisplayが見つかりません');
             }
 
             // ミッション進行（撫でるボタン用）
             if (window.missionManager) {
-                console.log('🎯 [DEBUG-PET-6] ミッション進行処理...');
+                console.log('🎯 [DEBUG-PET-8] ミッション進行処理...');
                 await missionManager.recordAction('touch_mascot');
-                console.log('✅ [DEBUG-PET-7] ミッション進行完了');
+                console.log('✅ [DEBUG-PET-9] ミッション進行完了');
             } else {
-                console.warn('⚠️ [DEBUG-PET-8] MissionManagerが見つかりません');
+                console.warn('⚠️ [DEBUG-PET-10] MissionManagerが見つかりません');
             }
 
             // インタラクション回数をカウント
             const interactionCount = Storage.get('interactionCount') || 0;
             Storage.set('interactionCount', interactionCount + 1);
-            console.log('📊 [DEBUG-PET-9] インタラクション回数更新:', interactionCount + 1);
+            console.log('📊 [DEBUG-PET-11] インタラクション回数更新:', interactionCount + 1);
             
-            console.log('✅ [DEBUG-PET-10] 撫でるボタンインタラクション完了');
+            console.log('✅ [DEBUG-PET-12] 撫でるボタンインタラクション完了');
             
         } catch (error) {
             console.error('❌ [DEBUG-PET-ERROR] 撫でるボタンインタラクションエラー:', error);
