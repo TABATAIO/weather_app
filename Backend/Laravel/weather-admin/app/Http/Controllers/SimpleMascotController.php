@@ -142,7 +142,11 @@ class SimpleMascotController extends Controller
                 $mascot = DB::table('mascots')->where('user_id', 1)->first();
             }
 
-            $level = intval(($mascot->experience ?? 0) / 100) + 1;
+            $totalExp = $mascot->experience ?? 0;
+            $level = intval($totalExp / 100) + 1;
+            $currentLevelExp = $totalExp % 100; // 現在のレベル内での経験値
+            $expToNextLevel = 100 - $currentLevelExp; // 次のレベルまでの経験値
+            $expProgress = ($currentLevelExp / 100) * 100; // パーセンテージ
 
             return response()->json([
                 'success' => true,
@@ -153,7 +157,10 @@ class SimpleMascotController extends Controller
                     'health' => $mascot->health ?? 100,
                     'happiness' => $mascot->happiness ?? 50,
                     'energy' => $mascot->energy ?? 80,
-                    'total_experience' => $mascot->experience ?? 0,
+                    'total_experience' => $totalExp,
+                    'current_level_exp' => $currentLevelExp,
+                    'exp_to_next_level' => $expToNextLevel,
+                    'exp_progress_percentage' => $expProgress,
                     'last_fed_at' => $mascot->last_fed_at ?? null,
                     'last_played_at' => $mascot->last_played_at ?? null,
                     'last_petted_at' => null, // mascotsテーブルにlast_petted_atカラムが存在しないのでnull
@@ -317,7 +324,7 @@ class SimpleMascotController extends Controller
     public function playWithMascot(Request $request)
     {
         try {
-            $mascot = DB::table('user_mascots')->where('id', 1)->first();
+            $mascot = DB::table('mascots')->where('id', 1)->first();
             
             if (!$mascot) {
                 return response()->json([
@@ -330,15 +337,15 @@ class SimpleMascotController extends Controller
             $expGain = 25;
             $newHappiness = min(100, $mascot->happiness + 30);
             $newEnergy = max(0, $mascot->energy - 15);
-            $newExperience = ($mascot->current_experience ?? 0) + $expGain;
+            $newExperience = ($mascot->experience ?? 0) + $expGain;
 
             // マスコットステータスを更新
-            DB::table('user_mascots')
+            DB::table('mascots')
                 ->where('id', $mascot->id)
                 ->update([
                     'happiness' => $newHappiness,
                     'energy' => $newEnergy,
-                    'current_experience' => $newExperience,
+                    'experience' => $newExperience,
                     'last_played_at' => now(),
                     'updated_at' => now()
                 ]);
@@ -352,7 +359,7 @@ class SimpleMascotController extends Controller
                     'exp_gained' => $expGain,
                     'happiness' => $newHappiness,
                     'energy' => $newEnergy,
-                    'current_experience' => $newExperience,
+                    'experience' => $newExperience,
                     'level' => $level
                 ]
             ]);
@@ -371,7 +378,7 @@ class SimpleMascotController extends Controller
     public function petMascot(Request $request)
     {
         try {
-            $mascot = DB::table('user_mascots')->where('id', 1)->first();
+            $mascot = DB::table('mascots')->where('id', 1)->first();
             
             if (!$mascot) {
                 return response()->json([
@@ -383,15 +390,15 @@ class SimpleMascotController extends Controller
             // なでることによる経験値とステータス変更
             $expGain = 10;
             $newHappiness = min(100, $mascot->happiness + 15);
-            $newExperience = ($mascot->current_experience ?? 0) + $expGain;
+            $newExperience = ($mascot->experience ?? 0) + $expGain;
 
             // マスコットステータスを更新
-            DB::table('user_mascots')
+            DB::table('mascots')
                 ->where('id', $mascot->id)
                 ->update([
                     'happiness' => $newHappiness,
-                    'current_experience' => $newExperience,
-                    'last_pet_at' => now(),
+                    'experience' => $newExperience,
+                    'last_played_at' => now(),
                     'updated_at' => now()
                 ]);
 
@@ -403,7 +410,7 @@ class SimpleMascotController extends Controller
                 'data' => [
                     'exp_gained' => $expGain,
                     'happiness' => $newHappiness,
-                    'current_experience' => $newExperience,
+                    'experience' => $newExperience,
                     'level' => $level
                 ]
             ]);
@@ -430,27 +437,27 @@ class SimpleMascotController extends Controller
             $newName = $request->input('name');
 
             // マスコットデータを取得（存在しない場合は作成）
-            $mascot = DB::table('user_mascots')->where('user_id', 1)->first();
+            $mascot = DB::table('mascots')->where('user_id', 1)->first();
             
             if (!$mascot) {
                 // マスコットが存在しない場合、デフォルトデータを作成
-                DB::table('user_mascots')->insert([
+                DB::table('mascots')->insert([
                     'user_id' => 1,
-                    'current_name' => $newName,
-                    'mascot_setting_id' => 1,
+                    'name' => $newName,
+                    'level' => 1,
                     'health' => 100,
                     'happiness' => 50,
                     'energy' => 80,
-                    'current_experience' => 0,
+                    'experience' => 0,
                     'created_at' => now(),
                     'updated_at' => now()
                 ]);
             } else {
                 // 既存のマスコットの名前を更新
-                DB::table('user_mascots')
+                DB::table('mascots')
                     ->where('user_id', 1)
                     ->update([
-                        'current_name' => $newName,
+                        'name' => $newName,
                         'updated_at' => now()
                     ]);
             }
@@ -472,6 +479,85 @@ class SimpleMascotController extends Controller
             return response()->json([
                 'success' => false,
                 'error' => '名前の更新に失敗しました',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * マスコットの挨拶を取得
+     */
+    public function getGreeting(Request $request)
+    {
+        try {
+            $mascot = DB::table('mascots')->where('user_id', 1)->first();
+            $mascotName = $mascot ? ($mascot->name ?? 'からめる') : 'からめる';
+            
+            // 現在時刻を取得（日本時間）
+            $now = now()->setTimezone('Asia/Tokyo');
+            $hour = $now->hour;
+            $currentTime = $now->format('H:i');
+            
+            // 時間帯を判定
+            $timeOfDay = '';
+            if ($hour >= 5 && $hour < 12) {
+                $timeOfDay = 'morning';
+            } elseif ($hour >= 12 && $hour < 17) {
+                $timeOfDay = 'afternoon';
+            } elseif ($hour >= 17 && $hour < 21) {
+                $timeOfDay = 'evening';
+            } else {
+                $timeOfDay = 'night';
+            }
+            
+            // 挨拶メッセージのパターン
+            $greetings = [
+                'morning' => [
+                    'おはよう！今日も良い天気だといいな☀️',
+                    'おはよ～♪ 朝から元気いっぱい！',
+                    'おはようございます！素敵な一日になりますように✨',
+                    '朝だよ〜！今日の天気チェックした？',
+                ],
+                'afternoon' => [
+                    'こんにちは！お昼ごはん食べた？🍙',
+                    'いい天気だね〜☁️',
+                    '午後も頑張ろうね！',
+                    'お昼休み楽しんでる？',
+                ],
+                'evening' => [
+                    'こんばんは〜夕方だね！',
+                    '今日はどんな一日だった？',
+                    'お疲れ様！夜ごはんの時間だね🍴',
+                    '夕日がきれいだよ〜🌅',
+                ],
+                'night' => [
+                    'こんばんは！夜更かしし過ぎないでね🌙',
+                    '星が見えるかな〜⭐',
+                    'おやすみ前に天気チェック！',
+                    '夜空がきれいだね✨',
+                ],
+            ];
+            
+            // ランダムに挨拶を選択
+            $messages = $greetings[$timeOfDay];
+            $greeting = $messages[array_rand($messages)];
+            
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'greeting' => $greeting,
+                    'mascot_name' => $mascotName,
+                    'time_of_day' => $timeOfDay,
+                    'current_hour' => $hour,
+                    'current_time' => $currentTime,
+                    'timezone' => 'Asia/Tokyo',
+                ]
+            ]);
+            
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'error' => '挨拶の取得に失敗しました',
                 'message' => $e->getMessage()
             ], 500);
         }

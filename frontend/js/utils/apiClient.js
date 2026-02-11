@@ -556,6 +556,66 @@ class ApiClient {
     }
 
     /**
+     * マスコットステータスを取得
+     */
+    async getMascotStatus() {
+        try {
+            const url = `http://localhost:8000/api/mascot/status`;
+            console.log('📊 マスコットステータス取得:', url);
+            
+            const response = await fetch(url, {
+                method: 'GET',
+                headers: {
+                    'Accept': 'application/json',
+                }
+            });
+            
+            if (response.ok) {
+                const result = await response.json();
+                console.log('✅ ステータス取得成功:', result);
+                return result;
+            } else {
+                const errorData = await response.json().catch(() => ({}));
+                console.error('❌ ステータス取得失敗:', response.status, errorData);
+                return { success: false, error: errorData.error || 'ステータス取得に失敗しました' };
+            }
+        } catch (error) {
+            console.error('❌ ステータス取得エラー:', error);
+            return { success: false, error: error.message };
+        }
+    }
+
+    /**
+     * マスコットの挨拶を取得
+     */
+    async getMascotGreeting() {
+        try {
+            const url = `http://localhost:8000/api/mascot/greeting`;
+            console.log('👋 マスコット挨拶取得:', url);
+            
+            const response = await fetch(url, {
+                method: 'GET',
+                headers: {
+                    'Accept': 'application/json',
+                }
+            });
+            
+            if (response.ok) {
+                const result = await response.json();
+                console.log('✅ 挨拶取得成功:', result);
+                return result;
+            } else {
+                const errorData = await response.json().catch(() => ({}));
+                console.error('❌ 挨拶取得失敗:', response.status, errorData);
+                return { success: false, error: errorData.error || '挨拶取得に失敗しました' };
+            }
+        } catch (error) {
+            console.error('❌ 挨拶取得エラー:', error);
+            return { success: false, error: error.message };
+        }
+    }
+
+    /**
      * API接続テスト
      */
     async testConnection() {
