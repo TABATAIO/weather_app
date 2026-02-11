@@ -27,6 +27,7 @@ Route::prefix('mascot')->group(function () {
     Route::get('/name', [SimpleMascotController::class, 'getMascotName']);
     Route::get('/basic', [SimpleMascotController::class, 'getBasicInfo']);
     Route::get('/status', [SimpleMascotController::class, 'getMascotStatus']);
+    Route::get('/greeting', [SimpleMascotController::class, 'getGreeting']);
     Route::post('/feed', [SimpleMascotController::class, 'feedMascot']);
     Route::post('/play', [SimpleMascotController::class, 'playWithMascot']);
     Route::post('/pet', [SimpleMascotController::class, 'petMascot']);

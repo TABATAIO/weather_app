@@ -169,6 +169,84 @@ class SimpleMascotController extends Controller
     }
 
     /**
+     * 時間帯に応じたマスコットの挨拶を取得
+     */
+    public function getGreeting(Request $request)
+    {
+        try {
+            // マスコットデータを取得
+            $mascot = DB::table('mascots')->where('user_id', 1)->first();
+            $mascotName = $mascot ? $mascot->name : 'からめる';
+            
+            // 日本時間で現在時刻を取得
+            $now = now()->setTimezone('Asia/Tokyo');
+            $hour = $now->hour;
+            
+            // 時間帯を判定
+            $timeOfDay = '';
+            if ($hour >= 5 && $hour < 12) {
+                $timeOfDay = 'morning';
+            } elseif ($hour >= 12 && $hour < 17) {
+                $timeOfDay = 'afternoon';
+            } elseif ($hour >= 17 && $hour < 21) {
+                $timeOfDay = 'evening';
+            } else {
+                $timeOfDay = 'night';
+            }
+            
+            // 時間帯別の挨拶メッセージ
+            $greetings = [
+                'morning' => [
+                    'おはようございます！素敵な一日になりますように✨',
+                    'おはようございます！今日も頑張りましょう〜♪',
+                    '朝だよ〜！元気いっぱいでいこうね！',
+                    'おはよう！いい天気だといいな〜☀️'
+                ],
+                'afternoon' => [
+                    'こんにちは！お昼ごはんは食べた？🍽️',
+                    'やっほー！午後も頑張ろうね〜',
+                    'こんにちは〜！いい感じに進んでる？',
+                    'お昼だね〜リフレッシュしよう！'
+                ],
+                'evening' => [
+                    'おつかれさま！今日も一日頑張ったね✨',
+                    'こんばんは〜！夕方の風が気持ちいいね',
+                    'お疲れさま！少しゆっくりしよう♪',
+                    '夕方だね〜！リラックスタイムだよ〜'
+                ],
+                'night' => [
+                    'こんばんは！今日も一日お疲れさま〜🌙',
+                    '夜だね〜！星が見えるかな〜✨',
+                    'おやすみ前に一緒におしゃべりしよ？',
+                    '静かな夜だね〜ゆっくり過ごそう♪'
+                ]
+            ];
+            
+            // ランダムに挨拶を選択
+            $messages = $greetings[$timeOfDay];
+            $greeting = $messages[array_rand($messages)];
+            
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'greeting' => $greeting,
+                    'mascot_name' => $mascotName,
+                    'time_of_day' => $timeOfDay,
+                    'current_hour' => $hour,
+                    'current_time' => $now->format('H:i'),
+                    'timezone' => 'Asia/Tokyo'
+                ]
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'error' => '挨拶の取得に失敗しました',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
      * マスコットにエサをあげる
      */
     public function feedMascot(Request $request)

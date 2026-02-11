@@ -35,6 +35,12 @@ class MascotPage {
         console.log('🚀 コンポーネント初期化開始...');
         
         try {
+            // APIクライアント初期化
+            if (typeof ApiClient !== 'undefined' && !window.apiClient) {
+                window.apiClient = new ApiClient();
+                console.log('✅ APIクライアント初期化完了');
+            }
+
             // 基本UI設定
             this.setupBasicUI();
 
@@ -178,6 +184,9 @@ class MascotPage {
             // 天気データ読み込み
             await this.loadWeatherData();
             
+            // マスコット挨拶読み込み
+            await this.loadMascotGreeting();
+            
             console.log('✅ 初期データ読み込み完了');
         } catch (error) {
             console.error('❌ 初期データ読み込みエラー:', error);
@@ -202,6 +211,55 @@ class MascotPage {
             }
         } catch (error) {
             console.error('天気データ取得エラー:', error);
+        }
+    }
+
+    /**
+     * マスコットの挨拶を読み込む
+     */
+    async loadMascotGreeting() {
+        try {
+            console.log('👋 マスコット挨拶読み込み開始...');
+            
+            if (window.apiClient) {
+                const result = await apiClient.getMascotGreeting();
+                if (result.success && result.data) {
+                    this.updateGreetingUI(result.data);
+                    console.log('✅ マスコット挨拶更新完了:', result.data);
+                } else {
+                    console.error('❌ マスコット挨拶取得失敗:', result.error);
+                }
+            } else {
+                console.warn('⚠️ APIクライアントが利用できません');
+            }
+        } catch (error) {
+            console.error('❌ マスコット挨拶読み込みエラー:', error);
+        }
+    }
+
+    /**
+     * 挨拶UIを更新
+     */
+    updateGreetingUI(greetingData) {
+        const commentElement = document.getElementById('aiComment');
+        
+        console.log('👋 挨拶データ詳細:', {
+            greeting: greetingData.greeting,
+            time_of_day: greetingData.time_of_day,
+            current_hour: greetingData.current_hour,
+            current_time: greetingData.current_time,
+            timezone: greetingData.timezone
+        });
+        
+        if (commentElement && greetingData.greeting) {
+            // 挨拶メッセージのみを表示
+            commentElement.textContent = greetingData.greeting;
+            
+            console.log('✅ 挨拶UI更新完了:', {
+                message: greetingData.greeting,
+                time: greetingData.current_time,
+                period: greetingData.time_of_day
+            });
         }
     }
 

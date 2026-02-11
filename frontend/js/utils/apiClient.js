@@ -264,6 +264,37 @@ class ApiClient {
     }
 
     /**
+     * マスコットの挨拶を取得
+     * @returns {Promise<Object>} - 挨拶データ
+     */
+    async getMascotGreeting() {
+        try {
+            const url = `http://localhost:8000/api/mascot/greeting`;
+            console.log('👋 マスコット挨拶取得:', url);
+            
+            const response = await fetch(url, {
+                method: 'GET',
+                headers: {
+                    'Accept': 'application/json',
+                }
+            });
+            
+            if (response.ok) {
+                const result = await response.json();
+                console.log('✅ 挨拶取得成功:', result);
+                return result;
+            } else {
+                const errorData = await response.json().catch(() => ({}));
+                console.error('❌ 挨拶取得失敗:', response.status, errorData);
+                throw new Error(`挨拶取得エラー: ${response.status}`);
+            }
+        } catch (error) {
+            console.error('❌ マスコット挨拶取得エラー:', error);
+            throw error;
+        }
+    }
+
+    /**
      * マスコットにエサをあげる
      * @returns {Promise<Object>} - 結果データ
      */
