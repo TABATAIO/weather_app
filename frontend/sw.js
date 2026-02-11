@@ -1,30 +1,31 @@
 // Service Worker for Weather App PWA
 // バージョン管理
-const CACHE_NAME = 'weather-app-v1.0.0';
+const CACHE_NAME = 'weather-app-v2.0.0';
 const OFFLINE_URL = '/index.html';
 
 // キャッシュするリソース
 const urlsToCache = [
   '/',
   '/index.html',
+  '/mascotPage.html',
+  '/chatPage.html',
+  '/auth.html',
+  '/css/destyle.css',
   '/css/main.css',
-  '/css/components.css',
-  '/css/variables.css',
-  '/css/responsive.css',
-  '/css/animations.css',
-  '/css/accessibility.css',
-  '/js/app.js',
-  '/js/services/weather-service.js',
-  '/js/services/mascot-manager.js',
-  '/js/services/notification-service.js',
-  '/js/services/background-controller.js',
-  '/js/services/performance-monitor.js',
-  '/js/modules/api-client.js',
-  '/js/modules/ui-state-manager.js',
-  '/js/modules/error-boundary.js',
-  '/js/modules/chat-interface.js',
-  '/img/icon.svg',
-  '/img/favicon.svg',
+  '/css/mascotPage.css',
+  '/css/chatPage.css',
+  '/css/weatherBackground.css',
+  '/js/utils/common.js',
+  '/js/utils/apiClient.js',
+  '/js/utils/storage.js',
+  '/js/modules/weatherBackground.js',
+  '/js/modules/mascotDisplay.js',
+  '/js/modules/chatInterface.js',
+  '/js/modules/missionManager.js',
+  '/js/modules/authManager.js',
+  '/js/pages/mascotPage.js',
+  '/js/pages/chatPage.js',
+  '/js/script.js',
   '/manifest.json'
 ];
 
