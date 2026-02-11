@@ -1266,6 +1266,106 @@ app.get("/api/chat/history/:userId", async (req, res) => {
   res.status(result.status).json(result);
 });
 
+// ============================================
+// ミッション関連API
+// ============================================
+
+// 今日のミッション取得API
+app.get("/api/missions/today", async (req, res) => {
+  try {
+    console.log("🎯 今日のミッション取得API呼び出し");
+    
+    // 現在の日付を取得
+    const today = new Date();
+    const dateStr = today.toISOString().split('T')[0];
+    
+    // サンプルミッションデータ（実際の実装では天気やユーザー状況に基づく）
+    const missions = [
+      {
+        id: 1,
+        title: "天気をチェックしよう",
+        description: "今日の天気予報を確認してみよう",
+        type: "weather",
+        progress: 0,
+        target: 1,
+        reward: 10,
+        completed: false
+      },
+      {
+        id: 2,
+        title: "マスコットと遊ぼう",
+        description: "マスコットをタップして触れ合おう",
+        type: "interaction",
+        progress: 0,
+        target: 3,
+        reward: 15,
+        completed: false
+      },
+      {
+        id: 3,
+        title: "チャットを楽しもう",
+        description: "マスコットとチャットをしてみよう",
+        type: "chat",
+        progress: 0,
+        target: 1,
+        reward: 20,
+        completed: false
+      }
+    ];
+
+    res.json({
+      success: true,
+      data: {
+        date: dateStr,
+        missions: missions,
+        totalMissions: missions.length,
+        completedMissions: missions.filter(m => m.completed).length
+      }
+    });
+
+  } catch (error) {
+    console.error("❌ ミッション取得エラー:", error);
+    res.status(500).json({
+      success: false,
+      error: "ミッションデータの取得に失敗しました",
+      details: error.message
+    });
+  }
+});
+
+// ミッション進捗更新API
+app.post("/api/missions/:missionId/progress", async (req, res) => {
+  try {
+    const { missionId } = req.params;
+    const { action, progress } = req.body;
+    
+    console.log(`🎯 ミッション進捗更新: ID=${missionId}, action=${action}, progress=${progress}`);
+    
+    // 実際の実装ではデータベースを更新
+    // ここではサンプルレスポンス
+    res.json({
+      success: true,
+      data: {
+        missionId: parseInt(missionId),
+        action: action,
+        newProgress: progress || 1,
+        completed: (progress || 1) >= 1, // 簡単な完了判定
+        reward: 10
+      }
+    });
+    
+  } catch (error) {
+    console.error("❌ ミッション進捗更新エラー:", error);
+    res.status(500).json({
+      success: false,
+      error: "ミッション進捗の更新に失敗しました",
+      details: error.message
+    });
+  }
+});
+
+// ============================================
+
 /**
  * 天気情報に基づいてカジュアルなコメントを生成する
  * @param {Object} currentWeather - 天気データ（温度、天気など）
@@ -2187,6 +2287,8 @@ app.use((req, res) => {
       "POST /api/user/profile",
       "GET /api/user/profile/:userId",
       "GET /api/chat/history/:userId",
+      "GET /api/missions/today",
+      "POST /api/missions/:missionId/progress",
     ],
   });
 });

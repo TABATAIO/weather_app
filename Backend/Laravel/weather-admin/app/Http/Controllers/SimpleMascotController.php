@@ -12,19 +12,19 @@ class SimpleMascotController extends Controller
     public function getMascotName(Request $request)
     {
         try {
-            // user_mascotsテーブルから実際の名前を取得
-            $mascot = DB::table('user_mascots')->where('user_id', 1)->first();
+            // mascotsテーブルから実際の名前を取得
+            $mascot = DB::table('mascots')->where('user_id', 1)->first();
             
             if (!$mascot) {
                 // マスコットが存在しない場合、デフォルトデータを作成
-                DB::table('user_mascots')->insert([
+                DB::table('mascots')->insert([
                     'user_id' => 1,
-                    'current_name' => 'からめる',
-                    'mascot_setting_id' => 1,
+                    'name' => 'からめる',
+                    'level' => 1,
                     'health' => 100,
                     'happiness' => 50,
                     'energy' => 80,
-                    'current_experience' => 0,
+                    'experience' => 0,
                     'created_at' => now(),
                     'updated_at' => now()
                 ]);
@@ -42,7 +42,7 @@ class SimpleMascotController extends Controller
             return response()->json([
                 'success' => true,
                 'data' => [
-                    'name' => $mascot->current_name ?? 'からめる',
+                    'name' => $mascot->name ?? 'からめる',
                     'species' => 'cloud_spirit',
                 ]
             ]);
@@ -60,7 +60,7 @@ class SimpleMascotController extends Controller
     {
         try {
             // データベースから実際のマスコット情報を取得
-            $mascot = DB::table('user_mascots')->where('user_id', 1)->first();
+            $mascot = DB::table('mascots')->where('user_id', 1)->first();
             
             if (!$mascot) {
                 // マスコットが存在しない場合、デフォルトデータを作成
@@ -74,14 +74,14 @@ class SimpleMascotController extends Controller
                     'mood' => '元気いっぱい♪'
                 ];
                 
-                DB::table('user_mascots')->insert([
+                DB::table('mascots')->insert([
                     'user_id' => 1,
-                    'current_name' => $defaultInfo['name'],
-                    'mascot_setting_id' => 1,
+                    'name' => $defaultInfo['name'],
+                    'level' => 1,
                     'health' => $defaultInfo['health'],
                     'happiness' => $defaultInfo['happiness'],
                     'energy' => $defaultInfo['energy'],
-                    'current_experience' => 0,
+                    'experience' => 0,
                     'created_at' => now(),
                     'updated_at' => now()
                 ]);
@@ -94,8 +94,8 @@ class SimpleMascotController extends Controller
             
             // 既存のマスコット情報を返す
             $mascotInfo = [
-                'name' => $mascot->current_name ?? 'からめる',
-                'level' => intval(($mascot->current_experience ?? 0) / 100) + 1,
+                'name' => $mascot->name ?? 'からめる',
+                'level' => intval(($mascot->experience ?? 0) / 100) + 1,
                 'species' => 'cloud_spirit',
                 'health' => $mascot->health ?? 80,
                 'happiness' => $mascot->happiness ?? 60,
@@ -124,39 +124,39 @@ class SimpleMascotController extends Controller
     {
         try {
             // デフォルトユーザー（ID: 1）のマスコットを取得または作成
-            $mascot = DB::table('user_mascots')->where('user_id', 1)->first();
+            $mascot = DB::table('mascots')->where('user_id', 1)->first();
             
             if (!$mascot) {
                 // マスコットが存在しない場合、デフォルトデータを作成
-                DB::table('user_mascots')->insert([
+                DB::table('mascots')->insert([
                     'user_id' => 1,
-                    'current_name' => 'からめる',
-                    'mascot_setting_id' => 1,
+                    'name' => 'からめる',
+                    'level' => 1,
                     'health' => 100,
                     'happiness' => 50,
                     'energy' => 80,
-                    'current_experience' => 0,
+                    'experience' => 0,
                     'created_at' => now(),
                     'updated_at' => now()
                 ]);
-                $mascot = DB::table('user_mascots')->where('user_id', 1)->first();
+                $mascot = DB::table('mascots')->where('user_id', 1)->first();
             }
 
-            $level = intval(($mascot->current_experience ?? 0) / 100) + 1;
+            $level = intval(($mascot->experience ?? 0) / 100) + 1;
 
             return response()->json([
                 'success' => true,
                 'data' => [
                     'id' => $mascot->id,
-                    'name' => $mascot->current_name ?? 'からめる',
+                    'name' => $mascot->name ?? 'からめる',
                     'level' => $level,
                     'health' => $mascot->health ?? 100,
                     'happiness' => $mascot->happiness ?? 50,
                     'energy' => $mascot->energy ?? 80,
-                    'total_experience' => $mascot->current_experience ?? 0,
+                    'total_experience' => $mascot->experience ?? 0,
                     'last_fed_at' => $mascot->last_fed_at ?? null,
                     'last_played_at' => $mascot->last_played_at ?? null,
-                    'last_petted_at' => $mascot->last_pet_at ?? null,
+                    'last_petted_at' => null, // mascotsテーブルにlast_petted_atカラムが存在しないのでnull
                 ]
             ]);
         } catch (\Exception $e) {
@@ -175,38 +175,38 @@ class SimpleMascotController extends Controller
     {
         try {
             // 直接SQLでマスコットデータを取得
-            $mascot = DB::table('user_mascots')->where('user_id', 1)->first();
+            $mascot = DB::table('mascots')->where('user_id', 1)->first();
             
             if (!$mascot) {
                 // マスコットが存在しない場合、デフォルトデータを作成
-                DB::table('user_mascots')->insert([
+                DB::table('mascots')->insert([
                     'user_id' => 1,
-                    'current_name' => 'からめる',
-                    'mascot_setting_id' => 1,
+                    'name' => 'からめる',
+                    'level' => 1,
                     'health' => 100,
                     'happiness' => 50,
                     'energy' => 80,
-                    'current_experience' => 0,
+                    'experience' => 0,
                     'last_fed_at' => now(),
                     'created_at' => now(),
                     'updated_at' => now()
                 ]);
-                $mascot = DB::table('user_mascots')->where('user_id', 1)->first();
+                $mascot = DB::table('mascots')->where('user_id', 1)->first();
             }
 
             // エサやりによる経験値とステータス変更
             $expGain = 15;
             $newHealth = min(100, $mascot->health + 20);
             $newEnergy = min(100, $mascot->energy + 10);
-            $newExperience = ($mascot->current_experience ?? 0) + $expGain;
+            $newExperience = ($mascot->experience ?? 0) + $expGain;
 
             // マスコットステータスを更新
-            DB::table('user_mascots')
+            DB::table('mascots')
                 ->where('id', $mascot->id)
                 ->update([
                     'health' => $newHealth,
                     'energy' => $newEnergy,
-                    'current_experience' => $newExperience,
+                    'experience' => $newExperience,
                     'last_fed_at' => now(),
                     'updated_at' => now()
                 ]);

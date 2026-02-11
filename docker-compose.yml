@@ -31,7 +31,7 @@ services:
       - ./Backend/Laravel/weather-admin/.env:/var/www/.env:rw
     environment:
       - DB_CONNECTION=sqlite
-      - DB_DATABASE=/var/www/storage/database/weather_app.db
+      - DB_DATABASE=/var/www/storage/database/database.sqlite
       - APP_ENV=production
     depends_on:
       - weather-backend

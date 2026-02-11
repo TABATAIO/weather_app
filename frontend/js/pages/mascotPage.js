@@ -1,4 +1,4 @@
-console.log('📁 [SCRIPT-LOAD] mascot_page.js読み込み開始...');
+console.log('📁 [SCRIPT-LOAD] mascotPage.js読み込み開始...');
 
 /**
  * マスコットページのメイン制御クラス（シンプル版）
@@ -329,4 +329,4 @@ window.addEventListener('DOMContentLoaded', () => {
     console.log('✅ MascotPage初期化完了');
 });
 
-console.log('📁 [SCRIPT-LOAD] mascot_page.js読み込み完了');
+console.log('📁 [SCRIPT-LOAD] mascotPage.js読み込み完了');

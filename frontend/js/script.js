@@ -137,7 +137,7 @@ class WeatherApp {
         const characterImg = document.querySelector('.character-img img');
         if (characterImg) {
             characterImg.addEventListener('click', () => {
-                window.location.href = 'mascot_page.html';
+                window.location.href = 'mascotPage.html';
             });
         }
 

@@ -108,11 +108,11 @@ class ChatPage {
      * 戻るボタンの処理
      */
     goBack() {
-        // mascot_page.htmlまたはindex.htmlに戻る
-        if (document.referrer.includes('mascot_page.html')) {
+        // mascotPage.htmlまたはindex.htmlに戻る
+        if (document.referrer.includes('mascotPage.html')) {
             window.history.back();
         } else {
-            window.location.href = 'mascot_page.html';
+            window.location.href = 'mascotPage.html';
         }
     }
 

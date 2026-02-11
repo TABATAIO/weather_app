@@ -89,8 +89,19 @@ class MissionManager {
                 console.log('UI状態: ローディング中');
                 break;
             case 'loaded':
-                console.log('UI状態: 読み込み完了');
-                // ミッションリストを表示（displayメソッドで処理）
+                console.log('UI状態: 読み込み完了 - DOM状態をafter表示に切り替え');
+                // ミッションコンテナのbeforeクラスを削除してafterクラスを追加
+                if (this.missionContainer) {
+                    this.missionContainer.classList.remove('before');
+                    this.missionContainer.classList.add('after');
+                }
+                // mission-list要素も同様に更新
+                if (this.missionList) {
+                    this.missionList.classList.remove('before');
+                    this.missionList.classList.add('after');
+                    // ローディング表示をクリア
+                    this.missionList.innerHTML = '';
+                }
                 break;
             case 'error':
                 this.missionList.innerHTML = '<div class="mission-status">❌ データ取得に失敗しました</div>';
@@ -213,8 +224,22 @@ class MissionManager {
      */
     display() {
         console.log('📺 [DISPLAY-1] ミッション表示メイン処理開始...');
+        
+        // UI状態を確実に'loaded'に切り替え
+        console.log('🔄 [DISPLAY-2] UI状態をloaded状態に強制切り替え...');
+        if (this.missionContainer) {
+            this.missionContainer.classList.remove('before');
+            this.missionContainer.classList.add('after');
+            console.log('✅ [DISPLAY-3] missionContainer状態切り替え完了');
+        }
+        if (this.missionList) {
+            this.missionList.classList.remove('before');
+            this.missionList.classList.add('after');
+            console.log('✅ [DISPLAY-4] missionList状態切り替え完了');
+        }
+        
         this.renderMissions();
-        console.log('✅ [DISPLAY-2] ミッション表示メイン処理完了');
+        console.log('✅ [DISPLAY-5] ミッション表示メイン処理完了');
     }
 
     /**
