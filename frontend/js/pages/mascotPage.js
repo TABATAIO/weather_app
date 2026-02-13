@@ -184,9 +184,6 @@ class MascotPage {
             // 天気データ読み込み
             await this.loadWeatherData();
             
-            // マスコットステータス読み込み
-            await this.loadMascotStatus();
-            
             // マスコット挨拶読み込み
             await this.loadMascotGreeting();
             
@@ -470,11 +467,6 @@ class MascotPage {
                 // 撫でるアクション実行（API経由で経験値自動更新、フィードバック自動表示）
                 await mascotDisplay.handlePetAction();
                 console.log('✅ [DEBUG-PET-4] 撫でるアクション完了');
-                
-                // マスコットステータスを再読み込み
-                console.log('🔄 [DEBUG-PET-5] ステータス再読み込み...');
-                await this.loadMascotStatus();
-                console.log('✅ [DEBUG-PET-6] ステータス再読み込み完了');
             } else {
                 console.warn('⚠️ [DEBUG-PET-7] MascotDisplayが見つかりません');
             }

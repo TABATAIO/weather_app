@@ -250,15 +250,16 @@ html, body {
 }
 
 .mascot-body {
-    width: 60vw; /* 80vwから60vwに縮小 */
+    width: 46vw; /* 80vwから60vwに縮小 */
     height: 15vh; /* 20vhから15vhに縮小 */
     max-width: 300px; /* 最大サイズを制限 */
     max-height: 200px; /* 最大高さを制限 */
     position: relative;
     z-index: 2;
     background-image: url(../img/character01.png);
-    background-size: cover;
+    background-size: contain;
     background-position: center;
+    background-repeat: no-repeat;
 }
 
 .mascot-face {

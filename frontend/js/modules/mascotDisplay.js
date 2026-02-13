@@ -123,16 +123,17 @@ class MascotDisplay {
     updateMascotDisplay() {
         if (!this.mascotData) return;
 
-        const { name, level, health, happiness, energy, total_experience } = this.mascotData;
+        const { name, level, health, happiness, energy, total_experience, exp_progress_percentage } = this.mascotData;
         
-        console.log('🔄 マスコット表示更新:', { name, level, health, happiness, energy, total_experience });
+        console.log('🔄 マスコット表示更新:', { name, level, health, happiness, energy, total_experience, exp_progress_percentage });
         
         // 名前は初期化時に設定済みなのでスキップ
         
-        // レベルを更新
-        this.updateLevel(level, total_experience);
+        // レベル表示と画像切り替えを更新
+        this.updateLevelDisplay(level);
         
-        // 経験値バーを更新
+        // 経験値バーを更新（常に実行）
+        console.log('📊 updateExperienceBar を呼び出します:', total_experience);
         this.updateExperienceBar(total_experience);
         
         // ヘルスを更新
@@ -336,6 +337,39 @@ class MascotDisplay {
     }
 
     /**
+     * レベル表示と画像を更新
+     */
+    updateLevelDisplay(level) {
+        const levelElement = document.getElementById('mascot-level');
+        if (levelElement) {
+            levelElement.textContent = `Lv.${level}`;
+        }
+
+        // レベルに応じたマスコット画像の切り替え
+        const mascotBody = document.getElementById('mascot-animation');
+        if (mascotBody) {
+            let characterImage = 'character01.png'; // デフォルト: 第一形態
+            
+            if (level >= 31) {
+                characterImage = 'character04.png'; // 第四形態
+            } else if (level >= 21) {
+                characterImage = 'character03.png'; // 第三形態
+            } else if (level >= 11) {
+                characterImage = 'character02.png'; // 第二形態
+            }
+            
+            mascotBody.style.backgroundImage = `url(img/${characterImage})`;
+            console.log(`🎨 マスコット画像更新: Lv.${level} → ${characterImage}`);
+        }
+
+        // レベルに応じたサイズ変更
+        if (this.mascotElement) {
+            const scale = Math.min(1 + (level - 1) * 0.05, 1.5); // 最大1.5倍
+            this.mascotElement.style.transform = `scale(${scale})`;
+        }
+    }
+
+    /**
      * マスコットレベルを更新
      * @param {number} level - マスコットのレベル
      * @param {number} totalExperience - 総経験値（オプション）
@@ -344,6 +378,23 @@ class MascotDisplay {
         const levelElement = document.getElementById('mascot-level');
         if (levelElement) {
             levelElement.textContent = `Lv.${level}`;
+        }
+
+        // レベルに応じたマスコット画像の切り替え
+        const mascotBody = document.getElementById('mascot-animation');
+        if (mascotBody) {
+            let characterImage = 'character01.png'; // デフォルト: 第一形態
+            
+            if (level >= 31) {
+                characterImage = 'character04.png'; // 第四形態
+            } else if (level >= 21) {
+                characterImage = 'character03.png'; // 第三形態
+            } else if (level >= 11) {
+                characterImage = 'character02.png'; // 第二形態
+            }
+            
+            mascotBody.style.backgroundImage = `url(img/${characterImage})`;
+            console.log(`🎨 マスコット画像更新: Lv.${level} → ${characterImage}`);
         }
 
         // レベルに応じたサイズ変更（オプション）
@@ -555,12 +606,39 @@ class MascotDisplay {
                 if (response.success) {
                     console.log('✅ 餌やり成功:', response.data);
                     
-                    // ステータス更新
-                    if (response.data.fullness !== undefined) {
-                        this.updateFullness(response.data.fullness);
+                    // レスポンスデータで全ステータスを更新
+                    const data = response.data;
+                    
+                    // レベル更新
+                    if (data.level !== undefined) {
+                        console.log(`📈 レベル更新: Lv.${data.level}`);
+                        this.updateLevelDisplay(data.level);
                     }
-                    if (response.data.mood !== undefined) {
-                        this.updateMood(response.data.mood);
+                    
+                    // プログレスバーを更新
+                    if (data.experience !== undefined) {
+                        console.log(`📊 EXP更新: +${data.exp_gained} → ${data.experience} EXP`);
+                        this.updateExperienceBar(data.experience);
+                    }
+                    
+                    // 幸福度更新
+                    if (data.happiness !== undefined) {
+                        console.log(`💛 幸福度: ${data.happiness}`);
+                        if (data.happiness >= 80) {
+                            this.updateMood('とても元気！');
+                        } else if (data.happiness >= 60) {
+                            this.updateMood('元気です');
+                        } else if (data.happiness >= 40) {
+                            this.updateMood('ふつう');
+                        } else {
+                            this.updateMood('元気がない...');
+                        }
+                    }
+                    
+                    // 満腹度更新
+                    if (data.fullness !== undefined) {
+                        console.log(`🍗 満腹度: ${data.fullness}`);
+                        this.updateFullness(data.fullness);
                     }
                 } else {
                     console.warn('⚠️ 餌やり失敗:', response.error);
@@ -602,9 +680,33 @@ class MascotDisplay {
                 if (response.success) {
                     console.log('✅ 撫でる成功:', response.data);
                     
-                    // ステータス更新
-                    if (response.data.mood !== undefined) {
-                        this.updateMood(response.data.mood);
+                    // レスポンスデータで全ステータスを更新
+                    const data = response.data;
+                    
+                    // レベル更新
+                    if (data.level !== undefined) {
+                        console.log(`📈 レベル更新: Lv.${data.level}`);
+                        this.updateLevelDisplay(data.level);
+                    }
+                    
+                    // プログレスバーを更新
+                    if (data.experience !== undefined) {
+                        console.log(`📊 EXP更新: +${data.exp_gained} → ${data.experience} EXP`);
+                        this.updateExperienceBar(data.experience);
+                    }
+                    
+                    // 幸福度更新
+                    if (data.happiness !== undefined) {
+                        console.log(`💛 幸福度: ${data.happiness}`);
+                        if (data.happiness >= 80) {
+                            this.updateMood('とても元気！');
+                        } else if (data.happiness >= 60) {
+                            this.updateMood('元気です');
+                        } else if (data.happiness >= 40) {
+                            this.updateMood('ふつう');
+                        } else {
+                            this.updateMood('元気がない...');
+                        }
                     }
                 } else {
                     console.warn('⚠️ 撫でる失敗:', response.error);
